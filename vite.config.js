@@ -17,7 +17,12 @@ export default defineConfig({
                 },
             },
         }),
-        vuetify({ autoImport: true }),
+        vuetify({
+            autoImport: true,
+            // styles: {
+            //     configFile: 'resources/styles/settings.scss'
+            // }
+        })
     ],
     resolve: {
         alias: {

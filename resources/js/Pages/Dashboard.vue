@@ -23,6 +23,25 @@
                         <p>Double count is: {{ counter.doubleCount }}</p>
                         <button @click="counter.increment()">Increment</button>
                     </div>
+                    <v-app >
+                        <v-main>
+                        <v-container>
+                            <v-card>
+                                <v-card-title>
+                                    Můj titulek
+                                </v-card-title>
+                                <v-card-text>
+                                    Obsah karty
+                                </v-card-text>
+                                <v-card-actions>
+                                    <v-btn color="primary">
+                                    Tlačítko
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-container>
+                        </v-main>
+                    </v-app>
                 </div>
             </div>
         </div>
