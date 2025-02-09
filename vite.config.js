@@ -28,5 +28,8 @@ export default defineConfig({
         alias: {
             '@': '/resources/js'
         }
-    }
+    },
+    // server: {
+    //     host: true
+    // }
 });
