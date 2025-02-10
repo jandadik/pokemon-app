@@ -2,54 +2,43 @@
     <Head title="Dashboard" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
-            >
-                Dashboard
-            </h2>
-        </template>
-
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div
-                    class="overflow-hidden bg-gray-600 shadow-sm sm:rounded-lg dark:bg-gray-800"
+        <v-tabs-window :model-value="tabStore.activeTab">
+            <v-tabs-window-item
+                v-for="item in tabStore.menuItems"
+                :key="item.title"
+                :value="item.title"
                 >
-                    <div class="p-6 text-gray-900 dark:text-gray-100">
-                        You're logged in!
-                    </div>
-                    <div class="p-6 text-gray-900 dark:text-gray-100">
-                        <p>Count is: {{ counter.count }}</p>
-                        <p>Double count is: {{ counter.doubleCount }}</p>
-                        <button @click="counter.increment()">Increment</button>
-                    </div>
-                 
-
-                    <v-card>
-                        <v-card-title>
-                            Můj titulek
-                        </v-card-title>
-                        <v-card-text>
-                            Obsah karty
-                        </v-card-text>
-                        <v-card-actions>
-                            <v-btn color="primary" @click="counter.increment()">
-                            Tlačítko
-                            </v-btn>
-                        </v-card-actions>
-                    </v-card>
-       
-    
-                </div>
-            </div>
-        </div>
+                <v-container fluid>
+                    <v-row>
+                        <v-col
+                        v-for="i in 198"
+                        :key="i"
+                        cols="6"
+                        sm="4"
+                        md="3"
+                        lg="2"
+                        xl="2"
+                        >
+                        <v-img
+                            :lazy-src="`https://images.pokemontcg.io/sv1/${i}.png`"
+                            :src="`https://images.pokemontcg.io/sv1/${i}.png`"
+                            width="100%"
+                            cover
+                        ></v-img>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-tabs-window-item>
+        </v-tabs-window>
+        
     </AuthenticatedLayout>
 </template>
 
 <script setup>
     import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
     import { Head } from '@inertiajs/vue3';
-    import { useCounterStore } from '@/stores/counter'
+    import { useTabStore } from '@/stores/tabStore';
 
-    const counter = useCounterStore()
+    const tabStore = useTabStore()
+    
 </script>
