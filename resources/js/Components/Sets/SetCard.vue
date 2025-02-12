@@ -73,9 +73,7 @@ const formatDate = (date) => {
 
 // Pro budoucí implementaci - přesměrování na stránku s kartami
 const showCards = () => {
-    // Prozatím jen vypíšeme do konzole
-    console.log('Show cards for set:', props.set.id)
-    // router.visit(route('sets.cards', props.set.id)) // Zakomentováno do implementace routy
+    router.visit(route('sets.cards', props.set.id))
 }
 
 // Pro budoucí implementaci - zobrazení statistik

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SetController;
+use App\Http\Controllers\CardController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,7 +25,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/sets', [SetController::class, 'index'])->name('sets.index');
-    Route::get('/sets/{set}/cards', [SetController::class, 'cards'])->name('sets.cards');
+    Route::get('/sets/{set}/cards', [CardController::class, 'index'])->name('sets.cards');
+    Route::get('/sets/{set}/cards/{card}', [CardController::class, 'show'])->name('sets.cards.show');
 });
 
 require __DIR__.'/auth.php';
