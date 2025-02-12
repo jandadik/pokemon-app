@@ -1,26 +1,30 @@
 <template>
     <v-tabs
-        :model-value="tabStore.activeTab"
-        @update:model-value="tabStore.setActiveTab"
-        align-tabs="title"
+        v-model="tabStore.activeTab"
+        @update:model-value="handleTabChange"
+        align-tabs="center"
     >
         <v-tab
-            v-for="item in tabStore.menuItems"
-            :key="item.title"
-            :text="item.title"
-            :value="item.title"
-        />
+            v-for="tab in tabStore.tabs"
+            :key="tab.value"
+            :value="tab.value"
+        >
+            {{ tab.title }}
+        </v-tab>
     </v-tabs>
 </template>
 
 <script setup>
-    import { useTabStore } from '@/stores/tabStore'
+import { useTabStore } from '@/stores/tabStore'
+import { router } from '@inertiajs/vue3'
 
-    // defineProps({
-    //     modelValue: [String, null]
-    // })
+const tabStore = useTabStore()
 
-    // defineEmits(['update:modelValue'])
-
-    const tabStore = useTabStore()
+const handleTabChange = (value) => {
+    tabStore.setActiveTab(value)
+    const tab = tabStore.tabs.find(t => t.value === value)
+    if (tab) {
+        router.visit(route(tab.route))
+    }
+}
 </script>

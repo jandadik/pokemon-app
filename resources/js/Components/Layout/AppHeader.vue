@@ -21,7 +21,11 @@
 
         <!-- Spodní část s taby -->
         <template v-slot:extension>
-            <AppTabs />
+            <v-container class="pa-0">
+                <div class="d-flex justify-center">
+                    <AppTabs />
+                </div>
+            </v-container>
         </template>
     </v-app-bar>
 </template>
