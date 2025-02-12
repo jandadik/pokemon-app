@@ -16,7 +16,7 @@ class CardController extends Controller
     public function index(Set $set)
     {
         $cards = $set->cards()
-            ->orderBy('id', 'asc')
+            ->orderByRaw('CAST(number AS UNSIGNED) ASC')
             ->orderBy('name', 'asc')  // záložní řazení podle jména
             ->get();
 

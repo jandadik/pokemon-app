@@ -43,7 +43,7 @@
             
             <div class="card-number">
                 <span class="text-caption">
-                    {{ formattedNumber }}/{{ setTotal }}
+                    {{ formattedNumber }}/{{ formattedSetTotal }}
                 </span>
             </div>
             <div class="set-symbol">
@@ -65,7 +65,15 @@
                 max-width="13"
                 height="13"
                 contain
-            />
+                class="cursor-pointer"
+            >
+                <v-tooltip location="bottom">
+                    <template v-slot:activator="{ props }">
+                        <div v-bind="props" style="width: 100%; height: 100%;"></div>
+                    </template>
+                    <span>{{ card.rarity }}</span>
+                </v-tooltip>
+            </v-img>
             <v-btn 
                 icon="mdi-heart-outline"
                 color="grey-darken-1"
@@ -104,6 +112,10 @@ const props = defineProps({
 
 const formattedNumber = computed(() => {
     return String(props.card.number).padStart(3, '0')
+})
+
+const formattedSetTotal = computed(() => {
+    return String(props.setTotal).padStart(3, '0')
 })
 
 const rarityIcon = computed(() => {

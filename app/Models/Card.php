@@ -61,7 +61,17 @@ class Card extends Model
 	protected $casts = [
 		'hp' => 'int',
 		'national_pokedex_number' => 'int',
-		'converted_retreat_cost' => 'int'
+		'converted_retreat_cost' => 'int',
+		'types' => 'array',
+		'subtypes' => 'array',
+		'rules' => 'array',
+		'evolves_to' => 'array',
+		'abilities' => 'array',
+		'weaknesses' => 'array',
+		'resistances' => 'array',
+		'retreat_cost' => 'array',
+		'ancient_trait' => 'array',
+		'legalities' => 'array'
 	];
 
 	protected $fillable = [
