@@ -9,7 +9,7 @@
                 :style="{ cursor: 'pointer' }"
                 contain
                 @click="showCards"
-                lazy-src="/images/placeholder.png"
+                lazy-src="/images/placeholder.jpg"
                 loading="lazy"
             />
         </div>

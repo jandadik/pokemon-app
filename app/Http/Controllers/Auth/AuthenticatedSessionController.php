@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Http\Controllers\UserParametersController;
+use App\Providers\RouteServiceProvider;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -33,7 +35,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Pokud existuje intended URL, použijeme ji
+        if ($request->session()->has('url.intended')) {
+            return redirect()->intended();
+        }
+
+        // Jinak přesměrujeme na dashboard
+        return redirect()->intended(RouteServiceProvider::HOME);
     }
 
     /**

@@ -22,8 +22,8 @@ class CardController extends Controller
                 ->get()
                 ->map(function ($card) {
                     $card->local_image = $card->img_file_small 
-                        ? '/images/' . str_replace('\\', '/', $card->img_file_small)
-                        : '/images/placeholder.png';
+                        ? '/images/' . str_replace(['\\', '.png'], ['/', '.jpg'], $card->img_file_small)
+                        : '/images/placeholder.jpg';
                     
                     return $card;
                 });

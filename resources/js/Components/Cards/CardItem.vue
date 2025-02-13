@@ -8,7 +8,7 @@
                 width="100%"
                 :style="{ cursor: 'pointer' }"
                 @click="showDetail"
-                :lazy-src="'/images/placeholder.png'"
+                :lazy-src="'/images/placeholder.jpg'"
                 loading="lazy"
             >
                 <template v-slot:placeholder>
@@ -56,7 +56,7 @@
                 </div>
                 <div class="set-symbol">
                     <v-img
-                        :src="set.symbol_url"
+                        :src="`/images/symbols/${set.ptcgo_code.toLowerCase()}.png`"
                         :alt="set.name"
                         width="20"
                         height="20"
@@ -101,8 +101,9 @@
 </template>
 
 <script setup>
+import { computed, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { useRaritiesStore } from '@/stores/raritiesStore'
 
 const props = defineProps({
     card: {
@@ -119,6 +120,12 @@ const props = defineProps({
     }
 })
 
+// Preload symbol setu
+onMounted(() => {
+    const img = new Image()
+    img.src = `/images/symbols/${props.set.ptcgo_code.toLowerCase()}.png`
+})
+
 const formattedNumber = computed(() => {
     return String(props.card.number).padStart(3, '0')
 })
@@ -132,14 +139,18 @@ const rarityIcon = computed(() => {
     
     // Nahrazení mezer pomlčkami a převod na malá písmena
     const iconName = props.card.rarity.toLowerCase().replace(/\s+/g, '-')
-    return `/images/symbols/${iconName}.svg`
+    console.log(useRaritiesStore(iconName))
+    return useRaritiesStore(iconName)
 })
 
 const showDetail = () => {
     router.visit(route('sets.cards.show', {
         set: props.card.set_id,
         card: props.card.id
-    }))
+    }), {
+        preserveState: true,  // Zachová stav předchozí stránky
+        preserveScroll: true  // Zachová pozici scrollu
+    })
 }
 </script>
 

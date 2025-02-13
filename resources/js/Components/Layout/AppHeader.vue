@@ -10,7 +10,7 @@
 
         <!-- Střední část -->
         <Link :href="route('dashboard')">
-            <ApplicationLogo class="h-9 w-auto fill-current" />
+            <ApplicationLogo class="" />
         </Link>
         <v-app-bar-title>Poke App</v-app-bar-title>
 
@@ -20,7 +20,7 @@
         </template>
 
         <!-- Spodní část s taby -->
-        <template v-slot:extension>
+        <template v-slot:extension v-if="showTabs">
             <v-container class="pa-0">
                 <div class="d-flex justify-center">
                     <AppTabs />
@@ -38,7 +38,11 @@
 
     defineProps({
         drawer: Boolean,
-        user: Boolean
+        user: Boolean,
+        showTabs: {
+            type: Boolean,
+            default: true
+        }
     })
 
     defineEmits(['update:drawer', 'update:user', 'toggle-user'])

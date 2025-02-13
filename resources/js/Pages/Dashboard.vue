@@ -1,13 +1,12 @@
 <template>
     <Head title="Dashboard" />
-
     <AuthenticatedLayout>
-        <v-tabs-window :model-value="tabStore.activeTab">
-            <v-tabs-window-item
-                v-for="item in tabStore.menuItems"
-                :key="item.title"
-                :value="item.title"
-                >
+    
+        <div>
+        <!-- Přímé použití v template -->
+        <span>parametr: {{ userParametersStore.homepage }}</span><br>
+        <span>parametr2: {{ userParametersStore.getParameter('homepage', 'nedef') }}</span>
+        </div>
                 <v-container fluid>
                     <v-row>
                         <v-col
@@ -28,8 +27,7 @@
                         </v-col>
                     </v-row>
                 </v-container>
-            </v-tabs-window-item>
-        </v-tabs-window>
+      
         
     </AuthenticatedLayout>
 </template>
@@ -37,8 +35,13 @@
 <script setup>
     import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
     import { Head } from '@inertiajs/vue3';
-    import { useTabStore } from '@/stores/tabStore';
 
-    const tabStore = useTabStore()
+
+    import { useUserParametersStore } from '@/stores/userParametersStore';
+
+    const userParametersStore = useUserParametersStore();
+
+
+
     
 </script>

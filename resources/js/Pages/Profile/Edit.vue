@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
+import UserParametersManager from './UserParametersManager.vue';
 import { Head } from '@inertiajs/vue3';
 
 defineProps({
@@ -50,6 +51,8 @@ defineProps({
                 >
                     <DeleteUserForm class="max-w-xl" />
                 </div>
+
+                <UserParametersManager />
             </div>
         </div>
     </AuthenticatedLayout>
