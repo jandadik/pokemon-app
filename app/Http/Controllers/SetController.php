@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Set;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Cache;
 
 class SetController extends Controller
 {
@@ -29,12 +30,14 @@ class SetController extends Controller
 
     public function index()
     {
-        $sets = Set::orderBy('release_date', 'desc')
-            ->get()
-            ->groupBy('series')
-            ->sortBy(function ($series, $key) {
-                return array_search($key, $this->seriesOrder) ?? PHP_INT_MAX;
-            });
+        $sets = Cache::remember('sets_grouped', 3600, function () {
+            return Set::orderBy('release_date', 'desc')
+                ->get()
+                ->groupBy('series')
+                ->sortBy(function ($series, $key) {
+                    return array_search($key, $this->seriesOrder) ?? PHP_INT_MAX;
+                });
+        });
 
         return Inertia::render('Sets/Index', [
             'sets' => $sets

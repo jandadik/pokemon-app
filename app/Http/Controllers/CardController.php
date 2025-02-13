@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Set;
 use App\Models\Card;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class CardController extends Controller
@@ -15,10 +15,19 @@ class CardController extends Controller
      */
     public function index(Set $set)
     {
-        $cards = $set->cards()
-            ->orderByRaw('CAST(number AS UNSIGNED) ASC')
-            ->orderBy('name', 'asc')  // záložní řazení podle jména
-            ->get();
+        $cards = Cache::remember('set_cards_' . $set->id, 3600, function () use ($set) {
+            return Card::where('set_id', $set->id)
+                ->select(['id', 'name', 'number', 'img_file_small', 'rarity', 'set_id'])
+                ->orderByRaw('CAST(number AS UNSIGNED) ASC')
+                ->get()
+                ->map(function ($card) {
+                    $card->local_image = $card->img_file_small 
+                        ? '/images/' . str_replace('\\', '/', $card->img_file_small)
+                        : '/images/placeholder.png';
+                    
+                    return $card;
+                });
+        });
 
         return Inertia::render('Cards/Index', [
             'set' => $set,
