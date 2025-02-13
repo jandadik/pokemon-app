@@ -15,13 +15,13 @@
             :items="registers || []"
             class="elevation-1"
         >
-            <template v-slot:item.default="{ item }">
+            <template #[`item.default`]="{ item }">
                 <v-checkbox
                     :model-value="!!item.default"
                     disabled
                 />
             </template>
-            <template v-slot:item.actions="{ item }">
+            <template #[`item.actions`]="{ item }">
                 <v-icon
                     size="small"
                     class="me-2"

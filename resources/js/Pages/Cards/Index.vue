@@ -38,8 +38,8 @@
 </template>
 
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import CardItem from '@/Components/Cards/CardItem.vue'
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue'
+import CardItem from '@/components/cards/CardItem.vue'
 
 defineProps({
     set: {

@@ -104,7 +104,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue'
 import PokemonAttacks from '@/components/cards/PokemonAttacks.vue'
 import PokemonAbilities from '@/components/cards/PokemonAbilities.vue'
 import PokemonRules from '@/components/cards/PokemonRules.vue'

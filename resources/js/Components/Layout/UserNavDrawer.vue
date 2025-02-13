@@ -33,7 +33,7 @@
 
 <script setup>
     import { useDisplay } from 'vuetify'
-    import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue'
+    import ResponsiveNavLink from '@/components/ResponsiveNavLink.vue'
 
     defineProps({
         modelValue: Boolean,

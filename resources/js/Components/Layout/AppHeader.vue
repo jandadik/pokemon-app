@@ -32,9 +32,9 @@
 
 <script setup>
     import { Link } from '@inertiajs/vue3'
-    import ApplicationLogo from '@/Components/ApplicationLogo.vue'
-    import AppHeaderActions from '@/Components/Layout/AppHeaderActions.vue'
-    import AppTabs from '@/Components/Layout/AppTabs.vue'
+    import ApplicationLogo from '@/components/ApplicationLogo.vue'
+    import AppHeaderActions from '@/components/layout/AppHeaderActions.vue'
+    import AppTabs from '@/components/layout/AppTabs.vue'
 
     defineProps({
         drawer: Boolean,

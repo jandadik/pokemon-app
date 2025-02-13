@@ -27,9 +27,9 @@
 
 <script setup>
 import { Head } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import AdminMenu from '@/Components/Admin/AdminMenu.vue';
-import RegisterCategories from '@/Components/Admin/RegisterCategories.vue';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import AdminMenu from '@/aomponents/admin/AdminMenu.vue';
+import RegisterCategories from '@/aomponents/admin/RegisterCategories.vue';
 
 defineProps({
     categories: {

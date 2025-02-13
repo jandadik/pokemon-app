@@ -27,8 +27,8 @@
 
 <script setup>
 import { Head } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import RegisterItems from '@/Components/Admin/RegisterItems.vue';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import RegisterItems from '@/components/admin/RegisterItems.vue';
 
 defineProps({
     category: {

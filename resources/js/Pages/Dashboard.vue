@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-    import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+    import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
     import { Head } from '@inertiajs/vue3';
 
 

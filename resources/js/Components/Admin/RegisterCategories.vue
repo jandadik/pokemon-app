@@ -15,7 +15,7 @@
             :items="categories"
             class="elevation-1"
         >
-            <template v-slot:item.actions="{ item }">
+            <template #[`item.actions`]="{ item }">
                 <v-btn
                     size="small"
                     color="primary"
@@ -122,7 +122,7 @@
 <script setup>
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
-import RegisterItems from '@/Components/Admin/RegisterItems.vue';
+import RegisterItems from '@/components/admin/RegisterItems.vue';
 
 const props = defineProps({
     categories: {

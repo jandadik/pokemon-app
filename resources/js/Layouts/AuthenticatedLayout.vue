@@ -33,9 +33,9 @@
 
 <script setup>
     import { ref, onMounted } from 'vue'
-    import AppHeader from '@/Components/Layout/AppHeader.vue'
-    import AppNavDrawer from '@/Components/Layout/AppNavDrawer.vue'
-    import UserNavDrawer from '@/Components/Layout/UserNavDrawer.vue'
+    import AppHeader from '@/components/layout/AppHeader.vue'
+    import AppNavDrawer from '@/components/layout/AppNavDrawer.vue'
+    import UserNavDrawer from '@/components/layout/UserNavDrawer.vue'
     import { useUserParametersStore } from '@/stores/userParametersStore'
     import { useTabStore } from '@/stores/tabStore'
 
