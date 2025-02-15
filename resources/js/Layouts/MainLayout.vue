@@ -1,24 +1,32 @@
 <template>
-    <Link href="/">HomePage</Link>
-    <Link href="/hello">ShopPage</Link>
-    <div>
-            <h1>hello</h1> {{counter}}
-            <h2>hello double</h2> {{ store.doubleCount }}
-            <v-btn @onclick="store.increment">klik</v-btn>
-        </div>
-    <slot></slot>
+    <v-responsive>
+        <v-app>
+            <!-- Levý drawer s menu -->
+            <AppNavDrawer
+                :model-value="drawer"
+                @update:model-value="drawer = $event"
+            />
+            <!-- Hlavní AppBar s taby -->
+            <AppHeader 
+                :drawer="drawer"
+                @update:drawer="drawer = $event"
+                @update:user="user = $event"
+            />
+            <!-- Hlavní obsah -->
+            <v-main>
+                <slot></slot>
+            </v-main>
+        </v-app>
+    </v-responsive>
 </template>
 
 <script setup>
-    import { Link } from '@inertiajs/vue3'
-    import {ref} from 'vue'
-    import { useCounterStore } from '@/stores/counterStore'
+    import {ref, onMounted} from 'vue'
+    import AppHeader from '@/Components/Layout/AppHeader.vue'
+    import AppNavDrawer from '@/Components/Layout/AppNavDrawer.vue'
+    
 
-    const store = useCounterStore()
-    const counter = ref(0)
-    setInterval(()=>counter.value++, 1000)
+    const drawer = ref(false)
+    const user = ref(false)
 
-    setTimeout(() => {
-        store.increment()
-    }, 1000);
 </script>

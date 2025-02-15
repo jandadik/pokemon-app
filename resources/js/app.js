@@ -1,6 +1,7 @@
 import { createApp, h } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import MainLayout from '@/Layouts/MainLayout.vue'
+import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
 // Vuetify
 import 'vuetify/styles'
@@ -35,6 +36,7 @@ createInertiaApp({
       .use(plugin)
       .use(vuetify)
       .use(pinia)
+      .use(ZiggyVue)
       .mount(el)
   },
 })

@@ -29,4 +29,10 @@ export default defineConfig({
         }),
         vuetify({ autoImport: true }),
     ],
+    resolve: {
+        alias: {
+            '@': '/resources/js',
+            //'ziggy-js': path.resolve('vendor/tightenco/ziggy'),
+        },
+    },
 });
