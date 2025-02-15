@@ -38,7 +38,10 @@
 
     defineProps({
         drawer: Boolean,
-        user: Boolean,
+        user: {
+            type: Object,
+            default: null
+        },
         showTabs: {
             type: Boolean,
             default: true

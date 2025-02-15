@@ -1,26 +1,27 @@
 <template>
-    <v-tabs
-        v-model="tabStore.activeTab"
-        @update:model-value="handleTabChange"
-        align-tabs="center"
-    >
-        <v-tab
-            v-for="tab in tabStore.tabs"
-            :key="tab.value"
-            :value="tab.value"
-        >
-            {{ tab.title }}
-        </v-tab>
-    </v-tabs>
+    <Link href="/">
+        <v-btn>
+            Home
+        </v-btn>
+    </Link>
+    <Link href="/set">
+        <v-btn>
+            Katalog
+        </v-btn>
+    </Link>
+    <Link href="/card">
+        <v-btn>
+            Karty
+        </v-btn>
+    </Link>
+    <Link href="/hello">
+        <v-btn>
+            Admin
+        </v-btn>
+    </Link>
 </template>
 
 <script setup>
-    import { useTabStore } from '@/stores/tabStore'
-    import { router } from '@inertiajs/vue3'
-
-    const tabStore = useTabStore()
-
-    const handleTabChange = (value) => {
+import { Link } from '@inertiajs/vue3'
     
-}
 </script>

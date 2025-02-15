@@ -5,12 +5,13 @@
             <AppNavDrawer
                 :model-value="drawer"
                 @update:model-value="drawer = $event"
+                :user="user"
             />
             <!-- Hlavní AppBar s taby -->
             <AppHeader 
                 :drawer="drawer"
                 @update:drawer="drawer = $event"
-                @update:user="user = $event"
+                :user="user"
             />
             <!-- Hlavní obsah -->
             <v-main>
@@ -21,12 +22,17 @@
 </template>
 
 <script setup>
-    import {ref, onMounted} from 'vue'
+    import {ref, onMounted, computed} from 'vue'
     import AppHeader from '@/Components/Layout/AppHeader.vue'
     import AppNavDrawer from '@/Components/Layout/AppNavDrawer.vue'
-    
+    import { usePage } from '@inertiajs/vue3'
 
     const drawer = ref(false)
-    const user = ref(false)
+    const page = usePage()
+
+    const flashSuccess = computed(
+        () => page.props.flash.success,
+    )
+    const user = computed(() => page.props.user)
 
 </script>

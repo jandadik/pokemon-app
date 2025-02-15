@@ -1,28 +1,21 @@
 <template>
     <v-navigation-drawer
         v-model="drawer"
-        :rail="rail"
-        permanent
-        @click="rail = false"
+        :location="$vuetify.display.mobile ? 'bottom' : 'start'"
+        temporary
     >
         <v-list-item
+            v-if="user"
             prepend-avatar="https://randomuser.me/api/portraits/men/85.jpg"
-            :title="name"
+            :title="user.name"
             nav
         >
-            <template v-slot:append>
-                <v-btn
-                    variant="text"
-                    icon="mdi-chevron-left"
-                    @click.stop="rail = !rail"
-                />
-            </template>
         </v-list-item>
 
         <v-divider />
 
         <v-list density="compact" nav>
-            <Link href="/">
+            <Link href="/" @click="closeDrawer">
                 <v-list-item
                     prepend-icon="mdi-cog"
                     title="Administrace"
@@ -30,7 +23,7 @@
                 />
             </Link>
 
-            <Link href="/">
+            <Link href="/" @click="closeDrawer">
                 <v-list-item
                     prepend-icon="mdi-view-dashboard"
                     title="Dashboard"
@@ -38,12 +31,24 @@
                 />
             </Link>
 
-            <v-list-item
-                v-for="item in navigationItems"
-                :key="item.value"
-                :title="item.title"
-                :value="item.value"
-            />
+        </v-list>
+
+        <v-divider />
+        <v-list density="compact" nav v-if="!user">
+            <Link href="/user-account/create" @click="closeDrawer">
+                <v-list-item prepend-icon="mdi-account-plus" title="Registrovat" value="register" />
+            </Link>
+        </v-list>
+        <v-list density="compact" nav v-if="!user">
+            <Link href="/login" @click="closeDrawer">
+                <v-list-item prepend-icon="mdi-login" title="Přihlásit" value="login" />
+            </Link>
+        </v-list>
+
+        <v-list density="compact" nav v-if="user">
+            <Link href="/logout" method="delete" as="button" @click="closeDrawer">
+                <v-list-item prepend-icon="mdi-logout" title="Odhlásit" value="logout" />
+            </Link>
         </v-list>
     </v-navigation-drawer>
 </template>
@@ -53,38 +58,21 @@
     import { Link } from '@inertiajs/vue3'
 
     const props = defineProps({
-        modelValue: Boolean
+        modelValue: Boolean,
+        user: {
+            type: Object,
+            default: null
+        }
     })
 
     const emit = defineEmits(['update:modelValue'])
-
-    const rail = ref(true)
 
     const drawer = computed({
         get: () => props.modelValue,
         set: (value) => emit('update:modelValue', value)
     })
 
-    // Přesunuto z AuthenticatedLayout.vue
-    const navigationItems = computed(() => [
-        {
-            title: 'Foo',
-            value: 'foo',
-        },
-        {
-            title: 'Bar',
-            value: 'bar',
-        },
-        {
-            title: 'Fizz',
-            value: 'fizz',
-        },
-        {
-            title: 'Buzz',
-            value: 'buzz',
-        },
-    ]);
-
-    const name = "Jan Novák"
-    const email = "jan.novak@example.com"
+    const closeDrawer = () => {
+        emit('update:modelValue', false)
+    }
 </script>

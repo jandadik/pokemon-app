@@ -9,17 +9,17 @@ export const useTabStore = defineStore('tab', {
             {
                 title: 'Home',
                 value: 'dashboard',
-                route: 'dashboard'
+                route: 'index'
             },
             {
                 title: 'Katalog',
                 value: 'sets',
-                route: 'sets.index'
+                route: '/set'
             },
             {
                 title: 'Admin',
                 value: 'admin',
-                route: 'admin.index'
+                route: 'hello'
             }
         ]
     }),
@@ -27,8 +27,8 @@ export const useTabStore = defineStore('tab', {
     getters: {
         // Přidáme getter pro získání route podle value
         getRouteByValue: (state) => (value) => {
-            const tab = state.tabs.find(tab => tab.value === value);
-            return tab ? tab.route : 'dashboard';
+            // const tab = state.tabs.find(tab => tab.value === value);
+            // return tab ? tab.route : 'dashboard';
         }
     },
 
