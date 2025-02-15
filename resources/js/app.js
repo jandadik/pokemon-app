@@ -1,51 +1,40 @@
-import '../css/app.css';
-import './bootstrap';
-
-import { createInertiaApp } from '@inertiajs/vue3';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createApp, h } from 'vue';
-import { ZiggyVue } from '../../vendor/tightenco/ziggy';
-import { createPinia } from 'pinia'
+import { createApp, h } from 'vue'
+import { createInertiaApp } from '@inertiajs/vue3'
+import MainLayout from '@/Layouts/MainLayout.vue'
 
 // Vuetify
 import 'vuetify/styles'
+import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import '@mdi/font/css/materialdesignicons.css'
-import { md3 } from 'vuetify/blueprints'
 
+// Pinia
+import { createPinia } from 'pinia'
 
 const vuetify = createVuetify({
     components,
     directives,
-    blueprint: md3,
-    theme: {
-      defaultTheme: 'light'
-    }
-})
+    icons: {
+    defaultSet: 'mdi', // This is already the default value - only for display purposes
+    },
+  })
 
 const pinia = createPinia()
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
-    resolve: (name) =>
-        resolvePageComponent(
-            `./Pages/${name}.vue`,
-            import.meta.glob('./Pages/**/*.vue'),
-        ),
-    setup({ el, App, props, plugin }) {
-        return createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(vuetify)
-            .use(pinia)
-            .use(ZiggyVue)
-            .mount(el);
+  resolve: name => {
+    const pages = import.meta.glob('./Pages/**/*.vue', { eager: true })
+    const page = pages[`./Pages/${name}.vue`]
+    page.default.layout = page.default.layout || MainLayout
 
-    },
-    progress: {
-        color: '#4B5563',
-    },
-});
+    return page
+  },
+  setup({ el, App, props, plugin }) {
+    createApp({ render: () => h(App, props) })
+      .use(plugin)
+      .use(vuetify)
+      .use(pinia)
+      .mount(el)
+  },
+})
