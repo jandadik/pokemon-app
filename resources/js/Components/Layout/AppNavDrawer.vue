@@ -5,9 +5,9 @@
         temporary
     >
         <v-list-item
-            v-if="user"
+            v-if="auth.isLoggedIn"
             prepend-avatar="https://randomuser.me/api/portraits/men/85.jpg"
-            :title="user.name"
+            :title="auth.user.name"
             nav
         >
         </v-list-item>
@@ -17,6 +17,7 @@
         <v-list density="compact" nav>
             <Link href="/" @click="closeDrawer">
                 <v-list-item
+                    v-if="auth.isLoggedIn && auth.can('admin.access')"
                     prepend-icon="mdi-cog"
                     title="Administrace"
                     value="admin"
@@ -34,18 +35,18 @@
         </v-list>
 
         <v-divider />
-        <v-list density="compact" nav v-if="!user">
+        <v-list density="compact" nav v-if="!auth.isLoggedIn">
             <Link href="/user-account/create" @click="closeDrawer">
                 <v-list-item prepend-icon="mdi-account-plus" title="Registrovat" value="register" />
             </Link>
         </v-list>
-        <v-list density="compact" nav v-if="!user">
+        <v-list density="compact" nav v-if="!auth.isLoggedIn">
             <Link href="/login" @click="closeDrawer">
                 <v-list-item prepend-icon="mdi-login" title="Přihlásit" value="login" />
             </Link>
         </v-list>
 
-        <v-list density="compact" nav v-if="user">
+        <v-list density="compact" nav v-if="auth.isLoggedIn">
             <Link href="/logout" method="delete" as="button" @click="closeDrawer">
                 <v-list-item prepend-icon="mdi-logout" title="Odhlásit" value="logout" />
             </Link>
@@ -56,13 +57,11 @@
 <script setup>
     import { ref, computed } from 'vue'
     import { Link } from '@inertiajs/vue3'
+    import { useAuthStore } from '@/stores/authStore'
 
+    const auth = useAuthStore()
     const props = defineProps({
         modelValue: Boolean,
-        user: {
-            type: Object,
-            default: null
-        }
     })
 
     const emit = defineEmits(['update:modelValue'])

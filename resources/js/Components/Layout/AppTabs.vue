@@ -14,7 +14,9 @@
             Karty
         </v-btn>
     </Link>
-    <Link href="/hello">
+    <Link 
+        v-if="auth.isLoggedIn && auth.can('admin.access')"
+        href="/hello">
         <v-btn>
             Admin
         </v-btn>
@@ -22,6 +24,9 @@
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+    import { Link } from '@inertiajs/vue3'
+    import { useAuthStore } from '@/stores/authStore'
+
+    const auth = useAuthStore()
     
 </script>

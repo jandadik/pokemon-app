@@ -8,7 +8,7 @@ use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
-
+use Spatie\Permission\Models\Role;
 
 class UserAccountController extends Controller
 {
@@ -33,7 +33,7 @@ class UserAccountController extends Controller
 
         // Automatické přihlášení po registraci
         Auth::login($user);
-        
+        $user->assignRole('user');
         // Regenerace session
         $request->session()->regenerate();
 

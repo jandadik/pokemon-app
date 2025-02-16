@@ -5,13 +5,14 @@ use App\Http\Controllers\IndexController;
 use App\Http\Controllers\SetController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [IndexController::class, 'index'])->name('index');
 
 Route::get('/hello', [IndexController::class, 'show'])
     ->name('hello')
-    ->middleware('auth');
+    ->middleware('auth', 'role:admin');
 
 Route::resource('card', CardController::class)
     ->only(['index', 'show']);
@@ -25,3 +26,7 @@ Route::delete('logout', [AuthController::class, 'destroy'])->name('logout');
 
 Route::get('user-account/create', [UserAccountController::class, 'create'])->name('user-account.create');
 Route::post('user-account', [UserAccountController::class, 'store'])->name('user-account.store');
+
+// Route::middleware(['auth', 'role:admin'])->group(function () {
+//     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
+// });

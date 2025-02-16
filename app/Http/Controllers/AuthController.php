@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
@@ -26,7 +27,7 @@ class AuthController extends Controller
                 'password' => 'Nesprávné přihlašovací údaje.',
             ]);
         }
-
+        
         $request->session()->regenerate();
 
         return redirect()->intended(route('index'));

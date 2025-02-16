@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Set;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 
 class SetController extends Controller
 {
@@ -70,6 +71,7 @@ class SetController extends Controller
      */
     public function show(Set $set)
     {
+        Gate::authorize(ability: 'admin.access');
         return inertia(
             'Set/Show',
             [
