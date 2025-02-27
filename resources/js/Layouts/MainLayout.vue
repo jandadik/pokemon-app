@@ -23,7 +23,7 @@
 import { ref, computed } from 'vue'
 import AppHeader from '@/Components/Layout/AppHeader.vue'
 import AppNavDrawer from '@/Components/Layout/AppNavDrawer.vue'
-import { usePage } from '@inertiajs/vue3'
+import { usePage, Link } from '@inertiajs/vue3'
 
 const drawer = ref(false)
 const page = usePage()

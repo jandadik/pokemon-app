@@ -16,7 +16,7 @@
     </Link>
     <Link 
         v-if="auth.isLoggedIn && auth.can('admin.access')"
-        href="/hello">
+        href="/admin">
         <v-btn>
             Admin
         </v-btn>

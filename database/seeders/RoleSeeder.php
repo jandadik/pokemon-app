@@ -33,28 +33,41 @@ class RoleSeeder extends Seeder
             'set.edit',
             'set.delete',
             
+            // Role
+            'role.view',
+            'role.create',
+            'role.edit',
+            'role.delete',
+            
+            // Oprávnění
+            'permission.view',
+            'permission.create',
+            'permission.edit',
+            'permission.delete',
+            
             // Admin sekce
             'admin.access'
         ];
 
+        // Vytvoření pouze chybějících oprávnění
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Vytvoření rolí a přiřazení oprávnění
-        Role::create(['name' => 'user'])
-            ->givePermissionTo(['card.view', 'set.view']);
+        $userRole = Role::firstOrCreate(['name' => 'user']);
+        $userRole->syncPermissions(['card.view', 'set.view']);
 
-        Role::create(['name' => 'editor'])
-            ->givePermissionTo([
-                'card.view', 'card.create', 'card.edit',
-                'set.view', 'set.create', 'set.edit'
-            ]);
+        $editorRole = Role::firstOrCreate(['name' => 'editor']);
+        $editorRole->syncPermissions([
+            'card.view', 'card.create', 'card.edit',
+            'set.view', 'set.create', 'set.edit'
+        ]);
 
-        Role::create(['name' => 'admin'])
-            ->givePermissionTo(Permission::all());
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $adminRole->syncPermissions(Permission::all());
 
-        Role::create(['name' => 'super-admin']);
+        Role::firstOrCreate(['name' => 'super-admin']);
         // super-admin má automaticky všechna oprávnění přes gate::before v AuthServiceProvider
     }
 }

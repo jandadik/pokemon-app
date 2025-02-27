@@ -15,7 +15,7 @@
         <v-divider />
 
         <v-list density="compact" nav>
-            <Link href="/" @click="closeDrawer">
+            <Link href="/admin" @click="closeDrawer">
                 <v-list-item
                     v-if="auth.isLoggedIn && auth.can('admin.access')"
                     prepend-icon="mdi-cog"
@@ -71,7 +71,15 @@
         set: (value) => emit('update:modelValue', value)
     })
 
-    const closeDrawer = () => {
-        emit('update:modelValue', false)
+    // const closeDrawer = () => {
+    //     emit('update:modelValue', false)
+    // }
+
+    const closeDrawer = (event) => {
+        try {
+            emit('update:modelValue', false)
+        } catch (error) {
+            console.error('Chyba při zavírání menu:', error)
+        }
     }
 </script>

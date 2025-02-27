@@ -35,13 +35,12 @@
     import ApplicationLogo from '@/Components/UI/ApplicationLogo.vue'
     import AppHeaderActions from '@/Components/Layout/AppHeaderActions.vue'
     import AppTabs from '@/Components/Layout/AppTabs.vue'
+    import { useAuthStore } from '@/stores/authStore'
+
+    const auth = useAuthStore()
 
     defineProps({
         drawer: Boolean,
-        user: {
-            type: Object,
-            default: null
-        },
         showTabs: {
             type: Boolean,
             default: true
