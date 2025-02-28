@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: pokemon_mailhog
+    ports:
+      - "1025:1025" # SMTP server port
+      - "8025:8025" # Webové rozhraní
+    networks:
+      - pokemon_network
+
+networks:
+  pokemon_network:
+    driver: bridge 

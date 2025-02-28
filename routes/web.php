@@ -9,6 +9,16 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RegisterCategoryController;
+use App\Http\Controllers\Admin\RegisterController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\TwoFactorAuthenticationController;
+use App\Http\Controllers\SessionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [IndexController::class, 'index'])->name('index');
@@ -79,6 +89,40 @@ Route::middleware(['auth', 'permission:admin.access'])->prefix('admin')->name('a
         ->middleware('permission:permission.delete')
         ->name('permissions.destroy');
 
+    // Register Categories management
+    Route::get('registers', [RegisterCategoryController::class, 'index'])
+        ->middleware('permission:register.view')
+        ->name('register-categories.index');
+        
+    Route::post('registers', [RegisterCategoryController::class, 'store'])
+        ->middleware('permission:register.create')
+        ->name('register-categories.store');
+        
+    Route::put('registers/{category}', [RegisterCategoryController::class, 'update'])
+        ->middleware('permission:register.edit')
+        ->name('register-categories.update');
+        
+    Route::delete('registers/{category}', [RegisterCategoryController::class, 'destroy'])
+        ->middleware('permission:register.delete')
+        ->name('register-categories.destroy');
+
+    // Register Items management
+    Route::get('registers/{category}/items', [RegisterController::class, 'index'])
+        ->middleware('permission:register.view')
+        ->name('registers.index');
+        
+    Route::post('registers/{category}/items', [RegisterController::class, 'store'])
+        ->middleware('permission:register.create')
+        ->name('registers.store');
+        
+    Route::put('registers/{category}/items/{register}', [RegisterController::class, 'update'])
+        ->middleware('permission:register.edit')
+        ->name('registers.update');
+        
+    Route::delete('registers/{category}/items/{register}', [RegisterController::class, 'destroy'])
+        ->middleware('permission:register.delete')
+        ->name('registers.destroy');
+
     // User management
     Route::get('users', [UserController::class, 'index'])
         ->middleware('permission:user.view')
@@ -103,4 +147,65 @@ Route::middleware(['auth', 'permission:admin.access'])->prefix('admin')->name('a
     Route::delete('users/{user}', [UserController::class, 'destroy'])
         ->middleware('permission:user.delete')
         ->name('users.destroy');
+});
+
+// Routy pro správu profilu
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('password.update');
+    Route::put('/profile/email', [ProfileController::class, 'updateEmail'])->name('email.update');
+    Route::put('/profile/notifications', [ProfileController::class, 'updateNotifications'])->name('notifications.update');
+    Route::put('/profile/settings', [ProfileController::class, 'updateSettings'])->name('settings.update');
+    Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+    Route::get('parameters', [ProfileController::class, 'fetchParameters'])->name('parameters.fetch');
+});
+
+// Routy pro reset hesla
+Route::middleware('guest')->group(function () {
+    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->name('password.request');
+
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->name('password.email');
+
+    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->name('password.reset');
+
+    Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->name('password.store');
+});
+
+// Routy pro verifikaci emailu
+Route::middleware('auth')->group(function () {
+    Route::get('verify-email', [EmailVerificationPromptController::class, '__invoke'])
+        ->name('verification.notice');
+
+    Route::get('verify-email/{id}/{hash}', [VerifyEmailController::class, '__invoke'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+
+    Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+});
+
+// Routy pro dvoufaktorové ověření
+Route::middleware(['auth'])->group(function () {
+    Route::get('two-factor/qr-code', [TwoFactorAuthenticationController::class, 'generateQrCode'])
+        ->name('two-factor.qr-code');
+    Route::post('two-factor/enable', [TwoFactorAuthenticationController::class, 'enable'])
+        ->name('two-factor.enable');
+    Route::delete('two-factor/disable', [TwoFactorAuthenticationController::class, 'disable'])
+        ->name('two-factor.disable');
+    Route::post('two-factor/verify', [TwoFactorAuthenticationController::class, 'verify'])
+        ->name('two-factor.verify');
+});
+
+// Routy pro správu sessions
+Route::middleware(['auth'])->group(function () {
+    Route::delete('sessions/{session}', [SessionController::class, 'destroy'])
+        ->name('sessions.destroy');
 });

@@ -4,13 +4,18 @@
         :location="$vuetify.display.mobile ? 'bottom' : 'start'"
         temporary
     >
-        <v-list-item
-            v-if="auth.isLoggedIn"
-            prepend-avatar="https://randomuser.me/api/portraits/men/85.jpg"
-            :title="auth.user.name"
-            nav
+        <Link 
+            v-if="auth.isLoggedIn" 
+            href="/profile" 
+            @click="closeDrawer"
         >
-        </v-list-item>
+            <v-list-item
+                prepend-avatar="https://randomuser.me/api/portraits/men/85.jpg"
+                :title="auth.user.name"
+                nav
+            >
+            </v-list-item>
+        </Link>
 
         <v-divider />
 

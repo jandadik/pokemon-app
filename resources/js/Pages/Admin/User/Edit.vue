@@ -85,6 +85,69 @@
               >
                 Nemáte oprávnění měnit role administrátorů.
               </v-alert>
+
+              <v-divider class="my-4"></v-divider>
+              
+              <div class="d-flex align-center mb-4">
+                <div class="text-h6">Přímá oprávnění</div>
+                <v-tooltip text="Tato oprávnění budou přidána k oprávněním z rolí">
+                  <template v-slot:activator="{ props: tooltip }">
+                    <v-icon
+                      class="ml-2"
+                      size="small"
+                      v-bind="tooltip"
+                    >
+                      mdi-help-circle-outline
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+              </div>
+
+              <v-row>
+                <v-col 
+                  v-for="(permissionGroup, groupName) in groupedPermissions" 
+                  :key="groupName"
+                  cols="12" 
+                  md="6"
+                >
+                  <v-card variant="outlined" class="mb-4">
+                    <v-card-title class="text-subtitle-1">
+                      {{ formatGroupName(groupName) }}
+                      <v-checkbox
+                        v-model="selectAllGroups[groupName]"
+                        label="Vybrat vše"
+                        hide-details
+                        density="compact"
+                        class="ml-2"
+                        @change="toggleGroupPermissions(groupName)"
+                      ></v-checkbox>
+                    </v-card-title>
+                    
+                    <v-card-text>
+                      <v-checkbox
+                        v-for="permission in permissionGroup"
+                        :key="permission.id"
+                        v-model="form.permissions"
+                        :value="permission.id"
+                        :label="formatPermissionName(permission.name)"
+                        hide-details
+                        density="compact"
+                        class="mb-1"
+                        :disabled="isPermissionDisabled"
+                      ></v-checkbox>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+              
+              <v-alert
+                v-if="isPermissionDisabled"
+                type="warning"
+                variant="tonal"
+                class="mt-4"
+              >
+                Nemáte oprávnění měnit oprávnění administrátorů.
+              </v-alert>
               
               <v-card-actions>
                 <v-spacer></v-spacer>
@@ -113,7 +176,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, computed } from 'vue'
+import { ref, nextTick, computed, onMounted } from 'vue'
 import { useForm, router, usePage } from '@inertiajs/vue3'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -126,6 +189,10 @@ const props = defineProps({
     required: true
   },
   roles: {
+    type: Array,
+    required: true
+  },
+  permissions: {
     type: Array,
     required: true
   },
@@ -159,12 +226,76 @@ const isRoleSelectDisabled = computed(() => {
   return isAdminUser.value && !isSuperAdmin.value
 })
 
+const selectAllGroups = ref({})
+const isPermissionDisabled = computed(() => {
+  return isAdminUser.value && !isSuperAdmin.value
+})
+
+const groupedPermissions = computed(() => {
+  const groups = {}
+  
+  props.permissions.forEach(permission => {
+    const groupName = permission.name.split('.')[0]
+    if (!groups[groupName]) {
+      groups[groupName] = []
+    }
+    groups[groupName].push(permission)
+  })
+  
+  return groups
+})
+
+const formatGroupName = (name) => {
+  return name.charAt(0).toUpperCase() + name.slice(1)
+}
+
+const formatPermissionName = (name) => {
+  const parts = name.split('.')
+  if (parts.length > 1) {
+    const action = parts[1]
+    return {
+      'view': 'Zobrazit',
+      'create': 'Vytvářet',
+      'edit': 'Upravovat',
+      'delete': 'Mazat',
+      'access': 'Přístup'
+    }[action] || action
+  }
+  return name
+}
+
+const toggleGroupPermissions = (groupName) => {
+  const groupPermissions = groupedPermissions.value[groupName].map(p => p.id)
+  
+  if (selectAllGroups.value[groupName]) {
+    // Přidat všechna oprávnění ze skupiny
+    groupPermissions.forEach(id => {
+      if (!form.permissions.includes(id)) {
+        form.permissions.push(id)
+      }
+    })
+  } else {
+    // Odebrat všechna oprávnění ze skupiny
+    form.permissions = form.permissions.filter(id => !groupPermissions.includes(id))
+  }
+}
+
+// Inicializace selectAllGroups při načtení komponenty
+onMounted(() => {
+  Object.keys(groupedPermissions.value).forEach(groupName => {
+    const groupPermissions = groupedPermissions.value[groupName].map(p => p.id)
+    const selectedCount = groupPermissions.filter(id => form.permissions.includes(id)).length
+    selectAllGroups.value[groupName] = selectedCount === groupPermissions.length
+  })
+})
+
 const form = useForm({
   name: props.user.name,
   email: props.user.email,
   password: '',
   password_confirmation: '',
-  roles: props.user.roles
+  roles: props.user.roles,
+  permissions: props.user.permissions || []
 })
 
 const handleFieldUpdate = async (field) => {

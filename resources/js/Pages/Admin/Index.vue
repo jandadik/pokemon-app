@@ -110,6 +110,41 @@
           </v-card>
         </v-col>
   
+        <!-- Správa registrů -->
+        <v-col cols="12" md="4">
+          <v-card
+            height="100%"
+            @click="navigateTo(route('admin.register-categories.index'))"
+            class="admin-card"
+            v-if="auth.can('register.view')"
+          >
+            <v-card-item>
+              <v-card-title class="text-h5">
+                <v-icon icon="mdi-format-list-bulleted" size="large" class="mr-2" />
+                Správa registrů
+              </v-card-title>
+            </v-card-item>
+            
+            <v-card-text>
+              <p>Správa univerzálních registrů v systému.</p>
+              <p class="text-caption text-grey">
+                Vytváření a úprava kategorií registrů a jejich položek.
+              </p>
+            </v-card-text>
+            
+            <v-card-actions>
+              <v-btn
+                color="primary"
+                variant="text"
+                @click.stop="navigateTo(route('admin.register-categories.index'))"
+              >
+                Otevřít
+                <v-icon icon="mdi-arrow-right" class="ml-2" />
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+  
         <!-- Nastavení systému - připraveno pro budoucí implementaci -->
         <v-col cols="12" md="4">
           <v-card

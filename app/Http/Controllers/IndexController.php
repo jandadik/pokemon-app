@@ -15,10 +15,7 @@ class IndexController extends Controller
         //     return redirect()->route('login');
         // }
         return inertia(
-            'Index/Index',
-            [
-                'message' => 'Hello grom controller'
-            ]
+            'Index/Index'
         );
     }
     public function show()

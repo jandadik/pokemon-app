@@ -43,6 +43,48 @@
                   {{ role }}
                 </v-chip>
               </template>
+
+              <template #[`item.permissions`]="{ item }">
+                <template v-if="item.permissions && Object.keys(item.permissions).length > 0">
+                  <div class="d-flex flex-wrap gap-1">
+                    <template v-for="(modulePermissions, module) in item.permissions" :key="module">
+                      <v-menu>
+                        <template v-slot:activator="{ props: menu }">
+                          <v-chip
+                            class="ma-1"
+                            size="small"
+                            color="purple"
+                            v-bind="menu"
+                          >
+                            {{ formatGroupName(module) }}
+                            <v-chip
+                              size="x-small"
+                              class="ml-1"
+                              color="white"
+                              text-color="purple"
+                            >
+                              {{ modulePermissions.length }}
+                            </v-chip>
+                          </v-chip>
+                        </template>
+                        
+                        <v-card min-width="200" class="pa-2">
+                          <v-list density="compact" nav>
+                            <v-list-item
+                              v-for="permission in modulePermissions"
+                              :key="permission.name"
+                              :title="formatPermissionAction(permission.action)"
+                              :prepend-icon="getActionIcon(permission.action)"
+                            >
+                            </v-list-item>
+                          </v-list>
+                        </v-card>
+                      </v-menu>
+                    </template>
+                  </div>
+                </template>
+                <span v-else class="text-grey">Žádná přímá oprávnění</span>
+              </template>
               
               <template #[`item.actions`]="{ item }">
                 <v-btn
@@ -114,6 +156,7 @@
     { title: 'Jméno', key: 'name' },
     { title: 'Email', key: 'email' },
     { title: 'Role', key: 'roles' },
+    { title: 'Přímá oprávnění', key: 'permissions' },
     { title: 'Vytvořen', key: 'created_at' },
     { title: 'Akce', key: 'actions', sortable: false }
   ]
@@ -154,5 +197,29 @@
     }
     
     return colors[role] || 'grey'
+  }
+
+  const formatGroupName = (name) => {
+    return name.charAt(0).toUpperCase() + name.slice(1)
+  }
+
+  const formatPermissionAction = (action) => {
+    return {
+      'view': 'Zobrazit',
+      'create': 'Vytvářet',
+      'edit': 'Upravovat',
+      'delete': 'Mazat',
+      'access': 'Přístup'
+    }[action] || action
+  }
+
+  const getActionIcon = (action) => {
+    return {
+      'view': 'mdi-eye',
+      'create': 'mdi-plus',
+      'edit': 'mdi-pencil',
+      'delete': 'mdi-delete',
+      'access': 'mdi-shield'
+    }[action] || 'mdi-check'
   }
 </script>

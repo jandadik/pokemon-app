@@ -46,7 +46,13 @@ class RoleSeeder extends Seeder
             'permission.delete',
             
             // Admin sekce
-            'admin.access'
+            'admin.access',
+
+            // Registry
+            'register.view',
+            'register.create',
+            'register.edit',
+            'register.delete'
         ];
 
         // Vytvoření pouze chybějících oprávnění

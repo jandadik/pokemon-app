@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Auth;
@@ -15,12 +16,29 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with('roles')->get()->map(function ($user) {
+        $users = User::with(['roles', 'permissions'])->get()->map(function ($user) {
+            // Seskupení oprávnění podle modulu
+            $groupedPermissions = $user->getDirectPermissions()
+                ->groupBy(function ($permission) {
+                    return explode('.', $permission->name)[0];
+                })
+                ->map(function ($permissions) {
+                    return $permissions->map(function ($permission) {
+                        $parts = explode('.', $permission->name);
+                        return [
+                            'module' => $parts[0],
+                            'action' => $parts[1],
+                            'name' => $permission->name
+                        ];
+                    });
+                });
+
             return [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'roles' => $user->roles->pluck('name'),
+                'permissions' => $groupedPermissions,
                 'created_at' => $user->created_at->format('d.m.Y'),
                 'is_admin' => $user->hasRole(['admin', 'super-admin'])
             ];
@@ -40,8 +58,16 @@ class UserController extends Controller
             ];
         });
 
+        $permissions = Permission::all()->map(function ($permission) {
+            return [
+                'id' => $permission->id,
+                'name' => $permission->name
+            ];
+        });
+
         return Inertia::render('Admin/User/Create', [
-            'roles' => $roles
+            'roles' => $roles,
+            'permissions' => $permissions
         ]);
     }
 
@@ -51,7 +77,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', Password::defaults()],
-            'roles' => 'array'
+            'roles' => 'array',
+            'permissions' => 'array'
         ]);
 
         $user = User::create([
@@ -63,6 +90,11 @@ class UserController extends Controller
         if ($request->has('roles')) {
             $roles = Role::whereIn('id', $request->roles)->get();
             $user->syncRoles($roles);
+        }
+
+        if ($request->has('permissions')) {
+            $permissions = Permission::whereIn('id', $request->permissions)->get();
+            $user->syncPermissions($permissions);
         }
 
         return redirect()->route('admin.users.index')
@@ -78,15 +110,24 @@ class UserController extends Controller
             ];
         });
 
+        $permissions = Permission::all()->map(function ($permission) {
+            return [
+                'id' => $permission->id,
+                'name' => $permission->name
+            ];
+        });
+
         return Inertia::render('Admin/User/Edit', [
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'roles' => $user->roles->pluck('id'),
+                'permissions' => $user->permissions->pluck('id'),
                 'is_admin' => $user->hasRole(['admin', 'super-admin'])
             ],
-            'roles' => $roles
+            'roles' => $roles,
+            'permissions' => $permissions
         ]);
     }
 
@@ -96,7 +137,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => ['nullable', 'confirmed', Password::defaults()],
-            'roles' => 'array'
+            'roles' => 'array',
+            'permissions' => 'array'
         ]);
 
         // Ochrana proti změně super-admin uživatele
@@ -106,11 +148,21 @@ class UserController extends Controller
                 ->with('error', 'Nemáte oprávnění upravovat super-admin uživatele.');
         }
 
-        $user->name = $request->name;
-        $user->email = $request->email;
+        // Aktualizace základních údajů
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+        ]);
         
+        // Aktualizace hesla, pokud bylo zadáno
         if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
+            $request->validate([
+                'password' => ['required', 'confirmed', Password::defaults()]
+            ]);
+            
+            $user->update([
+                'password' => Hash::make($request->password)
+            ]);
         }
         
         $user->save();
@@ -125,6 +177,11 @@ class UserController extends Controller
             
             $roles = Role::whereIn('id', $request->roles)->get();
             $user->syncRoles($roles);
+            // Aktualizace přímých oprávnění
+            if ($request->has('permissions')) {
+                $permissions = Permission::whereIn('id', $request->permissions)->get();
+                $user->syncPermissions($permissions);
+            }
         } else {
             // Ochrana proti odebrání všech rolí super-admin uživateli
             if ($user->hasRole('super-admin')) {
