@@ -268,46 +268,55 @@
                     Historie přihlášení
                   </v-expansion-panel-title>
                   <v-expansion-panel-text>
-                    <v-list lines="two">
+                    <v-skeleton-loader
+                      v-if="isLoadingLoginHistory"
+                      type="list-item-three-line"
+                      :loading="isLoadingLoginHistory"
+                      class="mb-4"
+                    ></v-skeleton-loader>
+                    
+                    <v-alert
+                      v-if="!isLoadingLoginHistory && loginHistory.length === 0"
+                      type="info"
+                      text="Zatím nejsou k dispozici žádné záznamy o přihlášení."
+                      class="mb-4"
+                    ></v-alert>
+                    
+                    <v-list lines="two" v-else>
                       <v-list-item
-                        v-for="(session, index) in securityForm.sessions"
+                        v-for="(login, index) in loginHistory"
                         :key="index"
-                        :subtitle="session.ip_address"
+                        :subtitle="login.ip_address + (login.location ? ' · ' + login.location : '')"
+                        :class="{ 'bg-error-lighten-5': login.is_suspicious }"
                       >
                         <template v-slot:prepend>
-                          <v-icon :color="session.is_current ? 'success' : ''">
-                            {{ session.is_current ? 'mdi-check-circle' : 'mdi-desktop-classic' }}
+                          <v-icon :color="login.is_current ? 'success' : (login.is_suspicious ? 'error' : '')">
+                            {{ login.is_current ? 'mdi-check-circle' : deviceIcon(login.user_agent) }}
                           </v-icon>
                         </template>
                         
                         <v-list-item-title>
-                          {{ session.user_agent }}
-                        </v-list-item-title>
-
-                        <template v-slot:append>
-                          <v-btn
-                            v-if="!session.is_current"
-                            icon="mdi-logout"
-                            variant="text"
+                          {{ formatUserAgent(login.user_agent) }}
+                          <v-chip
+                            v-if="login.is_suspicious"
                             color="error"
-                            size="small"
-                            @click="logoutSession(session.id)"
-                          ></v-btn>
+                            size="x-small"
+                            class="ml-2"
+                          >
+                            Podezřelé
+                          </v-chip>
+                        </v-list-item-title>
+                        
+                        <template v-slot:append>
+                          <v-chip size="small" color="secondary" class="text-caption">
+                            {{ formatDate(login.created_at) }}
+                          </v-chip>
                         </template>
                       </v-list-item>
                     </v-list>
                   </v-expansion-panel-text>
                 </v-expansion-panel>
               </v-expansion-panels>
-
-              <v-btn 
-                color="primary" 
-                type="submit"
-                :loading="securityForm.processing"
-                :disabled="!isSecurityFormValid || securityForm.processing"
-              >
-                Uložit nastavení
-              </v-btn>
             </v-form>
           </v-card-text>
         </v-card>
@@ -460,7 +469,7 @@ const props = defineProps({
 
 const page = usePage()
 const userStore = useUserStore()
-const { parameters, isLoading } = storeToRefs(userStore)
+const { parameters, isLoading, loginHistory } = storeToRefs(userStore)
 
 // Inicializace activeTab z URL parametru nebo výchozí hodnoty
 const activeTab = ref(page.props.tab || 'profile')
@@ -507,14 +516,12 @@ const isSecurityFormValid = ref(true)
 const isSettingsFormValid = ref(true)
 const isDeleteFormValid = ref(true)
 const showEmailVerificationAlert = ref(false)
+const isLoadingLoginHistory = ref(false)
 
 // Inicializace store při načtení komponenty
 onMounted(async () => {
   if (!userStore.isInitialized) {
-    console.log('Komponenta načtena - inicializuji store...')
     await userStore.fetchParameters()
-  } else {
-    console.log('Store již byl inicializován')
   }
 })
 
@@ -542,8 +549,8 @@ const notificationsForm = useForm({
 })
 
 const securityForm = useForm({
-  two_factor_enabled: props.user.two_factor_enabled ?? false,
-  login_notifications: props.user.settings?.login_notifications ?? true,
+  two_factor_enabled: userStore.getTwoFactorEnabled,
+  login_notifications: userStore.getLoginNotifications,
   sessions: props.user.sessions || []
 })
 
@@ -585,6 +592,10 @@ watch(
     // Aktualizace formuláře nastavení
     settingsForm.language = newSettings.language
     settingsForm.theme = newSettings.theme
+    
+    // Přidáme aktualizaci login_notifications
+    securityForm.login_notifications = newSettings.login_notifications
+    securityForm.two_factor_enabled = newSettings.two_factor_enabled
   },
   { deep: true }
 )
@@ -616,6 +627,19 @@ watch(
   { deep: true }
 )
 
+// Watch pro security
+watch(
+  () => ({
+    login_notifications: securityForm.login_notifications,
+    two_factor_enabled: securityForm.two_factor_enabled
+  }),
+  (newValues) => {
+    if (securityForm.processing) return
+    userStore.updateSecurity(newValues)
+  },
+  { deep: true }
+)
+
 // Metody pro zpracování formulářů
 const updateProfile = async () => {
   if (profileFormRef.value) {
@@ -623,16 +647,12 @@ const updateProfile = async () => {
     if (!valid) return
   }
 
-  console.log('Odesílaná data:', profileForm.data())
-
   profileForm.put(route('profile.update'), {
     onSuccess: () => {
       isProfileFormValid.value = true
-      console.log('Úspěšně uloženo')
     },
     onError: (errors) => {
       isProfileFormValid.value = false
-      console.error('Chyba při ukládání:', errors)
     },
     preserveScroll: true
   })
@@ -698,9 +718,10 @@ const updateSecurity = async () => {
     onSuccess: () => {
       isSecurityFormValid.value = true
     },
-    onError: () => {
+    onError: (errors) => {
       isSecurityFormValid.value = false
-    }
+    },
+    preserveScroll: true
   })
 }
 
@@ -741,10 +762,7 @@ const resendVerification = () => {
 }
 
 const generateTwoFactorQrCode = () => {
-  // API volání pro získání QR kódu
-  axios.get(route('two-factor.qr-code')).then(response => {
-    twoFactorQrCode.value = response.data.qr_code
-  })
+  // V budoucí implementaci zde bude získání QR kódu pro 2FA
 }
 
 const confirmTwoFactor = () => {
@@ -768,4 +786,70 @@ const logoutSession = (sessionId) => {
     securityForm.sessions = securityForm.sessions.filter(session => session.id !== sessionId)
   })
 }
+
+// Načtení historie přihlášení při otevření panelu historie
+const loadLoginHistory = async () => {
+  isLoadingLoginHistory.value = true;
+  try {
+    await userStore.fetchLoginHistory();
+  } catch (error) {
+    console.error('Chyba při načítání historie:', error);
+  } finally {
+    isLoadingLoginHistory.value = false;
+  }
+};
+
+// Načtení historie při otevření záložky Security
+watch(activeTab, (newVal) => {
+  if (newVal === 'security') {
+    loadLoginHistory();
+  }
+});
+
+// Přidáme také načtení historie při inicializaci komponenty, pokud jsme na záložce Security
+onMounted(() => {
+  if (activeTab.value === 'security') {
+    loadLoginHistory();
+  }
+});
+
+// Funkce pro určení ikony na základě user-agent
+const deviceIcon = (userAgent) => {
+  userAgent = userAgent.toLowerCase();
+  if (userAgent.includes('mobile') || userAgent.includes('android') || userAgent.includes('iphone')) {
+    return 'mdi-cellphone';
+  } else if (userAgent.includes('tablet') || userAgent.includes('ipad')) {
+    return 'mdi-tablet';
+  } else {
+    return 'mdi-desktop-classic';
+  }
+};
+
+// Funkce pro formátování user-agent do čitelnější podoby
+const formatUserAgent = (userAgent) => {
+  // Zjednodušené formátování - v reálné implementaci by bylo lepší použít knihovnu
+  if (userAgent.includes('Firefox')) {
+    return 'Firefox';
+  } else if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+    return 'Chrome';
+  } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+    return 'Safari';
+  } else if (userAgent.includes('Edg')) {
+    return 'Edge';
+  } else {
+    return 'Prohlížeč';
+  }
+  // V reálné implementaci bychom přidali také informaci o operačním systému
+};
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('cs', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
+};
 </script> 

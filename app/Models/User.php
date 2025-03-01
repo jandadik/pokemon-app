@@ -90,4 +90,14 @@ class User extends Authenticatable
             ->orderBy('last_activity', 'desc')
             ->get();
     }
+    
+    /**
+     * Vztah k historii přihlášení uživatele.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function loginHistory()
+    {
+        return $this->hasMany(LoginHistory::class);
+    }
 }

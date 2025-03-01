@@ -16,11 +16,13 @@ export const useUserStore = defineStore('user', {
         theme: 'system',
         
         // Zabezpečení
-        login_notifications: true
+        login_notifications: true,
+        two_factor_enabled: false
       }
     },
     isLoading: false,
-    isInitialized: false
+    isInitialized: false,
+    loginHistory: []
   }),
 
   getters: {
@@ -34,18 +36,18 @@ export const useUserStore = defineStore('user', {
     getTheme: (state) => state.parameters.settings.theme,
     
     // Zabezpečení
-    getLoginNotifications: (state) => state.parameters.settings.login_notifications
+    getLoginNotifications: (state) => state.parameters.settings.login_notifications,
+    getTwoFactorEnabled: (state) => state.parameters.settings.two_factor_enabled,
+    getLoginHistory: (state) => state.loginHistory
   },
 
   actions: {
     // Načtení parametrů z databáze
     async fetchParameters() {
       try {
-        // console.log('Načítám parametry z databáze...')
         this.isLoading = true
         
         const response = await axios.get(route('parameters.fetch'))
-        // console.log('Načtené parametry z databáze:', response.data)
         
         if (response.data.parameters) {
           this.initializeParameters(response.data.parameters)
@@ -61,20 +63,13 @@ export const useUserStore = defineStore('user', {
 
     // Inicializace parametrů z backendu
     initializeParameters(userParameters) {
-      // console.log('Inicializace parametrů - vstupní data:', userParameters)
-      
       if (userParameters?.settings) {
         const parsedSettings = JSON.parse(userParameters.settings)
-        // console.log('Parsovaná nastavení:', parsedSettings)
         
         this.parameters.settings = {
           ...this.parameters.settings,
           ...parsedSettings
         }
-        
-        // console.log('Finální nastavení:', this.parameters.settings)
-      } else {
-        // console.log('Žádná nastavení nebyla načtena')
       }
     },
 
@@ -82,17 +77,13 @@ export const useUserStore = defineStore('user', {
     async updateParameters(newSettings) {
       try {
         this.isLoading = true
-        // console.log('updateParameters - Nová nastavení k uložení:', newSettings)
-        // console.log('updateParameters - Současný stav store:', this.parameters.settings)
         
         // Aktualizujeme lokální stav
         this.parameters.settings = {
           ...this.parameters.settings,
           ...newSettings
         }
-        // console.log('updateParameters - Stav store po lokální aktualizaci:', this.parameters.settings)
 
-        // console.log('updateParameters - Odesílám data do databáze...')
         // Odešleme na server
         await router.put(route('settings.update'), {
           ...newSettings
@@ -100,16 +91,13 @@ export const useUserStore = defineStore('user', {
           preserveState: true,
           preserveScroll: true,
           onSuccess: () => {
-            // console.log('updateParameters - Data úspěšně uložena do databáze')
           },
           onError: () => {
-            // console.error('updateParameters - Chyba při ukládání do databáze, vracím původní hodnoty')
             // V případě chyby vrátíme původní hodnoty
             this.parameters.settings = {
               ...this.parameters.settings,
               ...userParameters.settings
             }
-            // console.log('updateParameters - Obnovený stav store:', this.parameters.settings)
           }
         })
       } finally {
@@ -121,17 +109,13 @@ export const useUserStore = defineStore('user', {
     async updateNotifications(notifications) {
       try {
         this.isLoading = true
-        // console.log('updateNotifications - Nová nastavení notifikací:', notifications)
-        // console.log('updateNotifications - Současný stav store:', this.parameters.settings)
         
         // Aktualizujeme lokální stav
         this.parameters.settings = {
           ...this.parameters.settings,
           ...notifications
         }
-        // console.log('updateNotifications - Stav store po lokální aktualizaci:', this.parameters.settings)
 
-        // console.log('updateNotifications - Odesílám data do databáze...')
         // Odešleme na server
         await router.put(route('notifications.update'), {
           ...notifications
@@ -139,20 +123,70 @@ export const useUserStore = defineStore('user', {
           preserveState: true,
           preserveScroll: true,
           onSuccess: () => {
-            // console.log('updateNotifications - Data úspěšně uložena do databáze')
           },
           onError: () => {
-            // console.error('updateNotifications - Chyba při ukládání do databáze, vracím původní hodnoty')
             // V případě chyby vrátíme původní hodnoty
             this.parameters.settings = {
               ...this.parameters.settings,
               ...userParameters.settings
             }
-            // console.log('updateNotifications - Obnovený stav store:', this.parameters.settings)
           }
         })
       } finally {
         this.isLoading = false
+      }
+    },
+    // Aktualizace notifikací
+    async updateSecurity(security) {
+      try {
+        this.isLoading = true
+        
+        // Aktualizujeme lokální stav
+        this.parameters.settings = {
+          ...this.parameters.settings,
+          ...security
+        }
+
+        // Odešleme na server
+        await router.put(route('security.update'), {
+          ...security
+        }, {
+          preserveState: true,
+          preserveScroll: true,
+          onSuccess: () => {
+          },
+          onError: () => {
+            // V případě chyby vrátíme původní hodnoty
+            this.parameters.settings = {
+              ...this.parameters.settings,
+              ...userParameters.settings
+            }
+          }
+        })
+      } finally {
+        this.isLoading = false
+      }
+    },
+    async fetchLoginHistory() {
+      try {
+        this.isLoading = true;
+        
+        const response = await axios.get(route('login-history.index'));
+        
+        if (response.data && response.data.history) {
+          this.loginHistory = response.data.history;
+        } else {
+          console.error('Neplatná odpověď serveru - chybí data historie:', response.data);
+          this.loginHistory = [];
+        }
+        
+        return this.loginHistory;
+      } catch (error) {
+        console.error('Chyba při načítání historie přihlášení:', error);
+        this.loginHistory = [];
+        return [];
+      } finally {
+        this.isLoading = false;
       }
     }
   }
@@ -162,7 +196,6 @@ export const useUserStore = defineStore('user', {
 document.addEventListener('DOMContentLoaded', () => {
   const store = useUserStore()
   if (!store.isInitialized && document.querySelector('meta[name="user-id"]')) {
-    // console.log('Uživatel je přihlášen, inicializuji parametry...')
     store.fetchParameters()
   }
 }) 

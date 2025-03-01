@@ -92,14 +92,14 @@
 
                     <!-- Zabezpečení -->
                     <tr>
-                        <td>Zabezpečení</td>
+                        <td rowspan="2">Zabezpečení</td>
                         <td>Upozornění na přihlášení</td>
                         <td>
                             <v-icon :color="userStore.getLoginNotifications ? 'success' : 'error'">
                                 {{ userStore.getLoginNotifications ? 'mdi-check' : 'mdi-close' }}
                             </v-icon>
                         </td>
-                        <td>
+                        <td rowspan="2">
                             <Link :href="route('profile', { tab: 'security' })">
                                 <v-btn
                                     variant="text"
@@ -108,6 +108,14 @@
                                     Upravit
                                 </v-btn>
                             </Link>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Dvoufaktorové ověření</td>
+                        <td>
+                            <v-icon :color="userStore.getTwoFactorEnabled ? 'success' : 'error'">
+                                {{ userStore.getTwoFactorEnabled ? 'mdi-check' : 'mdi-close' }}
+                            </v-icon>
                         </td>
                     </tr>
                 </tbody>

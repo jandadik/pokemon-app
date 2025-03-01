@@ -19,7 +19,9 @@ use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Auth\TwoFactorAuthenticationController;
 use App\Http\Controllers\SessionController;
+use App\Http\Controllers\LoginHistoryController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', [IndexController::class, 'index'])->name('index');
 
@@ -157,10 +159,26 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/profile/email', [ProfileController::class, 'updateEmail'])->name('email.update');
     Route::put('/profile/notifications', [ProfileController::class, 'updateNotifications'])->name('notifications.update');
     Route::put('/profile/settings', [ProfileController::class, 'updateSettings'])->name('settings.update');
+    Route::put('/profile/security', [ProfileController::class, 'updateSecurity'])->name('security.update');
     Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
     Route::get('parameters', [ProfileController::class, 'fetchParameters'])->name('parameters.fetch');
+    
+    // Historie přihlášení
+    Route::get('/login-history', [LoginHistoryController::class, 'index'])->name('login-history.index');
+    
+    // Testovací route pro ověření dat (jen dočasně)
+    Route::get('/test-login-history', function() {
+        $user = Auth::user();
+        $history = \App\Models\LoginHistory::where('user_id', $user->id)->get();
+        
+        return response()->json([
+            'user_id' => $user->id,
+            'count' => $history->count(),
+            'history' => $history
+        ]);
+    })->name('test-login-history');
 });
 
 // Routy pro reset hesla

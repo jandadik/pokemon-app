@@ -117,6 +117,30 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function updateSecurity(Request $request)
+    {
+        $validated = $request->validate([
+            'login_notifications' => ['required', 'boolean'],
+            'two_factor_enabled' => ['required', 'boolean'],
+        ]);
+
+        $settings = $request->user()->parameters()->firstOrCreate([
+            'user_id' => $request->user()->id
+        ]);
+
+        $currentSettings = json_decode($settings->settings ?? '{}', true);
+        $newSettings = array_merge($currentSettings, $validated);
+
+        $settings->update([
+            'settings' => json_encode($newSettings)
+        ]);
+
+        return back()->with([
+            'success' => 'Nastavení zabezpečení bylo úspěšně aktualizováno.',
+            'settings' => $newSettings
+        ]);
+    }
+
     /**
      * Načte parametry přihlášeného uživatele
      */
