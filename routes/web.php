@@ -152,7 +152,7 @@ Route::middleware(['auth', 'permission:admin.access'])->prefix('admin')->name('a
 });
 
 // Routy pro správu profilu
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('password.update');
@@ -220,6 +220,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('two-factor.disable');
     Route::post('two-factor/verify', [TwoFactorAuthenticationController::class, 'verify'])
         ->name('two-factor.verify');
+    Route::get('two-factor/challenge', [TwoFactorAuthenticationController::class, 'challenge'])
+        ->name('two-factor.challenge');
 });
 
 // Routy pro správu sessions

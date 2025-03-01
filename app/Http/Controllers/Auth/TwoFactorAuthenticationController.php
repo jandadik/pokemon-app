@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use PragmaRX\Google2FA\Google2FA;
+use Inertia\Inertia;
 
 class TwoFactorAuthenticationController extends Controller
 {
@@ -83,5 +84,13 @@ class TwoFactorAuthenticationController extends Controller
         }
         
         return back()->withErrors(['code' => 'Neplatný ověřovací kód.']);
+    }
+    
+    /**
+     * Zobrazí stránku s výzvou k zadání 2FA kódu.
+     */
+    public function challenge()
+    {
+        return Inertia::render('Auth/TwoFactorChallenge');
     }
 } 

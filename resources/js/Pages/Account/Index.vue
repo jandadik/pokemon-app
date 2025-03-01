@@ -403,11 +403,13 @@
       <v-card>
         <v-card-title>Nastavení dvoufaktorového ověření</v-card-title>
         <v-card-text>
-          <div v-if="!securityForm.two_factor_enabled">
+          <div v-if="!userStore.parameters.settings.two_factor_enabled">
             <p class="mb-4">Pro zvýšení bezpečnosti vašeho účtu doporučujeme aktivovat dvoufaktorové ověření.</p>
             
             <div class="d-flex justify-center mb-4">
+              <v-progress-circular v-if="isLoadingQrCode" indeterminate color="primary"></v-progress-circular>
               <v-img
+                v-else
                 :src="twoFactorQrCode"
                 max-width="200"
                 contain
@@ -447,6 +449,23 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Snackbar pro oznámení -->
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      timeout="3000"
+    >
+      {{ snackbar.text }}
+      <template v-slot:actions>
+        <v-btn
+          variant="text"
+          @click="snackbar.show = false"
+        >
+          Zavřít
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -455,6 +474,7 @@ import { ref, watch, onMounted } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import { useUserStore } from '@/stores/userStore'
 import { storeToRefs } from 'pinia'
+import axios from 'axios'
 
 const props = defineProps({
   user: {
@@ -496,7 +516,8 @@ watch(activeTab, (newTab) => {
 
 const showPassword = ref(false)
 const showTwoFactorDialog = ref(false)
-const twoFactorQrCode = ref(null)
+const twoFactorQrCode = ref('')
+const isLoadingQrCode = ref(false)
 
 // Reference na formuláře
 const profileFormRef = ref(null)
@@ -549,8 +570,8 @@ const notificationsForm = useForm({
 })
 
 const securityForm = useForm({
-  two_factor_enabled: userStore.getTwoFactorEnabled,
-  login_notifications: userStore.getLoginNotifications,
+  two_factor_enabled: userStore.parameters.settings.two_factor_enabled,
+  login_notifications: userStore.parameters.settings.login_notifications,
   sessions: props.user.sessions || []
 })
 
@@ -569,16 +590,6 @@ const twoFactorForm = useForm({
 })
 
 const verificationForm = useForm({})
-
-// Sledování změny two_factor_enabled
-watch(() => securityForm.two_factor_enabled, (newValue) => {
-  if (newValue !== props.user.two_factor_enabled) {
-    showTwoFactorDialog.value = true
-    if (newValue) {
-      generateTwoFactorQrCode()
-    }
-  }
-})
 
 // Sledování změn v store a aktualizace formulářů
 watch(
@@ -628,17 +639,36 @@ watch(
 )
 
 // Watch pro security
-watch(
-  () => ({
-    login_notifications: securityForm.login_notifications,
-    two_factor_enabled: securityForm.two_factor_enabled
-  }),
-  (newValues) => {
-    if (securityForm.processing) return
-    userStore.updateSecurity(newValues)
-  },
-  { deep: true }
-)
+watch(() => securityForm.two_factor_enabled, (newValue) => {
+  if (newValue !== userStore.parameters.settings.two_factor_enabled) {
+    showTwoFactorDialog.value = true
+    if (newValue) {
+      generateTwoFactorQrCode()
+    }
+  }
+})
+
+// Watch pro login_notifications
+watch(() => securityForm.login_notifications, (newValue) => {
+  if (newValue !== userStore.parameters.settings.login_notifications) {
+    userStore.updateParameters({
+      settings: {
+        ...userStore.parameters.settings,
+        login_notifications: newValue
+      }
+    })
+  }
+})
+
+// Watch pro změny v userStore
+watch(() => userStore.parameters.settings, (newSettings) => {
+  if (securityForm.two_factor_enabled !== newSettings.two_factor_enabled) {
+    securityForm.two_factor_enabled = newSettings.two_factor_enabled
+  }
+  if (securityForm.login_notifications !== newSettings.login_notifications) {
+    securityForm.login_notifications = newSettings.login_notifications
+  }
+}, { deep: true })
 
 // Metody pro zpracování formulářů
 const updateProfile = async () => {
@@ -762,21 +792,57 @@ const resendVerification = () => {
 }
 
 const generateTwoFactorQrCode = () => {
-  // V budoucí implementaci zde bude získání QR kódu pro 2FA
+  twoFactorQrCode.value = ''
+  isLoadingQrCode.value = true
+  
+  axios.get(route('two-factor.qr-code'))
+    .then(response => {
+      twoFactorQrCode.value = response.data.svg
+      isLoadingQrCode.value = false
+    })
+    .catch(error => {
+      isLoadingQrCode.value = false
+      showSnackbar('Nepodařilo se vygenerovat QR kód: ' + (error.response?.data?.message || error.message), 'error')
+    })
 }
 
+// Snackbar
+const snackbar = ref({
+  show: false,
+  text: '',
+  color: 'success'
+})
+
 const confirmTwoFactor = () => {
-  if (securityForm.two_factor_enabled) {
-    twoFactorForm.post(route('two-factor.enable'), {
-      onSuccess: () => {
+  if (!userStore.parameters.settings.two_factor_enabled) {
+    // Aktivace 2FA
+    if (twoFactorForm.code) {
+      userStore.updateParameters({
+        settings: {
+          ...userStore.parameters.settings,
+          two_factor_enabled: true
+        }
+      }).then(() => {
         showTwoFactorDialog.value = false
-      }
-    })
+        showSnackbar('Dvoufaktorové ověření bylo úspěšně aktivováno', 'success')
+      }).catch(error => {
+        showSnackbar('Nepodařilo se aktivovat dvoufaktorové ověření: ' + (error.response?.data?.message || error.message), 'error')
+      })
+    } else {
+      showSnackbar('Zadejte prosím ověřovací kód', 'error')
+    }
   } else {
-    twoFactorForm.delete(route('two-factor.disable'), {
-      onSuccess: () => {
-        showTwoFactorDialog.value = false
+    // Deaktivace 2FA
+    userStore.updateParameters({
+      settings: {
+        ...userStore.parameters.settings,
+        two_factor_enabled: false
       }
+    }).then(() => {
+      showTwoFactorDialog.value = false
+      showSnackbar('Dvoufaktorové ověření bylo úspěšně deaktivováno', 'success')
+    }).catch(error => {
+      showSnackbar('Nepodařilo se deaktivovat dvoufaktorové ověření: ' + (error.response?.data?.message || error.message), 'error')
     })
   }
 }
@@ -852,4 +918,13 @@ const formatDate = (dateString) => {
     minute: '2-digit'
   }).format(date);
 };
+
+// Funkce pro zobrazení notifikace
+const showSnackbar = (text, color = 'info') => {
+  snackbar.value = {
+    show: true,
+    text,
+    color
+  }
+}
 </script> 
