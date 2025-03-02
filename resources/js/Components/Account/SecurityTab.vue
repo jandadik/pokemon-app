@@ -2,13 +2,14 @@
   <v-card class="mb-4">
     <v-card-title>Zabezpečení účtu</v-card-title>
     <v-card-text>
-      <v-form @submit.prevent="updateSecurity" ref="securityFormRef" v-model="isSecurityFormValid">
+      <v-form ref="securityFormRef" v-model="isSecurityFormValid">
         <v-switch
           v-model="securityForm.two_factor_enabled"
           label="Dvoufaktorové ověření"
           color="primary"
           hide-details
           class="mb-4"
+          @change="handleTwoFactorChange"
         ></v-switch>
 
         <v-switch
@@ -19,6 +20,17 @@
           class="mb-4"
         ></v-switch>
 
+        <!-- Testovací tlačítko pro generování QR kódu -->
+        <v-btn 
+          color="primary" 
+          variant="outlined" 
+          class="mb-4"
+          @click="testGenerateQrCode"
+        >
+          Test QR kódu
+        </v-btn>
+
+        <!-- Historie přihlášení -->
         <v-expansion-panels class="mb-4">
           <v-expansion-panel>
             <v-expansion-panel-title>
@@ -39,36 +51,76 @@
                 class="mb-4"
               ></v-alert>
               
+              
               <v-list lines="two" v-else>
                 <v-list-item
                   v-for="(login, index) in loginHistory"
                   :key="index"
                   :subtitle="login.ip_address + (login.location ? ' · ' + login.location : '')"
                   :class="{ 'bg-error-lighten-5': login.is_suspicious }"
+                  class="mb-1 rounded"
+                  density="comfortable"
                 >
                   <template v-slot:prepend>
-                    <v-icon :color="login.is_current ? 'success' : (login.is_suspicious ? 'error' : '')">
+                    <v-icon :color="login.is_current ? 'success' : (login.is_suspicious ? 'error' : '')" size="small">
                       {{ login.is_current ? 'mdi-check-circle' : deviceIcon(login.user_agent) }}
                     </v-icon>
                   </template>
                   
-                  <v-list-item-title>
-                    {{ formatUserAgent(login.user_agent) }}
-                    <v-chip
-                      v-if="login.is_suspicious"
-                      color="error"
-                      size="x-small"
-                      class="ml-2"
-                    >
-                      Podezřelé
-                    </v-chip>
-                  </v-list-item-title>
-                  
-                  <template v-slot:append>
-                    <v-chip size="small" color="secondary" class="text-caption">
+                  <!-- Desktop zobrazení -->
+                  <div class="d-none d-sm-flex flex-row align-center w-100">
+                    <v-list-item-title class="text-body-2">
+                      {{ formatUserAgent(login.user_agent) }}
+                      <v-chip
+                        v-if="login.is_suspicious"
+                        color="error"
+                        size="x-small"
+                        class="ml-2"
+                      >
+                        Podezřelé
+                      </v-chip>
+                    </v-list-item-title>
+                    
+                    <v-spacer></v-spacer>
+                    
+                    <v-chip size="small" color="secondary" class="text-caption ml-2">
                       {{ formatDate(login.created_at) }}
                     </v-chip>
-                  </template>
+                  </div>
+                  
+                  <!-- Mobilní zobrazení -->
+                  <div class="d-flex d-sm-none flex-column w-100">
+                    <div class="d-flex justify-space-between align-center">
+                      <v-list-item-title class="text-body-2">
+                        {{ formatUserAgent(login.user_agent) }}
+                        <v-chip
+                          v-if="login.is_suspicious"
+                          color="error"
+                          size="x-small"
+                          class="ml-1"
+                        >
+                          !
+                        </v-chip>
+                      </v-list-item-title>
+                      
+                      <v-chip size="x-small" color="secondary" class="text-caption ml-1">
+                        {{ formatMobileDate(login.created_at) }}
+                      </v-chip>
+                    </div>
+                    
+                    <v-list-item-subtitle class="text-caption">
+                      <span class="text-medium-emphasis">{{ login.ip_address }}</span>
+                      <span v-if="login.location" class="text-disabled"> · {{ login.location }}</span>
+                      <v-chip
+                        v-if="login.is_suspicious"
+                        color="error"
+                        size="x-small"
+                        class="ml-1"
+                      >
+                        Podezřelé
+                      </v-chip>
+                    </v-list-item-subtitle>
+                  </div>
                 </v-list-item>
               </v-list>
             </v-expansion-panel-text>
@@ -77,6 +129,14 @@
       </v-form>
     </v-card-text>
   </v-card>
+  
+  <!-- Dialog pro dvoufaktorové ověření -->
+  <TwoFactorDialog
+    v-model="showTwoFactorDialog"
+    :errors="errors"
+    @success="handleSuccess"
+    @error="handleError"
+  />
 </template>
 
 <script setup>
@@ -84,6 +144,8 @@ import { ref, watch, onMounted } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { useUserStore } from '@/stores/userStore'
 import { storeToRefs } from 'pinia'
+import TwoFactorDialog from '@/Components/Account/TwoFactorDialog.vue'
+import axios from 'axios'
 
 const props = defineProps({
   user: {
@@ -96,12 +158,13 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['success', 'show-two-factor-dialog', 'error'])
+const emit = defineEmits(['success', 'error'])
 
 const userStore = useUserStore()
 const securityFormRef = ref(null)
 const isSecurityFormValid = ref(true)
 const isLoadingLoginHistory = ref(false)
+const showTwoFactorDialog = ref(false)
 
 const { parameters, isLoading, loginHistory } = storeToRefs(userStore)
 
@@ -111,11 +174,6 @@ const securityForm = useForm({
   login_notifications: userStore.parameters.settings.login_notifications,
   sessions: props.user.sessions || [],
 })
-
-// Aktualizace formuláře, když se změní data v userStore
-// onMounted(() => {
-//   updateFormFromUserStore()
-// })
 
 // Sledování změn v userStore parameters
 watch(
@@ -129,54 +187,50 @@ watch(
   { deep: true }
 )
 
-// Sledování změn v userStore.user
-// watch(() => userStore.user, (newUser) => {
-//   if (newUser && newUser.sessions) {
-//     securityForm.sessions = newUser.sessions
-//   }
-// }, { deep: true })
-
-// Pomocná funkce pro aktualizaci formuláře z userStore
-// function updateFormFromUserStore() {
-//   if (userStore.parameters && userStore.parameters.settings) {
-//     securityForm.two_factor_enabled = userStore.parameters.settings.two_factor_enabled
-//     securityForm.login_notifications = userStore.parameters.settings.login_notifications
-//   }
-  
-//   if (userStore.user && userStore.user.sessions) {
-//     securityForm.sessions = userStore.user.sessions
-//   }
-// }
-
-// Sledování změn ve formuláři two_factor_enabled
-// watch(() => securityForm.two_factor_enabled, (newValue) => {
-//   if (userStore.parameters && userStore.parameters.settings && 
-//       newValue !== userStore.parameters.settings.two_factor_enabled) {
-//     emit('show-two-factor-dialog', newValue)
-//     // Vracíme hodnotu zpět, protože změna se provede až po potvrzení dialogu
-//     securityForm.two_factor_enabled = userStore.parameters.settings.two_factor_enabled
-//   }
-// })
-
-// Sledování změn ve formuláři login_notifications
-// watch(() => securityForm.login_notifications, (newValue) => {
-//   if (userStore.parameters && userStore.parameters.settings && 
-//       newValue !== userStore.parameters.settings.login_notifications) {
-//     // Nebudeme aktualizovat přímo přes updateParameters,
-//     // ale aktualizace proběhne při odeslání formuláře
-//     securityForm.login_notifications = newValue;
-//   }
-// })
+// Watch pro formulář - upraveny tak, aby zpracovávaly oba parametry zároveň
 watch(
   () => ({
-    login_notifications: securityForm.login_notifications
+    login_notifications: securityForm.login_notifications,
+    two_factor_enabled: securityForm.two_factor_enabled
   }),
-  (newValues) => {
+  (newValues, oldValues) => {
     if (securityForm.processing) return
-    userStore.updateSecurity(newValues)
+    
+    // Neřešíme zde two_factor_enabled, protože to zpracováváme pomocí handleTwoFactorChange
+    if (newValues.login_notifications !== oldValues.login_notifications) {
+      // Pokud se změnilo pouze login_notifications, aktualizujeme normálně
+      userStore.updateSecurity(newValues)
+        .then(() => {
+          emit('success', 'Nastavení notifikací o přihlášení bylo uloženo')
+        })
+        .catch(error => {
+          emit('error', 'Nepodařilo se uložit nastavení: ' + error.message)
+        })
+    }
   },
   { deep: true }
 )
+
+// Funkce pro zpracování změny 2FA přepínače
+const handleTwoFactorChange = (newValue) => {
+  // Pokud se změnilo two_factor_enabled, otevřeme dialog
+  if (newValue !== userStore.parameters.settings.two_factor_enabled) {
+    // Vrátíme hodnotu zpět, protože ji budeme měnit přes dialog
+    securityForm.two_factor_enabled = userStore.parameters.settings.two_factor_enabled
+    console.log('Otevírání dialogu pro 2FA', newValue, userStore.parameters.settings.two_factor_enabled)
+    showTwoFactorDialog.value = true
+  }
+}
+
+// Funkce pro zpracování úspěšných operací
+const handleSuccess = (message) => {
+  emit('success', message)
+}
+
+// Funkce pro zpracování chyb
+const handleError = (message) => {
+  emit('error', message)
+}
 
 // Načtení historie přihlášení
 const loadLoginHistory = async () => {
@@ -195,33 +249,17 @@ onMounted(() => {
   loadLoginHistory()
 })
 
-const updateSecurity = async () => {
-  // if (formRef.value) {
-  //   const { valid } = await formRef.value.validate()
-  //   if (!valid) return
-  // }
-
-  // // Nejprve aktualizujeme data v store
-  // try {
-  //   await userStore.updateSecurity({
-  //     login_notifications: form.login_notifications
-  //   })
-    
-  //   // Poté odešleme formulář, pro případné další aktualizace
-  //   form.put(route('security.update'), {
-  //     onSuccess: () => {
-  //       isFormValid.value = true
-  //       emit('success', 'Nastavení zabezpečení bylo uloženo')
-  //     },
-  //     onError: () => {
-  //       isFormValid.value = false
-  //     },
-  //     preserveScroll: true
-  //   })
-  // } catch (error) {
-  //   emit('error', 'Nepodařilo se uložit nastavení zabezpečení: ' + error.message)
-  //   isFormValid.value = false
-  // }
+// Test generování QR kódu
+const testGenerateQrCode = () => {
+  console.log('Testovací funkce pro generování QR kódu')
+  axios.get(route('two-factor.qr-code'))
+    .then(response => {
+      console.log('Test - QR kód úspěšně získán:', response.data)
+    })
+    .catch(error => {
+      console.error('Test - Chyba při získávání QR kódu:', error)
+      emit('error', 'Nepodařilo se vygenerovat QR kód: ' + (error.response?.data?.message || error.message))
+    })
 }
 
 // *** TAB: SECURITY - POMOCNÉ FUNKCE PRO HISTORII PŘIHLÁŠENÍ ***
@@ -261,6 +299,17 @@ const formatDate = (dateString) => {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}
+
+// Funkce pro formátování data pro mobilní zařízení - kratší formát
+const formatMobileDate = (dateString) => {
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('cs', {
+    day: '2-digit',
+    month: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
   }).format(date)

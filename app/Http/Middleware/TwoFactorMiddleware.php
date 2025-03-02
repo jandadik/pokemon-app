@@ -29,6 +29,11 @@ class TwoFactorMiddleware
             return $next($request);
         }
 
+        // Uložíme si původní URL pro pozdější přesměrování
+        if (!$request->is('two-factor/*')) {
+            session(['url.intended' => $request->url()]);
+        }
+
         // Jinak přesměrujeme na stránku pro ověření 2FA
         return redirect()->route('two-factor.challenge');
     }

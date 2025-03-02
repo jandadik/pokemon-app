@@ -121,7 +121,7 @@ class ProfileController extends Controller
     {
         $validated = $request->validate([
             'login_notifications' => ['required', 'boolean'],
-            //'two_factor_enabled' => ['required', 'boolean'],
+            'two_factor_enabled' => ['required', 'boolean'],
         ]);
 
         $settings = $request->user()->parameters()->firstOrCreate([

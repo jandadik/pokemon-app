@@ -1,7 +1,45 @@
 <template>
   <v-container>
     <v-row>
-      <v-col cols="12" md="3">
+      <!-- Mobilní zobrazení - dropdown menu -->
+      <v-col cols="12" class="d-md-none">
+        <v-select
+          v-model="activeTab"
+          :items="[
+            { title: 'Osobní údaje', value: 'profile', icon: 'mdi-account' },
+            { title: 'Změna hesla', value: 'password', icon: 'mdi-lock' },
+            { title: 'Email', value: 'email', icon: 'mdi-email', badge: !user.email_verified_at },
+            { title: 'Notifikace', value: 'notifications', icon: 'mdi-bell' },
+            { title: 'Zabezpečení', value: 'security', icon: 'mdi-shield-account' },
+            { title: 'Nastavení', value: 'settings', icon: 'mdi-cog' },
+            { title: 'Smazat účet', value: 'delete', icon: 'mdi-delete' }
+          ]"
+          item-title="title"
+          item-value="value"
+          label="Vyberte sekci"
+          variant="outlined"
+          density="comfortable"
+        >
+          <template v-slot:selection="{ item }">
+            <v-icon :icon="item.raw.icon" class="mr-2"></v-icon>
+            {{ item.raw.title }}
+            <v-chip v-if="item.raw.value === 'email' && !user.email_verified_at" color="warning" size="x-small" class="ml-2">
+              Neověřeno
+            </v-chip>
+          </template>
+          
+          <template v-slot:item="{ item, props }">
+            <v-list-item v-bind="props" :prepend-icon="item.raw.icon" :title="item.raw.title">
+              <template v-slot:append v-if="item.raw.badge">
+                <v-chip color="warning" size="x-small">Neověřeno</v-chip>
+              </template>
+            </v-list-item>
+          </template>
+        </v-select>
+      </v-col>
+
+      <!-- Desktop zobrazení - boční menu -->
+      <v-col cols="3" class="d-none d-md-block">
         <!-- Navigační menu -->
         <v-card>
           <v-list>
@@ -61,6 +99,7 @@
         </v-card>
       </v-col>
 
+      <!-- Obsah tabů - na desktop vpravo, na mobilu pod menu -->
       <v-col cols="12" md="9">
         <!-- Profil -->
         <ProfileTab 
@@ -99,7 +138,6 @@
           :user="user"
           :errors="errors"
           @success="showSnackbar"
-          @show-two-factor-dialog="showTwoFactorDialog = true"
           @error="showSnackbar($event, 'error')"
         />
 
@@ -118,58 +156,6 @@
         />
       </v-col>
     </v-row>
-
-    <!-- Dialog pro dvoufaktorové ověření -->
-    <v-dialog v-model="showTwoFactorDialog" max-width="500">
-      <v-card>
-        <v-card-title>Nastavení dvoufaktorového ověření</v-card-title>
-        <v-card-text>
-          <div v-if="!userStore.parameters.settings.two_factor_enabled">
-            <p class="mb-4">Pro zvýšení bezpečnosti vašeho účtu doporučujeme aktivovat dvoufaktorové ověření.</p>
-            
-            <div class="d-flex justify-center mb-4">
-              <v-progress-circular v-if="isLoadingQrCode" indeterminate color="primary"></v-progress-circular>
-              <v-img
-                v-else
-                :src="twoFactorQrCode"
-                max-width="200"
-                contain
-              ></v-img>
-            </div>
-
-            <p class="mb-4">Naskenujte QR kód pomocí autentifikační aplikace (např. Google Authenticator) a zadejte vygenerovaný kód níže.</p>
-
-            <v-text-field
-              v-model="twoFactorForm.code"
-              label="Ověřovací kód"
-              type="number"
-              required
-              :error-messages="errors.code"
-            ></v-text-field>
-          </div>
-          <div v-else>
-            <p class="mb-4">Opravdu chcete deaktivovat dvoufaktorové ověření? Tímto snížíte bezpečnost vašeho účtu.</p>
-          </div>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="primary"
-            variant="text"
-            @click="showTwoFactorDialog = false"
-          >
-            Zrušit
-          </v-btn>
-          <v-btn
-            color="primary"
-            @click="confirmTwoFactor"
-            :loading="twoFactorForm.processing"
-          >
-            {{ securityForm.two_factor_enabled ? 'Deaktivovat' : 'Aktivovat' }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
 
     <!-- Snackbar pro oznámení -->
     <v-snackbar
@@ -233,8 +219,9 @@ watch(() => page.props.tab, (newTab) => {
   }
 })
 
-// Aktualizace URL při změně tabu
+// Upraveno pro vyřešení objektu
 watch(activeTab, (newTab) => {
+  // Aktualizace URL
   if (newTab !== page.props.tab) {
     window.history.replaceState(
       {},
@@ -246,128 +233,12 @@ watch(activeTab, (newTab) => {
   }
 })
 
-// *** SPOLEČNÉ PROMĚNNÉ ***
-
-const showTwoFactorDialog = ref(false)
-const twoFactorQrCode = ref('')
-const isLoadingQrCode = ref(false)
-
-// *** REFERENCE NA FORMULÁŘE ***
-
-const securityFormRef = ref(null)       // Tab: Security MOVED
-
-// *** VALIDAČNÍ STAVY FORMULÁŘŮ ***
-
-const isSecurityFormValid = ref(true)       // Tab: Security MOVED
-const isLoadingLoginHistory = ref(false)    // Tab: Security MOVED
-
 // *** INICIALIZACE STORE ***
 onMounted(async () => {
   if (!userStore.isInitialized) {
     await userStore.fetchParameters()
   }
 })
-
-// *** DEFINICE FORMULÁŘŮ ***
-
-
-// Tab: Security - Formulář pro nastavení zabezpečení MOVED
-const securityForm = useForm({
-  two_factor_enabled: userStore.parameters.settings.two_factor_enabled,
-  login_notifications: userStore.parameters.settings.login_notifications,
-  sessions: props.user.sessions || []
-})
-
-// Tab: Security - Formulář pro dvoufaktorové ověření
-const twoFactorForm = useForm({
-  code: ''
-})
-
-
-
-// *** SLEDOVÁNÍ ZMĚN V STORE A AKTUALIZACE FORMULÁŘŮ *** MOVED
-watch(
-  () => userStore.parameters.settings,
-  (newSettings) => {
-   
-    // Tab: Security - Aktualizace formuláře zabezpečení
-    securityForm.login_notifications = newSettings.login_notifications
-    securityForm.two_factor_enabled = newSettings.two_factor_enabled
-  },
-  { deep: true }
-)
-
-// *** TAB: SECURITY - WATCH PRO ZABEZPEČENÍ ***
-
-// Watch pro two_factor_enabled
-watch(() => securityForm.two_factor_enabled, (newValue) => {
-  if (newValue !== userStore.parameters.settings.two_factor_enabled) {
-    showTwoFactorDialog.value = true
-    if (newValue) {
-      generateTwoFactorQrCode()
-    }
-  }
-})
-
-// Watch pro login_notifications
-watch(() => securityForm.login_notifications, (newValue) => {
-  if (newValue !== userStore.parameters.settings.login_notifications) {
-    userStore.updateParameters({
-      settings: {
-        ...userStore.parameters.settings,
-        login_notifications: newValue
-      }
-    })
-  }
-})
-
-// Watch pro změny v userStore
-watch(() => userStore.parameters.settings, (newSettings) => {
-  if (securityForm.two_factor_enabled !== newSettings.two_factor_enabled) {
-    securityForm.two_factor_enabled = newSettings.two_factor_enabled
-  }
-  if (securityForm.login_notifications !== newSettings.login_notifications) {
-    securityForm.login_notifications = newSettings.login_notifications
-  }
-}, { deep: true })
-
-// *** METODY PRO ZPRACOVÁNÍ FORMULÁŘŮ ***
-
-
-
-// *** TAB: SECURITY - AKTUALIZACE ZABEZPEČENÍ ***
-const updateSecurity = async () => {
-  if (securityFormRef.value) {
-    const { valid } = await securityFormRef.value.validate()
-    if (!valid) return
-  }
-
-  securityForm.put(route('security.update'), {
-    onSuccess: () => {
-      isSecurityFormValid.value = true
-    },
-    onError: (errors) => {
-      isSecurityFormValid.value = false
-    },
-    preserveScroll: true
-  })
-}
-
-// *** TAB: SECURITY - GENEROVÁNÍ QR KÓDU PRO 2FA ***
-const generateTwoFactorQrCode = () => {
-  twoFactorQrCode.value = ''
-  isLoadingQrCode.value = true
-  
-  axios.get(route('two-factor.qr-code'))
-    .then(response => {
-      twoFactorQrCode.value = response.data.svg
-      isLoadingQrCode.value = false
-    })
-    .catch(error => {
-      isLoadingQrCode.value = false
-      showSnackbar('Nepodařilo se vygenerovat QR kód: ' + (error.response?.data?.message || error.message), 'error')
-    })
-}
 
 // *** SPOLEČNÉ KOMPONENTY ***
 
@@ -377,41 +248,6 @@ const snackbar = ref({
   text: '',
   color: 'success'
 })
-
-// *** TAB: SECURITY - POTVRZENÍ 2FA DIALOGU ***
-const confirmTwoFactor = () => {
-  if (!userStore.parameters.settings.two_factor_enabled) {
-    // Aktivace 2FA
-    if (twoFactorForm.code) {
-      userStore.updateParameters({
-        settings: {
-          ...userStore.parameters.settings,
-          two_factor_enabled: true
-        }
-      }).then(() => {
-        showTwoFactorDialog.value = false
-        showSnackbar('Dvoufaktorové ověření bylo úspěšně aktivováno', 'success')
-      }).catch(error => {
-        showSnackbar('Nepodařilo se aktivovat dvoufaktorové ověření: ' + (error.response?.data?.message || error.message), 'error')
-      })
-    } else {
-      showSnackbar('Zadejte prosím ověřovací kód', 'error')
-    }
-  } else {
-    // Deaktivace 2FA
-    userStore.updateParameters({
-      settings: {
-        ...userStore.parameters.settings,
-        two_factor_enabled: false
-      }
-    }).then(() => {
-      showTwoFactorDialog.value = false
-      showSnackbar('Dvoufaktorové ověření bylo úspěšně deaktivováno', 'success')
-    }).catch(error => {
-      showSnackbar('Nepodařilo se deaktivovat dvoufaktorové ověření: ' + (error.response?.data?.message || error.message), 'error')
-    })
-  }
-}
 
 // *** TAB: SECURITY - ODHLÁŠENÍ RELACE ***
 const logoutSession = (sessionId) => {
