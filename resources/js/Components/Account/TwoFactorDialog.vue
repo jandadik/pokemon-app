@@ -2,11 +2,11 @@
   <v-dialog v-model="dialogModel" max-width="500px">
     <v-card>
       <v-card-title class="text-h5">
-        {{ twoFactorEnabled ? 'Deaktivovat dvoufaktorové ověření' : 'Aktivovat dvoufaktorové ověření' }}
+        {{ user.two_factor_enabled ? 'Deaktivovat dvoufaktorové ověření' : 'Aktivovat dvoufaktorové ověření' }}
       </v-card-title>
       
       <v-card-text>
-        <p v-if="twoFactorEnabled">
+        <p v-if="user.two_factor_enabled">
           Opravdu chcete deaktivovat dvoufaktorové ověření? Tím se sníží bezpečnost vašeho účtu.
         </p>
         
@@ -94,11 +94,11 @@
           Zrušit
         </v-btn>
         <v-btn 
-          :color="twoFactorEnabled ? 'error' : 'primary'" 
+          :color="user.two_factor_enabled ? 'error' : 'primary'" 
           @click="confirm" 
           :loading="isUpdating"
-          :disabled="!twoFactorEnabled && (!qrCode || !form.code)">
-          {{ twoFactorEnabled ? 'Deaktivovat' : 'Aktivovat' }}
+          :disabled="!user.two_factor_enabled && (!qrCode || !form.code)">
+          {{ user.two_factor_enabled ? 'Deaktivovat' : 'Aktivovat' }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -108,7 +108,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import { useUserStore } from '@/stores/userStore'
+import { router } from '@inertiajs/vue3'
 import axios from 'axios'
 import QRCode from 'qrcode'
 
@@ -120,17 +120,14 @@ const props = defineProps({
   errors: {
     type: Object,
     default: () => ({})
+  },
+  user: {
+    type: Object,
+    required: true
   }
 })
 
 const emit = defineEmits(['update:modelValue', 'success', 'error'])
-
-const userStore = useUserStore()
-const twoFactorEnabled = computed(() => {
-  return userStore.parameters && 
-         userStore.parameters.settings && 
-         userStore.parameters.settings.two_factor_enabled
-})
 
 const qrCode = ref('')
 const isLoading = ref(false)
@@ -150,12 +147,11 @@ const dialogModel = computed({
 watch(() => dialogModel.value, (newValue) => {
   if (newValue) {
     // Dialog se otevírá
-    console.log('Dialog otevřen, hodnota twoFactorEnabled:', twoFactorEnabled.value)
     generateQrCode()
   } else {
     // Dialog se zavírá - resetujeme formulář
     form.reset()
-    if (!twoFactorEnabled.value) {
+    if (!props.user.two_factor_enabled) {
       qrCode.value = ''
       otpSecret.value = ''
     }
@@ -163,7 +159,7 @@ watch(() => dialogModel.value, (newValue) => {
 })
 
 const generateQrCode = () => {
-  if (!twoFactorEnabled.value) {
+  if (!props.user.two_factor_enabled) {
     isLoading.value = true
     otpSecret.value = ''
     
@@ -172,7 +168,6 @@ const generateQrCode = () => {
         if (response.data && response.data.qr_code) {
           // Zpracování OTP Auth URL
           const otpAuthUrl = response.data.qr_code
-          console.log('OTP Auth URL:', otpAuthUrl)
           
           // Extrahování secret z URL (pro zobrazení uživateli)
           const secretMatch = otpAuthUrl.match(/secret=([A-Z0-9]+)/)
@@ -188,10 +183,8 @@ const generateQrCode = () => {
           })
             .then(url => {
               qrCode.value = url
-              console.log('QR kód vygenerován lokálně')
             })
             .catch(err => {
-              console.error('Chyba při generování QR kódu:', err)
               // Použití otpAuthUrl jako záloha
               qrCode.value = otpAuthUrl
             })
@@ -199,16 +192,13 @@ const generateQrCode = () => {
         } else if (response.data && response.data.svg) {
           // Zpětná kompatibilita pro SVG formát
           qrCode.value = response.data.svg
-          console.log('SVG formát QR kódu získán')
         } else {
-          console.error('Neplatný formát QR kódu v odpovědi API:', response.data)
           emit('error', 'Nepodařilo se vygenerovat QR kód: Neplatný formát odpovědi')
         }
         
         isLoading.value = false
       })
       .catch(error => {
-        console.error('Chyba při generování QR kódu:', error)
         emit('error', 'Nepodařilo se vygenerovat QR kód: ' + (error.response?.data?.message || error.message))
         isLoading.value = false
       })
@@ -216,28 +206,20 @@ const generateQrCode = () => {
 }
 
 const confirm = () => {
-  if (!userStore.parameters || !userStore.parameters.settings) {
-    emit('error', 'Nelze načíst nastavení uživatele')
-    return
-  }
-  
   isUpdating.value = true
   
-  if (!twoFactorEnabled.value) {
+  if (!props.user.two_factor_enabled) {
     // Aktivace 2FA
     if (form.code) {
       // Ověříme kód pomocí správného endpointu z controlleru
       axios.post(route('two-factor.enable'), { code: form.code })
         .then(() => {
-          // Po úspěšném ověření kódu oznámíme uživateli, že 2FA bylo aktivováno
-          // a aktualizujeme store
           dialogModel.value = false
           emit('success', 'Dvoufaktorové ověření bylo úspěšně aktivováno')
           form.reset()
-          // Aktualizujeme nastavení v userStore
-          userStore.fetchParameters().finally(() => {
-            isUpdating.value = false
-          })
+          // Přesměrujeme na aktuální stránku pro obnovení dat
+          router.reload()
+          isUpdating.value = false
         })
         .catch(error => {
           isUpdating.value = false
@@ -249,14 +231,15 @@ const confirm = () => {
     }
   } else {
     // Deaktivace 2FA
-    axios.delete(route('two-factor.disable'))
+    axios.post(route('two-factor.disable'), {
+      _method: 'DELETE'
+    })
       .then(() => {
         dialogModel.value = false
-        emit('success', 'Dvoufaktorové ověření bylo úspěšně deaktivováno')
-        // Aktualizujeme nastavení v userStore
-        userStore.fetchParameters().finally(() => {
-          isUpdating.value = false
-        })
+        emit('success', 'Dvoufaktorové ověření bylo deaktivováno')
+        // Přesměrujeme na aktuální stránku pro obnovení dat
+        router.reload()
+        isUpdating.value = false
       })
       .catch(error => {
         isUpdating.value = false
@@ -266,11 +249,12 @@ const confirm = () => {
 }
 
 const copyToClipboard = (text) => {
-  const input = document.createElement('input')
-  input.value = text
-  document.body.appendChild(input)
-  input.select()
-  document.execCommand('copy')
-  document.body.removeChild(input)
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      emit('success', 'Zkopírováno do schránky')
+    })
+    .catch(() => {
+      emit('error', 'Nepodařilo se zkopírovat do schránky')
+    })
 }
 </script> 

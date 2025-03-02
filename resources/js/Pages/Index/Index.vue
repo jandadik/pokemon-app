@@ -113,8 +113,8 @@
                     <tr>
                         <td>Dvoufaktorové ověření</td>
                         <td>
-                            <v-icon :color="userStore.getTwoFactorEnabled ? 'success' : 'error'">
-                                {{ userStore.getTwoFactorEnabled ? 'mdi-check' : 'mdi-close' }}
+                            <v-icon :color="authStore.user.two_factor_enabled ? 'success' : 'error'">
+                                {{ authStore.user.two_factor_enabled ? 'mdi-check' : 'mdi-close' }}
                             </v-icon>
                         </td>
                     </tr>
@@ -128,12 +128,18 @@
 import { useUserStore } from '@/stores/userStore'
 import { useAuthStore } from '@/stores/authStore'
 import { Link } from '@inertiajs/vue3'
-import { ref } from 'vue'
-
+import { ref, onMounted } from 'vue'
 
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const activeTab = ref('profile')
+
+onMounted(() => {
+    console.log('Two Factor Auth Status:', {
+        enabled: authStore.user.two_factor_enabled,
+        user: authStore.user
+    })
+})
 </script>
 
 <style scoped>

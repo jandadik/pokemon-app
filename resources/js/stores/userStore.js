@@ -16,8 +16,7 @@ export const useUserStore = defineStore('user', {
         theme: 'system',
         
         // Zabezpečení
-        login_notifications: true,
-        two_factor_enabled: false
+        login_notifications: true
       }
     },
     isLoading: false,
@@ -37,7 +36,6 @@ export const useUserStore = defineStore('user', {
     
     // Zabezpečení
     getLoginNotifications: (state) => state.parameters.settings.login_notifications,
-    getTwoFactorEnabled: (state) => state.parameters.settings.two_factor_enabled,
     getLoginHistory: (state) => state.loginHistory
   },
 

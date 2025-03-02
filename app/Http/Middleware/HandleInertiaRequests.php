@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $request->user()->getRoleNames(),
                 'permissions' => $request->user()->getAllPermissions()->pluck('name'),
                 'can' => $request->user()->permissions->pluck('name'),
+                'two_factor_enabled' => $request->user()->two_factor_enabled,
             ] : null
         ]);
     

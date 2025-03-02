@@ -20,16 +20,6 @@
           class="mb-4"
         ></v-switch>
 
-        <!-- Testovací tlačítko pro generování QR kódu -->
-        <v-btn 
-          color="primary" 
-          variant="outlined" 
-          class="mb-4"
-          @click="testGenerateQrCode"
-        >
-          Test QR kódu
-        </v-btn>
-
         <!-- Historie přihlášení -->
         <v-expansion-panels class="mb-4">
           <v-expansion-panel>
@@ -134,6 +124,7 @@
   <TwoFactorDialog
     v-model="showTwoFactorDialog"
     :errors="errors"
+    :user="props.user"
     @success="handleSuccess"
     @error="handleError"
   />
@@ -170,36 +161,30 @@ const { parameters, isLoading, loginHistory } = storeToRefs(userStore)
 
 // Tab: Security - Formulář pro nastavení zabezpečení
 const securityForm = useForm({
-  two_factor_enabled: userStore.parameters.settings.two_factor_enabled,
+  two_factor_enabled: props.user.two_factor_enabled,
   login_notifications: userStore.parameters.settings.login_notifications,
   sessions: props.user.sessions || [],
 })
 
-// Sledování změn v userStore parameters
+// Sledování změn v userStore parameters - pouze pro login_notifications
 watch(
   () => userStore.parameters.settings,
   (newSettings) => {
     if (newSettings) {
-      securityForm.two_factor_enabled = newSettings.two_factor_enabled
       securityForm.login_notifications = newSettings.login_notifications
     }
   },
   { deep: true }
 )
 
-// Watch pro formulář - upraveny tak, aby zpracovávaly oba parametry zároveň
+// Watch pro login_notifications
 watch(
-  () => ({
-    login_notifications: securityForm.login_notifications,
-    two_factor_enabled: securityForm.two_factor_enabled
-  }),
-  (newValues, oldValues) => {
+  () => securityForm.login_notifications,
+  (newValue, oldValue) => {
     if (securityForm.processing) return
     
-    // Neřešíme zde two_factor_enabled, protože to zpracováváme pomocí handleTwoFactorChange
-    if (newValues.login_notifications !== oldValues.login_notifications) {
-      // Pokud se změnilo pouze login_notifications, aktualizujeme normálně
-      userStore.updateSecurity(newValues)
+    if (newValue !== oldValue) {
+      userStore.updateSecurity({ login_notifications: newValue })
         .then(() => {
           emit('success', 'Nastavení notifikací o přihlášení bylo uloženo')
         })
@@ -207,17 +192,26 @@ watch(
           emit('error', 'Nepodařilo se uložit nastavení: ' + error.message)
         })
     }
+  }
+)
+
+// Watch pro two_factor_enabled z props.user
+watch(
+  () => props.user.two_factor_enabled,
+  (newValue) => {
+    if (securityForm.two_factor_enabled !== newValue) {
+      securityForm.two_factor_enabled = newValue
+    }
   },
-  { deep: true }
+  { immediate: true } // Zajistí okamžitou synchronizaci při inicializaci
 )
 
 // Funkce pro zpracování změny 2FA přepínače
 const handleTwoFactorChange = (newValue) => {
   // Pokud se změnilo two_factor_enabled, otevřeme dialog
-  if (newValue !== userStore.parameters.settings.two_factor_enabled) {
+  if (newValue !== props.user.two_factor_enabled) {
     // Vrátíme hodnotu zpět, protože ji budeme měnit přes dialog
-    securityForm.two_factor_enabled = userStore.parameters.settings.two_factor_enabled
-    console.log('Otevírání dialogu pro 2FA', newValue, userStore.parameters.settings.two_factor_enabled)
+    securityForm.two_factor_enabled = props.user.two_factor_enabled
     showTwoFactorDialog.value = true
   }
 }
@@ -248,19 +242,6 @@ const loadLoginHistory = async () => {
 onMounted(() => {
   loadLoginHistory()
 })
-
-// Test generování QR kódu
-const testGenerateQrCode = () => {
-  console.log('Testovací funkce pro generování QR kódu')
-  axios.get(route('two-factor.qr-code'))
-    .then(response => {
-      console.log('Test - QR kód úspěšně získán:', response.data)
-    })
-    .catch(error => {
-      console.error('Test - Chyba při získávání QR kódu:', error)
-      emit('error', 'Nepodařilo se vygenerovat QR kód: ' + (error.response?.data?.message || error.message))
-    })
-}
 
 // *** TAB: SECURITY - POMOCNÉ FUNKCE PRO HISTORII PŘIHLÁŠENÍ ***
 
