@@ -63,338 +63,59 @@
 
       <v-col cols="12" md="9">
         <!-- Profil -->
-        <v-card v-if="activeTab === 'profile'" class="mb-4">
-          <v-card-title>Osobní údaje</v-card-title>
-          <v-card-text>
-            <v-form @submit.prevent="updateProfile" ref="profileFormRef" v-model="isProfileFormValid">
-              <v-row>
-                <v-col cols="12" md="6">
-                  <v-text-field
-                    v-model="profileForm.name"
-                    label="Jméno"
-                    required
-                    :error-messages="errors.name"
-                    prepend-inner-icon="mdi-account"
-                  ></v-text-field>
-                </v-col>
-
-                <v-col cols="12" md="6">
-                  <v-text-field
-                    v-model="profileForm.phone"
-                    label="Telefon"
-                    :error-messages="errors.phone"
-                    prepend-inner-icon="mdi-phone"
-                  ></v-text-field>
-                </v-col>
-
-                <v-col cols="12">
-                  <v-textarea
-                    v-model="profileForm.bio"
-                    label="O mně"
-                    :error-messages="errors.bio"
-                    prepend-inner-icon="mdi-text"
-                    rows="3"
-                  ></v-textarea>
-                </v-col>
-              </v-row>
-
-              <v-btn 
-                color="primary" 
-                type="submit" 
-                :loading="profileForm.processing"
-                :disabled="!isProfileFormValid || profileForm.processing"
-              >
-                Uložit změny
-              </v-btn>
-            </v-form>
-          </v-card-text>
-        </v-card>
+        <ProfileTab 
+          v-if="activeTab === 'profile'" 
+          :user="user"
+          :errors="errors"
+          @success="showSnackbar"
+        />
 
         <!-- Heslo -->
-        <v-card v-if="activeTab === 'password'" class="mb-4">
-          <v-card-title>Změna hesla</v-card-title>
-          <v-card-text>
-            <v-form @submit.prevent="updatePassword" ref="passwordFormRef" v-model="isPasswordFormValid">
-              <v-text-field
-                v-model="passwordForm.current_password"
-                label="Současné heslo"
-                :type="showPassword ? 'text' : 'password'"
-                required
-                :error-messages="errors.current_password"
-                prepend-inner-icon="mdi-lock"
-                :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                @click:append-inner="showPassword = !showPassword"
-              ></v-text-field>
-
-              <v-text-field
-                v-model="passwordForm.password"
-                label="Nové heslo"
-                :type="showPassword ? 'text' : 'password'"
-                required
-                :error-messages="errors.password"
-                prepend-inner-icon="mdi-lock-plus"
-              ></v-text-field>
-
-              <v-text-field
-                v-model="passwordForm.password_confirmation"
-                label="Potvrzení nového hesla"
-                :type="showPassword ? 'text' : 'password'"
-                required
-                prepend-inner-icon="mdi-lock-check"
-              ></v-text-field>
-
-              <v-btn 
-                color="primary" 
-                type="submit"
-                :loading="passwordForm.processing"
-                :disabled="!isPasswordFormValid || passwordForm.processing"
-              >
-                Změnit heslo
-              </v-btn>
-            </v-form>
-          </v-card-text>
-        </v-card>
+        <PasswordTab 
+          v-if="activeTab === 'password'" 
+          :errors="errors"
+          @success="showSnackbar"
+        />
 
         <!-- Email -->
-        <v-card v-if="activeTab === 'email'" class="mb-4">
-          <v-card-title>Email</v-card-title>
-          <v-card-text>
-            <v-alert
-              v-if="showEmailVerificationAlert"
-              type="info"
-              title="Email změněn"
-              text="Na váš nový email byla odeslána zpráva s potvrzovacím odkazem. Pro dokončení změny emailu prosím klikněte na odkaz v této zprávě."
-              class="mb-4"
-              closable
-              @click:close="showEmailVerificationAlert = false"
-            ></v-alert>
-
-            <v-alert
-              v-if="!user.email_verified_at"
-              type="warning"
-              title="Email není ověřen"
-              text="Pro plné využití účtu prosím ověřte svůj email."
-              class="mb-4"
-            >
-              <template v-slot:append>
-                <v-btn
-                  color="warning"
-                  @click="resendVerification"
-                  :loading="verificationForm.processing"
-                >
-                  Znovu zaslat ověření
-                </v-btn>
-              </template>
-            </v-alert>
-
-            <v-form @submit.prevent="updateEmail" ref="emailFormRef" v-model="isEmailFormValid">
-              <v-text-field
-                v-model="emailForm.email"
-                label="Email"
-                type="email"
-                required
-                :error-messages="errors.email"
-                prepend-inner-icon="mdi-email"
-              ></v-text-field>
-
-              <v-btn 
-                color="primary" 
-                type="submit"
-                :loading="emailForm.processing"
-                :disabled="!isEmailFormValid || emailForm.processing"
-              >
-                Změnit email
-              </v-btn>
-            </v-form>
-          </v-card-text>
-        </v-card>
+        <EmailTab 
+          v-if="activeTab === 'email'" 
+          :user="user"
+          :errors="errors"
+          @success="showSnackbar"
+        />
 
         <!-- Notifikace -->
-        <v-card v-if="activeTab === 'notifications'" class="mb-4">
-          <v-card-title>Nastavení notifikací</v-card-title>
-          <v-card-text>
-            <v-form @submit.prevent="updateNotifications" ref="notificationsFormRef" v-model="isNotificationsFormValid">
-              <v-switch
-                v-model="notificationsForm.email_notifications"
-                label="Emailové notifikace"
-                color="primary"
-                hide-details
-                class="mb-4"
-              ></v-switch>
-
-              <v-switch
-                v-model="notificationsForm.push_notifications"
-                label="Push notifikace v prohlížeči"
-                color="primary"
-                hide-details
-                class="mb-4"
-              ></v-switch>
-
-              <v-switch
-                v-model="notificationsForm.newsletter"
-                label="Odebírat newsletter"
-                color="primary"
-                hide-details
-                class="mb-4"
-              ></v-switch>
-            </v-form>
-          </v-card-text>
-        </v-card>
+        <NotificationsTab 
+          v-if="activeTab === 'notifications'" 
+          :errors="errors"
+          @success="showSnackbar"
+          @error="showSnackbar($event, 'error')"
+        />
 
         <!-- Zabezpečení -->
-        <v-card v-if="activeTab === 'security'" class="mb-4">
-          <v-card-title>Zabezpečení účtu</v-card-title>
-          <v-card-text>
-            <v-form @submit.prevent="updateSecurity" ref="securityFormRef" v-model="isSecurityFormValid">
-              <v-switch
-                v-model="securityForm.two_factor_enabled"
-                label="Dvoufaktorové ověření"
-                color="primary"
-                hide-details
-                class="mb-4"
-              ></v-switch>
-
-              <v-switch
-                v-model="securityForm.login_notifications"
-                label="Upozornění na nové přihlášení"
-                color="primary"
-                hide-details
-                class="mb-4"
-              ></v-switch>
-
-              <v-expansion-panels class="mb-4">
-                <v-expansion-panel>
-                  <v-expansion-panel-title>
-                    Historie přihlášení
-                  </v-expansion-panel-title>
-                  <v-expansion-panel-text>
-                    <v-skeleton-loader
-                      v-if="isLoadingLoginHistory"
-                      type="list-item-three-line"
-                      :loading="isLoadingLoginHistory"
-                      class="mb-4"
-                    ></v-skeleton-loader>
-                    
-                    <v-alert
-                      v-if="!isLoadingLoginHistory && loginHistory.length === 0"
-                      type="info"
-                      text="Zatím nejsou k dispozici žádné záznamy o přihlášení."
-                      class="mb-4"
-                    ></v-alert>
-                    
-                    <v-list lines="two" v-else>
-                      <v-list-item
-                        v-for="(login, index) in loginHistory"
-                        :key="index"
-                        :subtitle="login.ip_address + (login.location ? ' · ' + login.location : '')"
-                        :class="{ 'bg-error-lighten-5': login.is_suspicious }"
-                      >
-                        <template v-slot:prepend>
-                          <v-icon :color="login.is_current ? 'success' : (login.is_suspicious ? 'error' : '')">
-                            {{ login.is_current ? 'mdi-check-circle' : deviceIcon(login.user_agent) }}
-                          </v-icon>
-                        </template>
-                        
-                        <v-list-item-title>
-                          {{ formatUserAgent(login.user_agent) }}
-                          <v-chip
-                            v-if="login.is_suspicious"
-                            color="error"
-                            size="x-small"
-                            class="ml-2"
-                          >
-                            Podezřelé
-                          </v-chip>
-                        </v-list-item-title>
-                        
-                        <template v-slot:append>
-                          <v-chip size="small" color="secondary" class="text-caption">
-                            {{ formatDate(login.created_at) }}
-                          </v-chip>
-                        </template>
-                      </v-list-item>
-                    </v-list>
-                  </v-expansion-panel-text>
-                </v-expansion-panel>
-              </v-expansion-panels>
-            </v-form>
-          </v-card-text>
-        </v-card>
+        <SecurityTab 
+          v-if="activeTab === 'security'" 
+          :user="user"
+          :errors="errors"
+          @success="showSnackbar"
+          @show-two-factor-dialog="showTwoFactorDialog = true"
+          @error="showSnackbar($event, 'error')"
+        />
 
         <!-- Nastavení -->
-        <v-card v-if="activeTab === 'settings'" class="mb-4">
-          <v-card-title>Nastavení účtu</v-card-title>
-          <v-card-text>
-            <v-form @submit.prevent="updateSettings" ref="settingsFormRef" v-model="isSettingsFormValid">
-              <v-select
-                v-model="settingsForm.language"
-                label="Jazyk rozhraní"
-                :items="[
-                  { title: 'Čeština', value: 'cs' },
-                  { title: 'English', value: 'en' }
-                ]"
-                prepend-inner-icon="mdi-translate"
-                class="mb-4"
-              ></v-select>
-
-              <v-select
-                v-model="settingsForm.theme"
-                label="Vzhled aplikace"
-                :items="[
-                  { title: 'Světlý', value: 'light' },
-                  { title: 'Tmavý', value: 'dark' },
-                  { title: 'Podle systému', value: 'system' }
-                ]"
-                prepend-inner-icon="mdi-theme-light-dark"
-                class="mb-4"
-              ></v-select>
-            </v-form>
-          </v-card-text>
-        </v-card>
+        <SettingsTab 
+          v-if="activeTab === 'settings'" 
+          :errors="errors"
+          @success="showSnackbar"
+          @error="showSnackbar($event, 'error')"
+        />
 
         <!-- Smazání účtu -->
-        <v-card v-if="activeTab === 'delete'" class="mb-4">
-          <v-card-title class="bg-error text-white">Smazání účtu</v-card-title>
-          <v-card-text>
-            <v-alert
-              type="warning"
-              class="mb-4"
-            >
-              <template v-slot:title>
-                Nevratná akce
-              </template>
-              <p>Smazání účtu je nevratná akce. Všechna vaše data budou trvale odstraněna.</p>
-            </v-alert>
-
-            <v-form @submit.prevent="deleteAccount" ref="deleteFormRef" v-model="isDeleteFormValid">
-              <v-text-field
-                v-model="deleteForm.password"
-                label="Pro potvrzení zadejte své heslo"
-                type="password"
-                required
-                :error-messages="errors.password"
-                prepend-inner-icon="mdi-lock"
-              ></v-text-field>
-
-              <v-checkbox
-                v-model="deleteForm.confirm"
-                label="Rozumím, že tato akce je nevratná"
-                required
-                :error-messages="errors.confirm"
-                class="mb-4"
-              ></v-checkbox>
-
-              <v-btn 
-                color="error" 
-                type="submit"
-                :loading="deleteForm.processing"
-                :disabled="!isDeleteFormValid || deleteForm.processing || !deleteForm.confirm"
-              >
-                Smazat účet
-              </v-btn>
-            </v-form>
-          </v-card-text>
-        </v-card>
+        <DeleteAccountTab 
+          v-if="activeTab === 'delete'" 
+          :errors="errors"
+        />
       </v-col>
     </v-row>
 
@@ -476,6 +197,16 @@ import { useUserStore } from '@/stores/userStore'
 import { storeToRefs } from 'pinia'
 import axios from 'axios'
 
+// Import komponent
+import ProfileTab from '@/Components/Account/ProfileTab.vue'
+import PasswordTab from '@/Components/Account/PasswordTab.vue'
+import EmailTab from '@/Components/Account/EmailTab.vue'
+import DeleteAccountTab from '@/Components/Account/DeleteAccountTab.vue'
+import NotificationsTab from '@/Components/Account/NotificationsTab.vue'
+import SettingsTab from '@/Components/Account/SettingsTab.vue'
+import SecurityTab from '@/Components/Account/SecurityTab.vue'
+
+// *** ZÁKLADNÍ PROPS A PROMĚNNÉ ***
 const props = defineProps({
   user: {
     type: Object,
@@ -491,6 +222,7 @@ const page = usePage()
 const userStore = useUserStore()
 const { parameters, isLoading, loginHistory } = storeToRefs(userStore)
 
+// *** NAVIGACE MEZI TABY ***
 // Inicializace activeTab z URL parametru nebo výchozí hodnoty
 const activeTab = ref(page.props.tab || 'profile')
 
@@ -514,131 +246,60 @@ watch(activeTab, (newTab) => {
   }
 })
 
-const showPassword = ref(false)
+// *** SPOLEČNÉ PROMĚNNÉ ***
+
 const showTwoFactorDialog = ref(false)
 const twoFactorQrCode = ref('')
 const isLoadingQrCode = ref(false)
 
-// Reference na formuláře
-const profileFormRef = ref(null)
-const passwordFormRef = ref(null)
-const emailFormRef = ref(null)
-const notificationsFormRef = ref(null)
-const securityFormRef = ref(null)
-const settingsFormRef = ref(null)
-const deleteFormRef = ref(null)
+// *** REFERENCE NA FORMULÁŘE ***
 
-// Validační stavy
-const isProfileFormValid = ref(true)
-const isPasswordFormValid = ref(true)
-const isEmailFormValid = ref(true)
-const isNotificationsFormValid = ref(true)
-const isSecurityFormValid = ref(true)
-const isSettingsFormValid = ref(true)
-const isDeleteFormValid = ref(true)
-const showEmailVerificationAlert = ref(false)
-const isLoadingLoginHistory = ref(false)
+const securityFormRef = ref(null)       // Tab: Security MOVED
 
-// Inicializace store při načtení komponenty
+// *** VALIDAČNÍ STAVY FORMULÁŘŮ ***
+
+const isSecurityFormValid = ref(true)       // Tab: Security MOVED
+const isLoadingLoginHistory = ref(false)    // Tab: Security MOVED
+
+// *** INICIALIZACE STORE ***
 onMounted(async () => {
   if (!userStore.isInitialized) {
     await userStore.fetchParameters()
   }
 })
 
-// Formuláře
-const profileForm = useForm({
-  name: props.user.name,
-  phone: props.user.phone || '',
-  bio: props.user.bio || ''
-})
+// *** DEFINICE FORMULÁŘŮ ***
 
-const passwordForm = useForm({
-  current_password: '',
-  password: '',
-  password_confirmation: ''
-})
 
-const emailForm = useForm({
-  email: props.user.email
-})
-
-const notificationsForm = useForm({
-  email_notifications: userStore.getEmailNotifications,
-  push_notifications: userStore.getPushNotifications,
-  newsletter: userStore.getNewsletter
-})
-
+// Tab: Security - Formulář pro nastavení zabezpečení MOVED
 const securityForm = useForm({
   two_factor_enabled: userStore.parameters.settings.two_factor_enabled,
   login_notifications: userStore.parameters.settings.login_notifications,
   sessions: props.user.sessions || []
 })
 
-const settingsForm = useForm({
-  language: userStore.getLanguage,
-  theme: userStore.getTheme
-})
-
-const deleteForm = useForm({
-  password: '',
-  confirm: false
-})
-
+// Tab: Security - Formulář pro dvoufaktorové ověření
 const twoFactorForm = useForm({
   code: ''
 })
 
-const verificationForm = useForm({})
 
-// Sledování změn v store a aktualizace formulářů
+
+// *** SLEDOVÁNÍ ZMĚN V STORE A AKTUALIZACE FORMULÁŘŮ *** MOVED
 watch(
   () => userStore.parameters.settings,
   (newSettings) => {
-    // Aktualizace formuláře notifikací
-    notificationsForm.email_notifications = newSettings.email_notifications
-    notificationsForm.push_notifications = newSettings.push_notifications
-    notificationsForm.newsletter = newSettings.newsletter
-
-    // Aktualizace formuláře nastavení
-    settingsForm.language = newSettings.language
-    settingsForm.theme = newSettings.theme
-    
-    // Přidáme aktualizaci login_notifications
+   
+    // Tab: Security - Aktualizace formuláře zabezpečení
     securityForm.login_notifications = newSettings.login_notifications
     securityForm.two_factor_enabled = newSettings.two_factor_enabled
   },
   { deep: true }
 )
 
-// Watch pro notifikace
-watch(
-  () => ({
-    email_notifications: notificationsForm.email_notifications,
-    push_notifications: notificationsForm.push_notifications,
-    newsletter: notificationsForm.newsletter
-  }),
-  (newValues) => {
-    if (notificationsForm.processing) return
-    userStore.updateNotifications(newValues)
-  },
-  { deep: true }
-)
+// *** TAB: SECURITY - WATCH PRO ZABEZPEČENÍ ***
 
-// Watch pro nastavení
-watch(
-  () => ({
-    language: settingsForm.language,
-    theme: settingsForm.theme
-  }),
-  (newValues) => {
-    if (settingsForm.processing) return
-    userStore.updateParameters(newValues)
-  },
-  { deep: true }
-)
-
-// Watch pro security
+// Watch pro two_factor_enabled
 watch(() => securityForm.two_factor_enabled, (newValue) => {
   if (newValue !== userStore.parameters.settings.two_factor_enabled) {
     showTwoFactorDialog.value = true
@@ -670,74 +331,11 @@ watch(() => userStore.parameters.settings, (newSettings) => {
   }
 }, { deep: true })
 
-// Metody pro zpracování formulářů
-const updateProfile = async () => {
-  if (profileFormRef.value) {
-    const { valid } = await profileFormRef.value.validate()
-    if (!valid) return
-  }
+// *** METODY PRO ZPRACOVÁNÍ FORMULÁŘŮ ***
 
-  profileForm.put(route('profile.update'), {
-    onSuccess: () => {
-      isProfileFormValid.value = true
-    },
-    onError: (errors) => {
-      isProfileFormValid.value = false
-    },
-    preserveScroll: true
-  })
-}
 
-const updatePassword = async () => {
-  if (passwordFormRef.value) {
-    const { valid } = await passwordFormRef.value.validate()
-    if (!valid) return
-  }
 
-  passwordForm.put(route('password.update'), {
-    onSuccess: () => {
-      passwordForm.reset()
-      isPasswordFormValid.value = true
-    },
-    onError: () => {
-      isPasswordFormValid.value = false
-    }
-  })
-}
-
-const updateEmail = async () => {
-  if (emailFormRef.value) {
-    const { valid } = await emailFormRef.value.validate()
-    if (!valid) return
-  }
-
-  emailForm.put(route('email.update'), {
-    onSuccess: () => {
-      isEmailFormValid.value = true
-      showEmailVerificationAlert.value = true
-    },
-    onError: () => {
-      isEmailFormValid.value = false
-    }
-  })
-}
-
-const updateNotifications = async () => {
-  if (notificationsFormRef.value) {
-    const { valid } = await notificationsFormRef.value.validate()
-    if (!valid) return
-  }
-
-  notificationsForm.put(route('notifications.update'), {
-    onSuccess: () => {
-      isNotificationsFormValid.value = true
-    },
-    onError: () => {
-      isNotificationsFormValid.value = false
-    }
-  })
-}
-
+// *** TAB: SECURITY - AKTUALIZACE ZABEZPEČENÍ ***
 const updateSecurity = async () => {
   if (securityFormRef.value) {
     const { valid } = await securityFormRef.value.validate()
@@ -755,42 +353,7 @@ const updateSecurity = async () => {
   })
 }
 
-const updateSettings = async () => {
-  if (settingsFormRef.value) {
-    const { valid } = await settingsFormRef.value.validate()
-    if (!valid) return
-  }
-
-  settingsForm.put(route('settings.update'), {
-    onSuccess: () => {
-      isSettingsFormValid.value = true
-    },
-    onError: () => {
-      isSettingsFormValid.value = false
-    }
-  })
-}
-
-const deleteAccount = async () => {
-  if (deleteFormRef.value) {
-    const { valid } = await deleteFormRef.value.validate()
-    if (!valid) return
-  }
-
-  deleteForm.delete(route('profile.destroy'), {
-    onSuccess: () => {
-      isDeleteFormValid.value = true
-    },
-    onError: () => {
-      isDeleteFormValid.value = false
-    }
-  })
-}
-
-const resendVerification = () => {
-  verificationForm.post(route('verification.send'))
-}
-
+// *** TAB: SECURITY - GENEROVÁNÍ QR KÓDU PRO 2FA ***
 const generateTwoFactorQrCode = () => {
   twoFactorQrCode.value = ''
   isLoadingQrCode.value = true
@@ -806,13 +369,16 @@ const generateTwoFactorQrCode = () => {
     })
 }
 
-// Snackbar
+// *** SPOLEČNÉ KOMPONENTY ***
+
+// Snackbar pro zobrazení notifikací
 const snackbar = ref({
   show: false,
   text: '',
   color: 'success'
 })
 
+// *** TAB: SECURITY - POTVRZENÍ 2FA DIALOGU ***
 const confirmTwoFactor = () => {
   if (!userStore.parameters.settings.two_factor_enabled) {
     // Aktivace 2FA
@@ -847,77 +413,14 @@ const confirmTwoFactor = () => {
   }
 }
 
+// *** TAB: SECURITY - ODHLÁŠENÍ RELACE ***
 const logoutSession = (sessionId) => {
   axios.delete(route('sessions.destroy', sessionId)).then(() => {
     securityForm.sessions = securityForm.sessions.filter(session => session.id !== sessionId)
   })
 }
 
-// Načtení historie přihlášení při otevření panelu historie
-const loadLoginHistory = async () => {
-  isLoadingLoginHistory.value = true;
-  try {
-    await userStore.fetchLoginHistory();
-  } catch (error) {
-    console.error('Chyba při načítání historie:', error);
-  } finally {
-    isLoadingLoginHistory.value = false;
-  }
-};
-
-// Načtení historie při otevření záložky Security
-watch(activeTab, (newVal) => {
-  if (newVal === 'security') {
-    loadLoginHistory();
-  }
-});
-
-// Přidáme také načtení historie při inicializaci komponenty, pokud jsme na záložce Security
-onMounted(() => {
-  if (activeTab.value === 'security') {
-    loadLoginHistory();
-  }
-});
-
-// Funkce pro určení ikony na základě user-agent
-const deviceIcon = (userAgent) => {
-  userAgent = userAgent.toLowerCase();
-  if (userAgent.includes('mobile') || userAgent.includes('android') || userAgent.includes('iphone')) {
-    return 'mdi-cellphone';
-  } else if (userAgent.includes('tablet') || userAgent.includes('ipad')) {
-    return 'mdi-tablet';
-  } else {
-    return 'mdi-desktop-classic';
-  }
-};
-
-// Funkce pro formátování user-agent do čitelnější podoby
-const formatUserAgent = (userAgent) => {
-  // Zjednodušené formátování - v reálné implementaci by bylo lepší použít knihovnu
-  if (userAgent.includes('Firefox')) {
-    return 'Firefox';
-  } else if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
-    return 'Chrome';
-  } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
-    return 'Safari';
-  } else if (userAgent.includes('Edg')) {
-    return 'Edge';
-  } else {
-    return 'Prohlížeč';
-  }
-  // V reálné implementaci bychom přidali také informaci o operačním systému
-};
-
-const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('cs', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
-};
+// *** SPOLEČNÉ FUNKCE ***
 
 // Funkce pro zobrazení notifikace
 const showSnackbar = (text, color = 'info') => {
