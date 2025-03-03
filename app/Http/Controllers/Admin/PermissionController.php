@@ -7,10 +7,31 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Permission;
 
+/**
+ * Controller pro správu oprávnění v systému
+ * Zajišťuje CRUD operace nad oprávněními a jejich organizaci do modulů
+ * 
+ * @package App\Http\Controllers\Admin
+ */
 class PermissionController extends Controller
 {
+    // TODO: Vytvořit Form Request třídy pro validaci (StorePermissionRequest, UpdatePermissionRequest)
+    // TODO: Přidat Resource třídu pro transformaci dat (PermissionResource)
+    // SECURITY: Implementovat middleware pro kontrolu přístupu k operacím
+    // PERFORMANCE: Optimalizovat načítání oprávnění a jejich vztahů
+    // HACK: Dočasně používáme přímé mapování dat místo Resource třídy
+
+    /**
+     * Zobrazí seznam všech oprávnění
+     * 
+     * @return \Inertia\Response
+     */
     public function index()
     {
+        // TODO: Implementovat stránkování seznamu oprávnění
+        // TODO: Přidat filtrování podle modulu
+        // PERFORMANCE: Optimalizovat dotazy na počet rolí pomocí withCount
+
         $permissions = Permission::all()->map(function ($permission) {
             // Rozdělení názvu oprávnění na modul a akci
             $parts = explode('.', $permission->name);
@@ -36,8 +57,17 @@ class PermissionController extends Controller
         ]);
     }
 
+    /**
+     * Zobrazí formulář pro vytvoření nového oprávnění
+     * 
+     * @return \Inertia\Response
+     */
     public function create()
     {
+        // TODO: Přidat validaci existujících modulů
+        // TODO: Implementovat našeptávání pro název akce
+        // NOTE: Zvážit cachování seznamu modulů pro lepší výkon
+
         // Získání existujících modulů pro dropdown
         $modules = Permission::all()
             ->map(function ($permission) {
@@ -53,8 +83,18 @@ class PermissionController extends Controller
         ]);
     }
 
+    /**
+     * Uloží nové oprávnění
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
+        // TODO: Přesunout validaci do StorePermissionRequest
+        // TODO: Přidat validaci formátu modulu a akce
+        // SECURITY: Implementovat kontrolu duplicit case-insensitive
+
         $request->validate([
             'module' => 'required|string|max:255',
             'action' => 'required|string|max:255',
@@ -75,8 +115,18 @@ class PermissionController extends Controller
             ->with('success', 'Oprávnění bylo úspěšně vytvořeno.');
     }
 
+    /**
+     * Zobrazí formulář pro úpravu oprávnění
+     * 
+     * @param Permission $permission
+     * @return \Inertia\Response
+     */
     public function edit(Permission $permission)
     {
+        // TODO: Přidat zobrazení rolí používajících toto oprávnění
+        // TODO: Implementovat historii změn oprávnění
+        // NOTE: Zvážit přidání preview dopadu změn na existující role
+
         $parts = explode('.', $permission->name);
         
         // Získání existujících modulů pro dropdown
@@ -101,8 +151,20 @@ class PermissionController extends Controller
         ]);
     }
 
+    /**
+     * Aktualizuje oprávnění
+     * 
+     * @param Request $request
+     * @param Permission $permission
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, Permission $permission)
     {
+        // TODO: Přesunout validaci do UpdatePermissionRequest
+        // TODO: Přidat logování změn oprávnění
+        // SECURITY: Implementovat kontrolu pro systémová oprávnění
+        // PERFORMANCE: Optimalizovat aktualizaci pomocí transakce
+
         $request->validate([
             'module' => 'required|string|max:255',
             'action' => 'required|string|max:255',
@@ -125,8 +187,18 @@ class PermissionController extends Controller
             ->with('success', 'Oprávnění bylo úspěšně aktualizováno.');
     }
 
+    /**
+     * Odstraní oprávnění
+     * 
+     * @param Permission $permission
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function destroy(Permission $permission)
     {
+        // FIXME: Ošetřit smazání oprávnění používaného v rolích
+        // SECURITY: Přidat kontrolu závislostí před smazáním
+        // TODO: Přidat možnost přesunu rolí na jiné oprávnění před smazáním
+
         // Kontrola, zda je oprávnění používáno rolemi
         if ($permission->roles()->count() > 0) {
             return redirect()->route('admin.permissions.index')

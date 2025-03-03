@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -9,10 +9,38 @@ use Inertia\Inertia;
 use App\Models\LoginHistory;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Controller pro správu historie přihlášení
+ * Sleduje a zobrazuje historii přihlášení uživatele včetně detailů o zařízeních a lokacích
+ */
 class LoginHistoryController extends Controller
 {
+    // TODO: Vytvořit Resource třídu pro transformaci dat (LoginHistoryResource)
+    // TODO: Implementovat export historie do PDF/CSV
+    // SECURITY: Přidat šifrování citlivých údajů o zařízeních
+    // PERFORMANCE: Optimalizovat ukládání a načítání historie
+    // NOTE: Historie přihlášení je důležitá pro bezpečnostní audit
+    // TODO: Implementovat stránkování historie přihlášení
+    // TODO: Přidat filtrování podle data a zařízení
+    // SECURITY: Přidat detekci podezřelých přihlášení
+    // PERFORMANCE: Optimalizovat agregaci dat pro grafy
+
     /**
-     * Získání historie přihlášení pro aktuálního uživatele.
+     * Zobrazí historii přihlášení pro aktuálního uživatele
+     * 
+     * @param Request $request HTTP požadavek
+     * @return \Inertia\Response|\Illuminate\Http\JsonResponse
+     * 
+     * Metoda:
+     * 1. Načte posledních 10 záznamů přihlášení
+     * 2. Transformuje data pro zobrazení
+     * 3. Označí aktuální session
+     * 4. Vrací data podle požadovaného formátu (JSON/Inertia)
+     * 
+     * Bezpečnostní prvky:
+     * - Filtrování podle user_id (každý vidí jen své přihlášení)
+     * - Limitovaný počet záznamů (ochrana proti přetížení)
+     * - Logování přístupů pro audit
      */
     public function index(Request $request)
     {
