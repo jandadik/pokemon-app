@@ -25,13 +25,30 @@
           prepend-inner-icon="mdi-theme-light-dark"
           class="mb-4"
         ></v-select>
+        
+        <!-- Ukázka vybraného tématu -->
+        <v-card class="mt-4 mb-4 pa-4" :theme="previewTheme">
+          <v-card-title class="text-center">Ukázka zvoleného vzhledu</v-card-title>
+          <v-card-text>
+            <div class="d-flex flex-column align-center">
+              <v-icon size="48" class="mb-2">mdi-theme-light-dark</v-icon>
+              <div class="text-center">
+                {{ getThemeLabel(settingsForm.theme) }}
+              </div>
+              <v-chip color="primary" class="ma-2">Primární</v-chip>
+              <v-chip color="secondary" class="ma-2">Sekundární</v-chip>
+              <v-chip color="accent" class="ma-2">Akcent</v-chip>
+              <v-chip color="error" class="ma-2">Chyba</v-chip>
+            </div>
+          </v-card-text>
+        </v-card>
       </v-form>
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { useUserStore } from '@/stores/userStore'
 
@@ -52,6 +69,25 @@ const settingsForm = useForm({
   language: userStore.getLanguage,
   theme: userStore.getTheme
 })
+
+// Detekce systémového nastavení
+const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)')
+const isDarkMode = ref(systemPrefersDark.matches)
+
+// Pro náhled témat
+const previewTheme = computed(() => {
+  if (settingsForm.theme === 'system') {
+    return isDarkMode.value ? 'dark' : 'light'
+  }
+  return settingsForm.theme
+})
+
+// Vrátí popis tématu
+function getThemeLabel(theme) {
+  if (theme === 'light') return 'Světlý režim'
+  if (theme === 'dark') return 'Tmavý režim'
+  return `Podle systému (${isDarkMode.value ? 'tmavý' : 'světlý'})`
+}
 
 // Sledování změn v store a aktualizace formuláře
 watch(
@@ -87,9 +123,11 @@ const updateSettings = async () => {
   settingsForm.put(route('settings.update'), {
     onSuccess: () => {
       isSettingsFormValid.value = true
+      emit('success', 'Nastavení bylo úspěšně uloženo')
     },
     onError: () => {
       isSettingsFormValid.value = false
+      emit('error', 'Při ukládání nastavení došlo k chybě')
     }
   })
 }

@@ -56,6 +56,18 @@
                 <v-list-item prepend-icon="mdi-logout" title="Odhlásit" value="logout" />
             </Link>
         </v-list>
+        
+        <v-divider />
+        
+        <!-- Sekce Nastavení -->
+        <v-list-subheader>Nastavení</v-list-subheader>
+        <v-list density="compact" nav>
+            <v-list-item prepend-icon="mdi-theme-light-dark" title="Téma aplikace">
+                <template v-slot:append>
+                    <ThemeSwitcher />
+                </template>
+            </v-list-item>
+        </v-list>
     </v-navigation-drawer>
 </template>
 
@@ -63,6 +75,7 @@
     import { ref, computed } from 'vue'
     import { Link } from '@inertiajs/vue3'
     import { useAuthStore } from '@/stores/authStore'
+    import ThemeSwitcher from '@/Components/ThemeSwitcher.vue'
 
     const auth = useAuthStore()
     const props = defineProps({
