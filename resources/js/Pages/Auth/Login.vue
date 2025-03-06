@@ -73,6 +73,34 @@
                                 Přihlásit se
                             </v-btn>
 
+                            <div class="d-flex align-items-center my-4">
+                                <v-divider class="flex-grow-1"></v-divider>
+                                <span class="mx-4 text-medium-emphasis">nebo</span>
+                                <v-divider class="flex-grow-1"></v-divider>
+                            </div>
+                            
+                            <v-btn
+                                color="indigo"
+                                block
+                                @click="redirectToWorkOS"
+                                class="mb-4"
+                                prepend-icon="mdi-account-group"
+                            >
+                                Přihlásit se přes SSO
+                            </v-btn>
+
+                            <div v-if="isDevelopment" class="my-2 text-center">
+                                <v-btn
+                                    color="grey"
+                                    variant="text"
+                                    size="small"
+                                    @click="openWorkOSDirectly"
+                                    class="text-caption"
+                                >
+                                    Otevřít SSO v tomto okně (pro vývojáře)
+                                </v-btn>
+                            </div>
+
                             <div class="text-center mt-4">
                                 <span class="text-medium-emphasis">Nemáte účet?</span>
                                 <v-btn
@@ -131,6 +159,8 @@ const form = useForm({
     remember: false
 })
 
+const isDevelopment = ref(window.location.hostname === 'localhost');
+
 const submit = async () => {
     if (formRef.value) {
         const { valid } = await formRef.value.validate()
@@ -157,5 +187,15 @@ const navigateToForgotPassword = () => {
 
 const navigateToRegister = () => {
     router.visit(route('user-account.create'))
+}
+
+const redirectToWorkOS = () => {
+    // Místo fetch požadavku použijeme přímé otevření v novém okně nebo záložce
+    window.open(route('auth.workos'), '_self');
+}
+
+const openWorkOSDirectly = () => {
+    // Pro testování přímo ve stejném okně
+    window.location.href = route('auth.workos');
 }
 </script>

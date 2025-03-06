@@ -229,3 +229,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('sessions/{session}', [SessionController::class, 'destroy'])
         ->name('sessions.destroy');
 });
+
+// WorkOS SSO routes
+Route::get('/auth/workos', [App\Http\Controllers\Auth\WorkOSController::class, 'redirect'])
+    ->name('auth.workos');
+    
+Route::get('/authenticate', [App\Http\Controllers\Auth\WorkOSController::class, 'callback'])
+    ->name('auth.workos.callback');
