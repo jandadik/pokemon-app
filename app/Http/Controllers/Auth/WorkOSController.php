@@ -118,6 +118,9 @@ class WorkOSController extends Controller
             Auth::login($user);
             \Log::info('Uživatel přihlášen: ' . $profile->email);
 
+            // Označení nového přihlášení
+            session(['auth.login_triggered' => true]);
+
             // Přesměrování na dashboard
             return redirect()->intended('/');
             

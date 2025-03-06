@@ -113,8 +113,8 @@
                     <tr>
                         <td>Dvoufaktorové ověření</td>
                         <td>
-                            <v-icon :color="authStore.user.two_factor_enabled ? 'success' : 'error'">
-                                {{ authStore.user.two_factor_enabled ? 'mdi-check' : 'mdi-close' }}
+                            <v-icon :color="authStore.user?.two_factor_enabled ? 'success' : 'error'">
+                                {{ authStore.user?.two_factor_enabled ? 'mdi-check' : 'mdi-close' }}
                             </v-icon>
                         </td>
                     </tr>
@@ -135,10 +135,12 @@ const authStore = useAuthStore()
 const activeTab = ref('profile')
 
 onMounted(() => {
-    console.log('Two Factor Auth Status:', {
-        enabled: authStore.user.two_factor_enabled,
-        user: authStore.user
-    })
+    if (authStore.user) {
+        console.log('Two Factor Auth Status:', {
+            enabled: authStore.user.two_factor_enabled,
+            user: authStore.user
+        })
+    }
 })
 </script>
 

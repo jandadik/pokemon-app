@@ -24,6 +24,9 @@ export const useUserStore = defineStore('user', {
     loginHistory: []
   }),
 
+  // Přidáme persist plugin
+  persist: true,
+
   getters: {
     // Notifikace
     getEmailNotifications: (state) => state.parameters.settings.email_notifications,
@@ -43,20 +46,26 @@ export const useUserStore = defineStore('user', {
     // Načtení parametrů z databáze
     async fetchParameters() {
       try {
-        this.isLoading = true
+        console.log('fetchParameters() volána');
+        this.isLoading = true;
         
-        const response = await axios.get(route('parameters.fetch'))
+        const response = await axios.get(route('parameters.fetch'));
+        console.log('Odpověď z parametrů:', response.data);
         
         if (response.data.parameters) {
-          this.initializeParameters(response.data.parameters)
+          this.initializeParameters(response.data.parameters);
+          this.isInitialized = true;
+          console.log('Parametry inicializovány:', this.parameters.settings);
+        } else {
+          console.warn('Parametry nebyly nalezeny v odpovědi');
         }
-        
-        this.isInitialized = true
       } catch (error) {
-        console.error('Chyba při načítání parametrů:', error)
+        console.error('Chyba při načítání parametrů:', error);
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
+      
+      return this.parameters;
     },
 
     // Inicializace parametrů z backendu
@@ -190,10 +199,16 @@ export const useUserStore = defineStore('user', {
   }
 })
 
-// Automatická inicializace store při přihlášení
-document.addEventListener('DOMContentLoaded', () => {
-  const store = useUserStore()
+// Automatická inicializace store při načtení stránky - vylepšena
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('DOMContentLoaded - inicializace userStore');
+  const store = useUserStore();
+  console.log('userStore inicializován:', store.isInitialized);
+  console.log('Meta tag uživatele:', !!document.querySelector('meta[name="user-id"]'));
+  
   if (!store.isInitialized && document.querySelector('meta[name="user-id"]')) {
-    store.fetchParameters()
+    console.log('Volám fetchParameters při inicializaci');
+    await store.fetchParameters();
+    console.log('Parametry načteny, isInitialized:', store.isInitialized);
   }
-}) 
+}); 

@@ -22,6 +22,7 @@ use App\Http\Controllers\User\SessionController;
 use App\Http\Controllers\User\LoginHistoryController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Middleware\TrackNewLogin;
 
 Route::get('/', [IndexController::class, 'index'])->name('index');
 
@@ -36,7 +37,8 @@ Route::resource('set', SetController::class)
     ->only(['index', 'show']);
 
 Route::get('login', [AuthController::class, 'create'])->name('login');
-Route::post('login', [AuthController::class, 'store'])->name('login.store');
+Route::post('login', [AuthController::class, 'store'])
+    ->name('login.store');
 Route::delete('logout', [AuthController::class, 'destroy'])->name('logout');
 
 Route::get('user-account/create', [UserAccountController::class, 'create'])->name('user-account.create');

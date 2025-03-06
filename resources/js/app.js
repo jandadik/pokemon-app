@@ -14,8 +14,10 @@ import { ref, watch } from 'vue'
 
 // Pinia
 import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
 
 // Vytvoříme defaultní hodnotu pro tmavý režim před inicializací Vuetify
 let prefersDarkTheme = false
@@ -80,19 +82,37 @@ createInertiaApp({
     
     // Reaktivní nastavení témat
     const updateTheme = () => {
+      console.log('Aktualizace tématu, aktuální nastavení:', userStore.getTheme);
       const themePreference = userStore.getTheme
       
       if (themePreference === 'system') {
         // Nastavení podle systému
         vuetify.theme.global.name.value = systemPrefersDark.matches ? 'dark' : 'light'
+        console.log('Nastaveno téma podle systému:', vuetify.theme.global.name.value);
       } else {
         // Explicitní nastavení uživatelem
         vuetify.theme.global.name.value = themePreference
+        console.log('Nastaveno explicitní téma:', themePreference);
       }
     }
     
+    // Zajistíme, že uživatelské parametry jsou načteny před inicializací tématu
+    if (document.querySelector('meta[name="user-id"]') && !userStore.isInitialized) {
+      console.log('Načítám parametry před nastavením tématu');
+      userStore.fetchParameters().then(() => {
+        console.log('Parametry načteny, nastavuji téma');
+        updateTheme();
+      });
+    } else {
+      console.log('Použití aktuálních nastavení pro téma');
+      updateTheme();
+    }
+    
     // Sledování změn nastavení tématu
-    watch(() => userStore.getTheme, updateTheme, { immediate: true })
+    watch(() => userStore.getTheme, (newTheme) => {
+      console.log('Změna tématu na:', newTheme);
+      updateTheme();
+    });
 
     // Sledování změn preferencí systému
     systemPrefersDark.addEventListener('change', updateTheme)

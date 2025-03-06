@@ -62,4 +62,16 @@ onMounted(() => {
 watch(theme, (newTheme) => {
     vuetifyTheme.global.name.value = newTheme
 }, { immediate: true })
+
+// Sledujeme flash zprávy ze serveru
+watch(() => page.props.flash, (flash) => {
+  //console.log('Flash zprávy ze serveru:', flash);
+  
+  if (flash && flash.success === 'new_login') {
+    //console.log('Detekována flash zpráva success s hodnotou new_login, spouštím fetchParameters');
+    userStore.fetchParameters();
+  } else {
+    //console.log('Žádná odpovídající flash zpráva nebyla nalezena');
+  }
+}, { immediate: true });
 </script>

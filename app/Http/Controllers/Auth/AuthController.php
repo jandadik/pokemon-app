@@ -51,6 +51,9 @@ class AuthController extends Controller
         }
         
         $request->session()->regenerate();
+        
+        // Označení nového přihlášení
+        session(['auth.login_triggered' => true]);
 
         return redirect()->intended(route('index'));
     }
