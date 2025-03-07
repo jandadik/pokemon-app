@@ -59,7 +59,7 @@ class LoginNotification extends Mailable
                 'user' => $this->user,
                 'loginRecord' => $this->loginRecord,
                 'isSuspicious' => $this->loginRecord->is_suspicious,
-                'url' => route('profile', ['tab' => 'security']),
+                'url' => route('user.profile', ['tab' => 'security']),
             ],
         );
     }

@@ -62,10 +62,10 @@ const form = useForm({})
 const logoutForm = useForm({})
 
 const submit = () => {
-  form.post(route('verification.send'))
+  form.post(route('auth.verification.send'))
 }
 
 const logout = () => {
-  logoutForm.post(route('logout'))
+  logoutForm.post(route('auth.logout'))
 }
 </script> 

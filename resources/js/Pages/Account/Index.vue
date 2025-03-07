@@ -227,8 +227,8 @@ watch(activeTab, (newTab) => {
       {},
       '',
       newTab === 'profile' 
-        ? route('profile') 
-        : route('profile', { tab: newTab })
+        ? route('user.profile') 
+        : route('user.profile', { tab: newTab })
     )
   }
 })
@@ -251,7 +251,7 @@ const snackbar = ref({
 
 // *** TAB: SECURITY - ODHLÁŠENÍ RELACE ***
 const logoutSession = (sessionId) => {
-  axios.delete(route('sessions.destroy', sessionId)).then(() => {
+  axios.delete(route('user.sessions.destroy', sessionId)).then(() => {
     securityForm.sessions = securityForm.sessions.filter(session => session.id !== sessionId)
   })
 }

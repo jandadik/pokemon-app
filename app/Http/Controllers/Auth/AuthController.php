@@ -55,7 +55,7 @@ class AuthController extends Controller
         // Označení nového přihlášení
         session(['auth.login_triggered' => true]);
 
-        return redirect()->intended(route('index'));
+        return redirect()->intended(route('public.index'));
     }
 
     /**
@@ -75,6 +75,6 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('index');
+        return redirect()->route('public.index');
     }
 }

@@ -68,7 +68,7 @@ const deleteAccount = async () => {
     if (!valid) return
   }
 
-  deleteForm.delete(route('profile.destroy'), {
+  deleteForm.delete(route('user.profile.destroy'), {
     onSuccess: () => {
       isDeleteFormValid.value = true
     },

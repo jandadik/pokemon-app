@@ -73,7 +73,7 @@ const updatePassword = async () => {
     if (!valid) return
   }
 
-  passwordForm.put(route('password.update'), {
+  passwordForm.put(route('user.password.update'), {
     onSuccess: () => {
       passwordForm.reset()
       isPasswordFormValid.value = true

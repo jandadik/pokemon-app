@@ -87,7 +87,7 @@ const updateEmail = async () => {
     if (!valid) return
   }
 
-  emailForm.put(route('email.update'), {
+  emailForm.put(route('user.email.update'), {
     onSuccess: () => {
       isEmailFormValid.value = true
       showEmailVerificationAlert.value = true
@@ -100,7 +100,7 @@ const updateEmail = async () => {
 }
 
 const resendVerification = () => {
-  verificationForm.post(route('verification.send'), {
+  verificationForm.post(route('auth.verification.send'), {
     onSuccess: () => {
       emit('success', 'Ověřovací email byl znovu odeslán')
     }

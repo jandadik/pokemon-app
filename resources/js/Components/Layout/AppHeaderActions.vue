@@ -30,7 +30,7 @@
         </template>
         <v-list>
             <v-list-item>
-                <Link :href="route('profile')">
+                <Link :href="route('user.profile')">
                     <v-list-item-title>
                         <v-icon start>mdi-account</v-icon>
                         Profil
@@ -38,7 +38,7 @@
                 </Link>
             </v-list-item>
             <v-list-item>
-                <Link :href="route('profile', { tab: 'settings' })">
+                <Link :href="route('user.profile', { tab: 'settings' })">
                     <v-list-item-title>
                         <v-icon start>mdi-cog</v-icon>
                         Nastavení
@@ -47,7 +47,7 @@
             </v-list-item>
             <v-divider></v-divider>
             <v-list-item>
-                <Link :href="route('logout')" method="delete" as="button">
+                <Link :href="route('auth.logout')" method="delete" as="button">
                     <v-list-item-title>
                         <v-icon start>mdi-logout</v-icon>
                         Odhlásit
@@ -59,7 +59,7 @@
     
     <!-- Přihlášení a registrace pro nepřihlášeného uživatele -->
     <template v-else>
-        <Link :href="route('login')">
+        <Link :href="route('auth.login')">
             <v-btn 
                 :icon="$vuetify.display.mobile"
                 :variant="$vuetify.display.mobile ? 'plain' : 'text'"

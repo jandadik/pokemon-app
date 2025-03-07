@@ -80,7 +80,7 @@ const updateProfile = async () => {
     if (!valid) return
   }
 
-  profileForm.put(route('profile.update'), {
+  profileForm.put(route('user.profile.update'), {
     onSuccess: () => {
       isProfileFormValid.value = true
       emit('success', 'Profil byl úspěšně aktualizován')

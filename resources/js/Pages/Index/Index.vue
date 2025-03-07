@@ -3,7 +3,7 @@
         <v-card-title class="text-h5">
             Nastavení vašeho účtu
             <Link
-                :href="route('profile')"
+                :href="route('user.profile')"
                 class="float-right"
             >
                 <v-btn
@@ -36,7 +36,7 @@
                             </v-icon>
                         </td>
                         <td rowspan="3">
-                            <Link :href="route('profile', { tab: 'notifications' })">
+                            <Link :href="route('user.profile', { tab: 'notifications' })">
                                 <v-btn
                                     variant="text"
                                     color="primary"
@@ -69,7 +69,7 @@
                         <td>Jazyk</td>
                         <td>{{ userStore.getLanguage === 'cs' ? 'Čeština' : 'English' }}</td>
                         <td rowspan="2">
-                            <Link :href="route('profile', { tab: 'settings' })">
+                            <Link :href="route('user.profile', { tab: 'settings' })">
                                 <v-btn
                                     variant="text"
                                     color="primary"
@@ -100,7 +100,7 @@
                             </v-icon>
                         </td>
                         <td rowspan="2">
-                            <Link :href="route('profile', { tab: 'security' })">
+                            <Link :href="route('user.profile', { tab: 'security' })">
                                 <v-btn
                                     variant="text"
                                     color="primary"

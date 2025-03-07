@@ -170,7 +170,7 @@ const submit = async () => {
         }
     }
 
-    form.post(route('login.store'), {
+    form.post(route('auth.login.store'), {
         onSuccess: () => {
             isFormValid.value = true
             form.reset()
@@ -182,11 +182,11 @@ const submit = async () => {
 }
 
 const navigateToForgotPassword = () => {
-    router.visit(route('password.request'))
+    router.visit(route('auth.password.request'))
 }
 
 const navigateToRegister = () => {
-    router.visit(route('user-account.create'))
+    router.visit(route('auth.user-account.create'))
 }
 
 const redirectToWorkOS = () => {

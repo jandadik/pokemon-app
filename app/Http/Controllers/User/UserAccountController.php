@@ -70,7 +70,7 @@ class UserAccountController extends Controller
         $user->assignRole('user');
         $request->session()->regenerate();
 
-        return redirect()->intended(route('index'))
+        return redirect()->intended(route('public.index'))
             ->with('success', 'Účet byl úspěšně vytvořen.');
     }
 }

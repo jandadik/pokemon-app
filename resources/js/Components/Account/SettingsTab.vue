@@ -120,7 +120,7 @@ const updateSettings = async () => {
     if (!valid) return
   }
 
-  settingsForm.put(route('settings.update'), {
+  settingsForm.put(route('user.settings.update'), {
     onSuccess: () => {
       isSettingsFormValid.value = true
       emit('success', 'Nastavení bylo úspěšně uloženo')

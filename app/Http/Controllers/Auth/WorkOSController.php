@@ -74,7 +74,7 @@ class WorkOSController extends Controller
             $error = $request->query('error');
             $errorDescription = $request->query('error_description');
             \Log::error('WorkOS vrátil chybu: ' . $error . ' - ' . $errorDescription);
-            return redirect()->route('login')->with('error', 'Přihlášení přes WorkOS selhalo: ' . $errorDescription);
+            return redirect()->route('auth.login')->with('error', 'Přihlášení přes WorkOS selhalo: ' . $errorDescription);
         }
         
         // Získání kódu z WorkOS
@@ -83,7 +83,7 @@ class WorkOSController extends Controller
         
         if (!$code) {
             \Log::error('WorkOS error: Parametr code chybí v callback požadavku');
-            return redirect()->route('login')->with('error', 'Přihlášení přes WorkOS selhalo: Chybí autorizační kód');
+            return redirect()->route('auth.login')->with('error', 'Přihlášení přes WorkOS selhalo: Chybí autorizační kód');
         }
         
         // Získání a dekódování state parametru, který je JSON objekt
@@ -127,7 +127,7 @@ class WorkOSController extends Controller
         } catch (\Exception $e) {
             // Něco se pokazilo
             \Log::error('WorkOS error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            return redirect()->route('login')->with('error', 'Přihlášení přes WorkOS selhalo: ' . $e->getMessage());
+            return redirect()->route('auth.login')->with('error', 'Přihlášení přes WorkOS selhalo: ' . $e->getMessage());
         }
     }
 } 

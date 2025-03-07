@@ -12,7 +12,7 @@ class IndexController extends Controller
     {
         // dd(Auth::user());
         // if (!Auth::check()) {
-        //     return redirect()->route('login');
+        //     return redirect()->route('auth.login');
         // }
         return inertia(
             'Index/Index'

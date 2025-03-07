@@ -133,7 +133,7 @@ const handleFieldUpdate = async (field) => {
 const submit = () => {
     if (!isFormValid.value) return
 
-    form.post(route('user-account.store'), {
+    form.post(route('auth.user-account.store'), {
         onFinish: () => {
             if (!Object.keys(props.errors).length) {
                 form.reset()

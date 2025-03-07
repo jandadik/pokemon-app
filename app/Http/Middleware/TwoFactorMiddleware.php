@@ -35,6 +35,6 @@ class TwoFactorMiddleware
         }
 
         // Jinak přesměrujeme na stránku pro ověření 2FA
-        return redirect()->route('two-factor.challenge');
+        return redirect()->route('auth.two-factor.challenge');
     }
 }

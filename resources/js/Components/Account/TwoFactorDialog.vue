@@ -163,7 +163,7 @@ const generateQrCode = () => {
     isLoading.value = true
     otpSecret.value = ''
     
-    axios.get(route('two-factor.qr-code'))
+    axios.get(route('auth.two-factor.qr-code'))
       .then(response => {
         if (response.data && response.data.qr_code) {
           // Zpracování OTP Auth URL
@@ -212,7 +212,7 @@ const confirm = () => {
     // Aktivace 2FA
     if (form.code) {
       // Ověříme kód pomocí správného endpointu z controlleru
-      axios.post(route('two-factor.enable'), { code: form.code })
+      axios.post(route('auth.two-factor.enable'), { code: form.code })
         .then(() => {
           dialogModel.value = false
           emit('success', 'Dvoufaktorové ověření bylo úspěšně aktivováno')
@@ -231,7 +231,7 @@ const confirm = () => {
     }
   } else {
     // Deaktivace 2FA
-    axios.post(route('two-factor.disable'), {
+    axios.post(route('auth.two-factor.disable'), {
       _method: 'DELETE'
     })
       .then(() => {

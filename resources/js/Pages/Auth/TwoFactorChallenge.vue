@@ -51,7 +51,7 @@
                   variant="text"
                   size="small"
                   color="secondary"
-                  :href="route('logout')"
+                  :href="route('auth.logout')"
                   method="post"
                   as="button"
                   :disabled="form.processing"
@@ -115,7 +115,7 @@ const verify = async () => {
     if (!valid) return
   }
 
-  form.post(route('two-factor.verify'), {
+  form.post(route('auth.two-factor.verify'), {
     onSuccess: () => {
       // Po úspěšném ověření budeme přesměrováni na původní stránku
     },

@@ -88,7 +88,7 @@ const updateNotifications = async () => {
     if (!valid) return
   }
 
-  notificationsForm.put(route('notifications.update'), {
+  notificationsForm.put(route('user.notifications.update'), {
     onSuccess: () => {
       isNotificationsFormValid.value = true
     },

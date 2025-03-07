@@ -47,13 +47,13 @@
         </v-list>
         <v-list density="compact" nav v-if="!auth.isLoggedIn">
             <Link href="/login" @click="closeDrawer">
-                <v-list-item prepend-icon="mdi-login" title="Přihlásit" value="login" />
+                <v-list-item prepend-icon="mdi-login" title="Přihlásit" value="auth.login" />
             </Link>
         </v-list>
 
         <v-list density="compact" nav v-if="auth.isLoggedIn">
             <Link href="/logout" method="delete" as="button" @click="closeDrawer">
-                <v-list-item prepend-icon="mdi-logout" title="Odhlásit" value="logout" />
+                <v-list-item prepend-icon="mdi-logout" title="Odhlásit" value="auth.logout" />
             </Link>
         </v-list>
         

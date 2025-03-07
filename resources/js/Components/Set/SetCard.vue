@@ -82,6 +82,6 @@ const showCards = () => {
 const showStats = () => {
     // Zde bude logika pro zobrazení statistik (modal nebo přesměrování)
     console.log('Show stats for set:', props.set.id)
-    router.visit(route('set.show', props.set.id))
+    router.visit(route('public.set.show', props.set.id))
 }
 </script>

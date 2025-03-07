@@ -49,7 +49,7 @@ export const useUserStore = defineStore('user', {
         console.log('fetchParameters() volána');
         this.isLoading = true;
         
-        const response = await axios.get(route('parameters.fetch'));
+        const response = await axios.get(route('user.parameters.fetch'));
         console.log('Odpověď z parametrů:', response.data);
         
         if (response.data.parameters) {
@@ -92,7 +92,7 @@ export const useUserStore = defineStore('user', {
         }
 
         // Odešleme na server
-        await router.put(route('settings.update'), {
+        await router.put(route('user.settings.update'), {
           ...newSettings
         }, {
           preserveState: true,
@@ -124,7 +124,7 @@ export const useUserStore = defineStore('user', {
         }
 
         // Odešleme na server
-        await router.put(route('notifications.update'), {
+        await router.put(route('user.notifications.update'), {
           ...notifications
         }, {
           preserveState: true,
@@ -155,7 +155,7 @@ export const useUserStore = defineStore('user', {
         }
 
         // Odešleme na server
-        await router.put(route('security.update'), {
+        await router.put(route('user.security.update'), {
           ...security
         }, {
           preserveState: true,
@@ -178,7 +178,7 @@ export const useUserStore = defineStore('user', {
       try {
         this.isLoading = true;
         
-        const response = await axios.get(route('login-history.index'));
+        const response = await axios.get(route('user.login-history.index'));
         
         if (response.data && response.data.history) {
           this.loginHistory = response.data.history;

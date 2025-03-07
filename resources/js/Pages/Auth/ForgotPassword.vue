@@ -49,7 +49,7 @@
                 <v-btn
                   variant="text"
                   color="primary"
-                  @click="router.visit(route('login'))"
+                  @click="router.visit(route('auth.login'))"
                   class="text-none"
                 >
                   Zpět na přihlášení
@@ -99,7 +99,7 @@ const submit = async () => {
     }
   }
 
-  form.post(route('password.email'), {
+  form.post(route('auth.password.email'), {
     onSuccess: () => {
       form.reset()
       if (formRef.value) {
@@ -107,7 +107,7 @@ const submit = async () => {
       }
       // Po úspěšném odeslání přesměrujeme na login po 3 sekundách
       setTimeout(() => {
-        router.visit(route('login'))
+        router.visit(route('auth.login'))
       }, 3000)
     },
     onError: () => {
