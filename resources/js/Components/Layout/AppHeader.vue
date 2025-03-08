@@ -12,7 +12,7 @@
         <Link href="/">
             <ApplicationLogo class="" />
         </Link>
-        <v-app-bar-title>Poke App</v-app-bar-title>
+        <v-app-bar-title>{{ $trans('app.app_name') }}</v-app-bar-title>
 
         <!-- Pravá část -->
         <template v-slot:append>

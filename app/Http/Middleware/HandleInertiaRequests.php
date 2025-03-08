@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -48,7 +49,30 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $request->user()->getAllPermissions()->pluck('name'),
                 'can' => $request->user()->permissions->pluck('name'),
                 'two_factor_enabled' => $request->user()->two_factor_enabled,
-            ] : null
+            ] : null,
+            'locale' => App::getLocale(),
+            'locales' => config('app.available_locales', ['cs', 'en']),
+            'translations' => $this->getTranslationsForCurrentLocale(),
         ]);
+    }
+
+    /**
+     * Načte překlady pro aktuální jazyk aplikace
+     *
+     * @return array
+     */
+    private function getTranslationsForCurrentLocale(): array
+    {
+        $locale = App::getLocale();
+        $translations = [];
+
+        // Načteme překlady z jednotlivých souborů
+        foreach (['app', 'auth', 'ui', 'validation'] as $file) {
+            if (file_exists(resource_path("lang/{$locale}/{$file}.php"))) {
+                $translations[$file] = trans($file, [], $locale);
+            }
+        }
+
+        return $translations;
     }
 }

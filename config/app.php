@@ -78,11 +78,23 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'cs'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
-    'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+    'faker_locale' => env('APP_FAKER_LOCALE', 'cs_CZ'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Available Application Locales
+    |--------------------------------------------------------------------------
+    |
+    | This array contains all available locales that can be selected
+    | in the application. Used for language switching functionality.
+    |
+    */
+
+    'available_locales' => ['cs', 'en'],
 
     /*
     |--------------------------------------------------------------------------

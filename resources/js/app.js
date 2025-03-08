@@ -3,13 +3,16 @@ import { createInertiaApp } from '@inertiajs/vue3'
 import MainLayout from '@/Layouts/MainLayout.vue'
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
+// i18n
+import { setupI18n, TranslationPlugin } from '@/i18n'
+
 // Vuetify
 import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import { useUserStore } from '@/stores/userStore'
+import { useUserStore, initializeUserStore } from '@/stores/userStore'
 import { ref, watch } from 'vue'
 
 // Pinia
@@ -66,11 +69,20 @@ createInertiaApp({
     return page
   },
   setup({ el, App, props, plugin }) {
+    // Inicializace i18n s překlady z backendu
+    const locale = props.initialPage.props.locale || 'cs';
+    const i18n = setupI18n(props.initialPage.props.translations || {}, locale);
+    
     const app = createApp({ render: () => h(App, props) })
       .use(plugin)
       .use(pinia)
       .use(vuetify)
       .use(ZiggyVue)
+      .use(i18n)
+      .use(TranslationPlugin)
+    
+    // Nastavení html lang atributu podle aktuálního jazyka
+    document.documentElement.lang = props.initialPage.props.locale || 'cs'
     
     app.mount(el)
 
@@ -116,5 +128,8 @@ createInertiaApp({
 
     // Sledování změn preferencí systému
     systemPrefersDark.addEventListener('change', updateTheme)
+
+    // Initialize user store
+    initializeUserStore(userStore)
   },
 })

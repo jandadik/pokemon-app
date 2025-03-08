@@ -85,6 +85,9 @@ export const useUserStore = defineStore('user', {
       try {
         this.isLoading = true
         
+        // Uložíme původní hodnotu jazyka
+        const previousLanguage = this.parameters.settings.language
+        
         // Aktualizujeme lokální stav
         this.parameters.settings = {
           ...this.parameters.settings,
@@ -98,6 +101,11 @@ export const useUserStore = defineStore('user', {
           preserveState: true,
           preserveScroll: true,
           onSuccess: () => {
+            // Pokud se změnil jazyk, obnovíme stránku pro načtení nových překladů
+            if (newSettings.language && newSettings.language !== previousLanguage) {
+              console.log('Změna jazyka na:', newSettings.language, '- obnovení stránky');
+              window.location.reload();
+            }
           },
           onError: () => {
             // V případě chyby vrátíme původní hodnoty
@@ -195,14 +203,50 @@ export const useUserStore = defineStore('user', {
       } finally {
         this.isLoading = false;
       }
+    },
+    // Metoda specificky pro změnu jazyka - používána v LanguageSwitcher
+    async updateLanguage(language) {
+      try {
+        this.isLoading = true;
+        
+        // Uložíme původní hodnotu jazyka
+        const previousLanguage = this.parameters.settings.language;
+        
+        // Aktualizujeme lokální stav
+        this.parameters.settings.language = language;
+
+        // Odešleme na server - musíme poslat všechny povinné parametry nastavení
+        await router.put(route('user.settings.update'), {
+          language: language,
+          theme: this.parameters.settings.theme // Přidáme i aktuální téma
+        }, {
+          preserveState: true,
+          preserveScroll: true,
+          onSuccess: () => {
+            // Pokud se změnil jazyk, obnovíme stránku pro načtení nových překladů
+            if (language !== previousLanguage) {
+              console.log('Změna jazyka na:', language, '- obnovení stránky');
+              window.location.reload();
+            }
+          },
+          onError: (errors) => {
+            // V případě chyby vrátíme původní hodnotu
+            this.parameters.settings.language = previousLanguage;
+            console.error('Chyba při aktualizaci jazyka:', errors);
+          }
+        });
+      } catch (error) {
+        console.error('Chyba při aktualizaci jazyka:', error);
+        this.isLoading = false;
+      }
     }
   }
 })
 
-// Automatická inicializace store při načtení stránky - vylepšena
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOMContentLoaded - inicializace userStore');
-  const store = useUserStore();
+// Funkce pro inicializaci store - zavoláme ji po inicializaci Pinia v app.js
+export async function initializeUserStore(providedStore = null) {
+  console.log('Inicializace userStore');
+  const store = providedStore || useUserStore();
   console.log('userStore inicializován:', store.isInitialized);
   console.log('Meta tag uživatele:', !!document.querySelector('meta[name="user-id"]'));
   
@@ -211,4 +255,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await store.fetchParameters();
     console.log('Parametry načteny, isInitialized:', store.isInitialized);
   }
-}); 
+  
+  return store;
+} 

@@ -1,7 +1,7 @@
 <template>
     <v-card v-if="authStore.user" class="mt-4">
         <v-card-title class="text-h5">
-            Nastavení vašeho účtu
+            {{ $t('app.account_settings') }}
             <Link
                 :href="route('user.profile')"
                 class="float-right"
@@ -10,7 +10,7 @@
                     color="primary"
                     variant="text"
                 >
-                    Upravit nastavení
+                    {{ $trans('app.buttons.edit_settings') }}
                 </v-btn>
             </Link>
         </v-card-title>
@@ -19,17 +19,17 @@
             <v-table>
                 <thead>
                     <tr>
-                        <th>Kategorie</th>
-                        <th>Nastavení</th>
-                        <th>Hodnota</th>
-                        <th>Akce</th>
+                        <th>{{ $t('app.category') }}</th>
+                        <th>{{ $t('app.setting') }}</th>
+                        <th>{{ $t('app.value') }}</th>
+                        <th>{{ $t('app.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <!-- Notifikace -->
                     <tr>
-                        <td rowspan="3">Notifikace</td>
-                        <td>Emailové notifikace</td>
+                        <td rowspan="3">{{ $t('app.notifications') }}</td>
+                        <td>{{ $t('app.email_notifications') }}</td>
                         <td>
                             <v-icon :color="userStore.getEmailNotifications ? 'success' : 'error'">
                                 {{ userStore.getEmailNotifications ? 'mdi-check' : 'mdi-close' }}
@@ -41,13 +41,13 @@
                                     variant="text"
                                     color="primary"
                                 >
-                                    Upravit
+                                    {{ $trans('app.buttons.edit') }}
                                 </v-btn>
                             </Link>
                         </td>
                     </tr>
                     <tr>
-                        <td>Push notifikace</td>
+                        <td>{{ $t('app.push_notifications') }}</td>
                         <td>
                             <v-icon :color="userStore.getPushNotifications ? 'success' : 'error'">
                                 {{ userStore.getPushNotifications ? 'mdi-check' : 'mdi-close' }}
@@ -55,7 +55,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>Newsletter</td>
+                        <td>{{ $t('app.newsletter') }}</td>
                         <td>
                             <v-icon :color="userStore.getNewsletter ? 'success' : 'error'">
                                 {{ userStore.getNewsletter ? 'mdi-check' : 'mdi-close' }}
@@ -65,8 +65,8 @@
 
                     <!-- Nastavení -->
                     <tr>
-                        <td rowspan="2">Nastavení</td>
-                        <td>Jazyk</td>
+                        <td rowspan="2">{{ $t('app.settings') }}</td>
+                        <td>{{ $t('app.language') }}</td>
                         <td>{{ userStore.getLanguage === 'cs' ? 'Čeština' : 'English' }}</td>
                         <td rowspan="2">
                             <Link :href="route('user.profile', { tab: 'settings' })">
@@ -74,13 +74,13 @@
                                     variant="text"
                                     color="primary"
                                 >
-                                    Upravit
+                                    {{ $trans('app.buttons.edit') }}
                                 </v-btn>
                             </Link>
                         </td>
                     </tr>
                     <tr>
-                        <td>Téma</td>
+                        <td>{{ $t('app.theme') }}</td>
                         <td>
                             {{ 
                                 userStore.getTheme === 'light' ? 'Světlé' : 
@@ -92,8 +92,8 @@
 
                     <!-- Zabezpečení -->
                     <tr>
-                        <td rowspan="2">Zabezpečení</td>
-                        <td>Upozornění na přihlášení</td>
+                        <td rowspan="2">{{ $t('app.security') }}</td>
+                        <td>{{ $t('app.login_notifications') }}</td>
                         <td>
                             <v-icon :color="userStore.getLoginNotifications ? 'success' : 'error'">
                                 {{ userStore.getLoginNotifications ? 'mdi-check' : 'mdi-close' }}
@@ -105,13 +105,13 @@
                                     variant="text"
                                     color="primary"
                                 >
-                                    Upravit
+                                    {{ $trans('app.buttons.edit') }}
                                 </v-btn>
                             </Link>
                         </td>
                     </tr>
                     <tr>
-                        <td>Dvoufaktorové ověření</td>
+                        <td>{{ $t('app.two_factor_authentication') }}</td>
                         <td>
                             <v-icon :color="authStore.user?.two_factor_enabled ? 'success' : 'error'">
                                 {{ authStore.user?.two_factor_enabled ? 'mdi-check' : 'mdi-close' }}

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\IndexController;
+use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\SetController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,3 +29,7 @@ Route::resources([
     'card' => CardController::class,
     'set' => SetController::class,
 ], ['only' => ['index', 'show']]);
+
+// Přepínání jazyků
+Route::get('/language/{locale}', [LanguageController::class, 'switch'])
+    ->name('language.switch');
