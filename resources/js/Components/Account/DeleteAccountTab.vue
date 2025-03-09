@@ -1,21 +1,21 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title class="bg-error text-white">Smazání účtu</v-card-title>
+    <v-card-title class="bg-error text-white">{{ $t('account.delete.title') }}</v-card-title>
     <v-card-text>
       <v-alert
         type="warning"
         class="mb-4"
       >
         <template v-slot:title>
-          Nevratná akce
+          {{ $t('account.delete.warning_title') }}
         </template>
-        <p>Smazání účtu je nevratná akce. Všechna vaše data budou trvale odstraněna.</p>
+        <p>{{ $t('account.delete.warning_text') }}</p>
       </v-alert>
 
       <v-form @submit.prevent="deleteAccount" ref="deleteFormRef" v-model="isDeleteFormValid">
         <v-text-field
           v-model="deleteForm.password"
-          label="Pro potvrzení zadejte své heslo"
+          :label="$t('account.delete.password_confirm')"
           type="password"
           required
           :error-messages="errors.password"
@@ -24,7 +24,7 @@
 
         <v-checkbox
           v-model="deleteForm.confirm"
-          label="Rozumím, že tato akce je nevratná"
+          :label="$t('account.delete.understand')"
           required
           :error-messages="errors.confirm"
           class="mb-4"
@@ -36,7 +36,7 @@
           :loading="deleteForm.processing"
           :disabled="!isDeleteFormValid || deleteForm.processing || !deleteForm.confirm"
         >
-          Smazat účet
+          {{ $t('account.delete.confirm_button') }}
         </v-btn>
       </v-form>
     </v-card-text>

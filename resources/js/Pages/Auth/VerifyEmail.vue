@@ -3,7 +3,7 @@
     <v-row justify="center">
       <v-col cols="12" sm="8" md="6" lg="4">
         <v-card>
-          <v-card-title class="text-center">Ověření emailové adresy</v-card-title>
+          <v-card-title class="text-center">{{ $t('auth.verify_email.title') }}</v-card-title>
           
           <v-card-text>
             <v-alert
@@ -11,11 +11,11 @@
               type="success"
               class="mb-4"
             >
-              Nový ověřovací odkaz byl odeslán na vaši emailovou adresu.
+              {{ $t('auth.verify_email.success') }}
             </v-alert>
 
             <p class="text-body-1 mb-4">
-              Děkujeme za registraci! Než začnete, mohli byste prosím ověřit svou e-mailovou adresu kliknutím na odkaz, který jsme vám právě poslali? Pokud jste e-mail neobdrželi, rádi vám pošleme další.
+              {{ $t('auth.verify_email.description') }}
             </p>
 
             <div class="d-flex gap-4">
@@ -26,7 +26,7 @@
                   block
                   :loading="form.processing"
                 >
-                  Znovu odeslat ověřovací email
+                  {{ $t('auth.verify_email.submit') }}
                 </v-btn>
               </v-form>
 
@@ -37,7 +37,7 @@
                   type="submit"
                   :loading="logoutForm.processing"
                 >
-                  Odhlásit se
+                  {{ $t('auth.logout') }}
                 </v-btn>
               </v-form>
             </div>

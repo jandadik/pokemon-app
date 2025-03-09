@@ -2,20 +2,20 @@
   <v-dialog v-model="dialogModel" max-width="500px">
     <v-card>
       <v-card-title class="text-h5">
-        {{ user.two_factor_enabled ? 'Deaktivovat dvoufaktorové ověření' : 'Aktivovat dvoufaktorové ověření' }}
+        {{ user.two_factor_enabled ? $t('account.security.two_factor_disable') : $t('account.security.two_factor_enable') }}
       </v-card-title>
       
       <v-card-text>
         <p v-if="user.two_factor_enabled">
-          Opravdu chcete deaktivovat dvoufaktorové ověření? Tím se sníží bezpečnost vašeho účtu.
+          {{ $t('account.security.two_factor_disable_warning') }}
         </p>
         
         <div v-else>
-          <p class="mb-4">Pro aktivaci dvoufaktorového ověření naskenujte následující QR kód pomocí autentifikační aplikace (např. Google Authenticator, Authy nebo Microsoft Authenticator):</p>
+          <p class="mb-4">{{ $t('account.security.two_factor_enable_info') }}</p>
           
           <div v-if="isLoading" class="text-center my-4">
             <v-progress-circular indeterminate color="primary"></v-progress-circular>
-            <div class="mt-2">Generuji QR kód...</div>
+            <div class="mt-2">{{ $t('account.security.generating_qr') }}</div>
           </div>
           
           <div v-else-if="qrCode" class="text-center my-4">
@@ -24,12 +24,12 @@
             
             <!-- Zobrazení QR kódu jako obrázku, pokud je to dataURL -->
             <div v-else-if="qrCode.startsWith('data:image')" class="mb-4">
-              <img :src="qrCode" alt="QR kód pro dvoufaktorové ověření" class="mx-auto" style="max-width: 100%;" />
+              <img :src="qrCode" :alt="$t('account.security.qr_code_alt')" class="mx-auto" style="max-width: 100%;" />
             </div>
             
             <!-- Zobrazení OTP Auth URL jako text -->
             <v-alert v-else color="info" class="text-center mb-4" variant="tonal">
-              <p class="mb-2"><strong>Naskenujte QR kód nebo zadejte URL do vaší autentifikační aplikace:</strong></p>
+              <p class="mb-2"><strong>{{ $t('account.security.scan_qr_or_url') }}</strong></p>
               
               <p class="font-weight-bold text-break mb-2 user-select-all" style="word-break: break-all;">
                 {{ qrCode }}
@@ -42,15 +42,14 @@
                 class="mt-2 mb-2"
                 @click="copyToClipboard(qrCode)"
               >
-                Zkopírovat URL
+                {{ $t('account.security.copy_url') }}
               </v-btn>
             </v-alert>
             
             <!-- Zobrazení tajného klíče -->
             <v-alert v-if="otpSecret" color="info" class="mt-4" variant="tonal" density="compact">
-              <p class="mb-1"><strong>Tajný klíč pro ruční zadání:</strong></p>
-              <p class="font-weight-bold text-break mb-0 user-select-all">{{ otpSecret }}</p>
-              
+              <p class="mb-1"><strong>{{ $t('account.security.secret_key') }}</strong></p>
+              <p class="font-monospace mb-0 user-select-all">{{ otpSecret }}</p>
               <v-btn
                 color="primary"
                 size="x-small"
@@ -58,47 +57,55 @@
                 class="mt-2"
                 @click="copyToClipboard(otpSecret)"
               >
-                Zkopírovat klíč
+                {{ $t('account.security.copy_key') }}
               </v-btn>
             </v-alert>
-            
-            <!-- Vstupní pole pro zadání kódu -->
-            <v-text-field
-              v-model="form.code"
-              label="Ověřovací kód"
-              type="text"
-              class="mt-4"
-              placeholder="Zadejte 6místný kód z vaší autentifikační aplikace"
-              :disabled="isUpdating"
-              required
-              variant="outlined"
-              :error-messages="form.errors.code"
-            ></v-text-field>
-            
-            <p class="text-caption mt-2">
-              Zadejte ověřovací kód vygenerovaný vaší autentifikační aplikací pro dokončení aktivace.
-            </p>
           </div>
           
-          <div v-else class="text-center my-4">
-            <v-alert color="error" variant="tonal">
-              Nepodařilo se vygenerovat QR kód. Zkuste to prosím znovu.
-            </v-alert>
+          <div v-if="qrCode && !isCodeVerified">
+            <v-form @submit.prevent="verifyCode" ref="codeFormRef" v-model="isCodeFormValid">
+              <v-text-field
+                v-model="codeForm.code"
+                :label="$t('account.security.verification_code')"
+                required
+                :error-messages="errors.code"
+                :rules="[v => !!v || $t('account.security.code_required'), v => /^\d{6}$/.test(v) || $t('account.security.code_format')]"
+                prepend-inner-icon="mdi-key"
+                maxlength="6"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                class="mb-4"
+              ></v-text-field>
+              
+              <v-checkbox 
+                v-model="codeForm.remember" 
+                :label="$t('account.security.remember_device')"
+                color="primary"
+                hide-details
+                class="mb-4"
+              ></v-checkbox>
+              
+              <v-btn 
+                color="primary"
+                type="submit"
+                :loading="codeForm.processing"
+                :disabled="!isCodeFormValid || codeForm.processing"
+                class="mb-4"
+              >
+                {{ $t('account.security.verify_code') }}
+              </v-btn>
+            </v-form>
           </div>
         </div>
       </v-card-text>
       
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="grey" text @click="dialogModel = false" :disabled="isUpdating">
-          Zrušit
+        <v-btn color="error" variant="text" @click="close">
+          {{ $t('account.general.cancel') }}
         </v-btn>
-        <v-btn 
-          :color="user.two_factor_enabled ? 'error' : 'primary'" 
-          @click="confirm" 
-          :loading="isUpdating"
-          :disabled="!user.two_factor_enabled && (!qrCode || !form.code)">
-          {{ user.two_factor_enabled ? 'Deaktivovat' : 'Aktivovat' }}
+        <v-btn v-if="user.two_factor_enabled" color="primary" @click="disableTwoFactor" :loading="isProcessing">
+          {{ $t('account.security.disable') }}
         </v-btn>
       </v-card-actions>
     </v-card>

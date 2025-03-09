@@ -1,13 +1,13 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title>Osobní údaje</v-card-title>
+    <v-card-title>{{ $t('account.profile.title') }}</v-card-title>
     <v-card-text>
       <v-form @submit.prevent="updateProfile" ref="profileFormRef" v-model="isProfileFormValid">
         <v-row>
           <v-col cols="12" md="6">
             <v-text-field
               v-model="profileForm.name"
-              label="Jméno"
+              :label="$t('account.profile.name')"
               required
               :error-messages="errors.name"
               prepend-inner-icon="mdi-account"
@@ -17,7 +17,7 @@
           <v-col cols="12" md="6">
             <v-text-field
               v-model="profileForm.phone"
-              label="Telefon"
+              :label="$t('account.profile.phone')"
               :error-messages="errors.phone"
               prepend-inner-icon="mdi-phone"
             ></v-text-field>
@@ -26,7 +26,7 @@
           <v-col cols="12">
             <v-textarea
               v-model="profileForm.bio"
-              label="O mně"
+              :label="$t('account.profile.bio')"
               :error-messages="errors.bio"
               prepend-inner-icon="mdi-text"
               rows="3"
@@ -40,7 +40,7 @@
           :loading="profileForm.processing"
           :disabled="!isProfileFormValid || profileForm.processing"
         >
-          Uložit změny
+          {{ $t('account.profile.save') }}
         </v-btn>
       </v-form>
     </v-card-text>
@@ -83,7 +83,7 @@ const updateProfile = async () => {
   profileForm.put(route('user.profile.update'), {
     onSuccess: () => {
       isProfileFormValid.value = true
-      emit('success', 'Profil byl úspěšně aktualizován')
+      emit('success', $t('account.profile.success_message'))
     },
     onError: () => {
       isProfileFormValid.value = false

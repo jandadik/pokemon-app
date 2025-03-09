@@ -3,7 +3,7 @@
     <v-row justify="center">
       <v-col cols="12" sm="8" md="6" lg="4">
         <v-card>
-          <v-card-title class="text-center">Reset hesla</v-card-title>
+          <v-card-title class="text-center">{{ $t('auth.password_reset.title') }}</v-card-title>
           
           <v-card-text>
             <v-form 
@@ -14,7 +14,7 @@
             >
               <v-text-field
                 v-model="form.email"
-                label="Email"
+                :label="$t('auth.password_reset.email')"
                 type="email"
                 required
                 :rules="emailRules"
@@ -26,7 +26,7 @@
 
               <v-text-field
                 v-model="form.password"
-                label="Nové heslo"
+                :label="$t('auth.password_reset.password')"
                 :type="showPassword ? 'text' : 'password'"
                 required
                 :rules="passwordRules"
@@ -40,7 +40,7 @@
 
               <v-text-field
                 v-model="form.password_confirmation"
-                label="Potvrzení hesla"
+                :label="$t('auth.password_reset.password_confirm')"
                 :type="showPassword ? 'text' : 'password'"
                 required
                 :rules="passwordConfirmationRules"
@@ -56,7 +56,7 @@
                 :loading="form.processing"
                 :disabled="form.processing"
               >
-                Resetovat heslo
+                {{ $t('auth.password_reset.submit') }}
               </v-btn>
 
               <div class="text-center mt-4">
@@ -66,7 +66,7 @@
                   @click="router.visit(route('auth.login'))"
                   class="text-none"
                 >
-                  Zpět na přihlášení
+                  {{ $t('auth.password_reset.back_to_login') }}
                 </v-btn>
               </div>
             </v-form>
@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 
 const props = defineProps({
@@ -97,8 +97,8 @@ const props = defineProps({
 })
 
 const form = useForm({
-  token: props.token,
   email: props.email,
+  token: props.token,
   password: '',
   password_confirmation: ''
 })
@@ -107,19 +107,35 @@ const isFormValid = ref(true)
 const formRef = ref(null)
 const showPassword = ref(false)
 
+// Funkce pro získání validačních textů
+const validationText = {
+  emailRequired: 'E-mail je povinný',
+  emailValid: 'E-mail musí být platný',
+  passwordRequired: 'Heslo je povinné',
+  passwordMinLength: 'Heslo musí mít alespoň 8 znaků',
+  passwordUppercase: 'Heslo musí obsahovat alespoň jedno velké písmeno',
+  passwordLowercase: 'Heslo musí obsahovat alespoň jedno malé písmeno',
+  passwordNumber: 'Heslo musí obsahovat alespoň jednu číslici',
+  passwordConfirmRequired: 'Potvrzení hesla je povinné',
+  passwordConfirmMatch: 'Hesla se neshodují'
+}
+
 const emailRules = [
-  v => !!v || 'E-mail je povinný',
-  v => /.+@.+\..+/.test(v) || 'E-mail musí být platný',
+  v => !!v || validationText.emailRequired,
+  v => /.+@.+\..+/.test(v) || validationText.emailValid,
 ]
 
 const passwordRules = [
-  v => !!v || 'Heslo je povinné',
-  v => v?.length >= 8 || 'Heslo musí mít alespoň 8 znaků',
+  v => !!v || validationText.passwordRequired,
+  v => v?.length >= 8 || validationText.passwordMinLength,
+  v => /[A-Z]/.test(v) || validationText.passwordUppercase,
+  v => /[a-z]/.test(v) || validationText.passwordLowercase,
+  v => /[0-9]/.test(v) || validationText.passwordNumber,
 ]
 
 const passwordConfirmationRules = [
-  v => !!v || 'Potvrzení hesla je povinné',
-  v => v === form.password || 'Hesla se neshodují',
+  v => !!v || validationText.passwordConfirmRequired,
+  v => v === form.password || validationText.passwordConfirmMatch,
 ]
 
 const submit = async () => {
@@ -131,16 +147,9 @@ const submit = async () => {
     }
   }
 
-  form.post(route('auth.password.store'), {
+  form.post(route('auth.password.update'), {
     onSuccess: () => {
-      form.reset()
-      if (formRef.value) {
-        formRef.value.resetValidation()
-      }
-      // Po úspěšném resetu hesla přesměrujeme na login po 3 sekundách
-      setTimeout(() => {
-        router.visit(route('auth.login'))
-      }, 3000)
+      router.visit(route('auth.login'))
     },
     onError: () => {
       isFormValid.value = false

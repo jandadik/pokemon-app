@@ -4,7 +4,7 @@
             <v-col cols="12" sm="8" md="6" lg="4">
                 <v-card class="elevation-12 pa-8">
                     <v-card-title class="text-h4 text-center mb-4">
-                        Přihlášení
+                        {{ $t('auth.login.title') }}
                     </v-card-title>
 
                     <v-card-text>
@@ -23,7 +23,7 @@
                         >
                             <v-text-field
                                 v-model="form.email"
-                                label="Email"
+                                :label="$t('auth.login.email')"
                                 type="email"
                                 required
                                 :rules="emailRules"
@@ -34,7 +34,7 @@
 
                             <v-text-field
                                 v-model="form.password"
-                                label="Heslo"
+                                :label="$t('auth.login.password')"
                                 :type="showPassword ? 'text' : 'password'"
                                 required
                                 :rules="passwordRules"
@@ -45,22 +45,13 @@
                                 @click:append-inner="showPassword = !showPassword"
                             />
 
-                            <div class="d-flex align-center justify-space-between mb-4">
+                            <div class="d-flex align-center mb-4">
                                 <v-checkbox
                                     v-model="form.remember"
-                                    label="Zapamatovat si mě"
+                                    :label="$t('auth.login.remember')"
                                     hide-details
                                     class="mt-0"
                                 />
-
-                                <v-btn
-                                    variant="text"
-                                    color="primary"
-                                    @click="navigateToForgotPassword"
-                                    class="text-none"
-                                >
-                                    Zapomenuté heslo?
-                                </v-btn>
                             </div>
 
                             <v-btn
@@ -70,46 +61,45 @@
                                 :loading="form.processing"
                                 :disabled="!isFormValid || form.processing"
                             >
-                                Přihlásit se
+                                {{ $t('auth.login.submit') }}
                             </v-btn>
 
                             <div class="d-flex align-items-center my-4">
                                 <v-divider class="flex-grow-1"></v-divider>
-                                <span class="mx-4 text-medium-emphasis">nebo</span>
+                                <span class="mx-4 text-medium-emphasis">{{ $t('auth.login.or') }}</span>
                                 <v-divider class="flex-grow-1"></v-divider>
                             </div>
                             
                             <v-btn
-                                color="indigo"
+                                color="red darken-1"
                                 block
                                 @click="redirectToWorkOS"
                                 class="mb-4"
-                                prepend-icon="mdi-account-group"
+                                prepend-icon="mdi-google"
                             >
-                                Přihlásit se přes SSO
+                                {{ $t('auth.login.google') }}
                             </v-btn>
 
-                            <div v-if="isDevelopment" class="my-2 text-center">
-                                <v-btn
-                                    color="grey"
-                                    variant="text"
-                                    size="small"
-                                    @click="openWorkOSDirectly"
-                                    class="text-caption"
-                                >
-                                    Otevřít SSO v tomto okně (pro vývojáře)
-                                </v-btn>
-                            </div>
-
                             <div class="text-center mt-4">
-                                <span class="text-medium-emphasis">Nemáte účet?</span>
+                                <span class="text-medium-emphasis">{{ $t('auth.login.no_account') }}</span>
                                 <v-btn
                                     variant="text"
                                     color="primary"
                                     @click="navigateToRegister"
                                     class="text-none ms-2"
                                 >
-                                    Vytvořit účet
+                                    {{ $t('auth.login.register') }}
+                                </v-btn>
+                            </div>
+                            
+                            <div class="text-center mt-2">
+                                <v-btn
+                                    variant="text"
+                                    color="secondary"
+                                    @click="navigateToForgotPassword"
+                                    class="text-none"
+                                >
+                                    {{ $t('auth.login.forgot') }}
                                 </v-btn>
                             </div>
                         </v-form>
@@ -143,14 +133,22 @@ const formRef = ref(null)
 const showPassword = ref(false)
 const isFormValid = ref(true)
 
+// Funkce pro získání validačních textů
+const validationText = {
+  emailRequired: 'E-mail je povinný',
+  emailValid: 'E-mail musí být platný',
+  passwordRequired: 'Heslo je povinné',
+  passwordMinLength: 'Heslo musí mít alespoň 8 znaků'
+}
+
 const emailRules = [
-    v => !!v || 'E-mail je povinný',
-    v => /.+@.+\..+/.test(v) || 'E-mail musí být platný',
+    v => !!v || validationText.emailRequired,
+    v => /.+@.+\..+/.test(v) || validationText.emailValid,
 ]
 
 const passwordRules = [
-    v => !!v || 'Heslo je povinné',
-    v => v?.length >= 8 || 'Heslo musí mít alespoň 8 znaků',
+    v => !!v || validationText.passwordRequired,
+    v => v?.length >= 8 || validationText.passwordMinLength,
 ]
 
 const form = useForm({
@@ -158,8 +156,6 @@ const form = useForm({
     password: 'hovnohovno',
     remember: false
 })
-
-const isDevelopment = ref(window.location.hostname === 'localhost');
 
 const submit = async () => {
     if (formRef.value) {
@@ -192,10 +188,5 @@ const navigateToRegister = () => {
 const redirectToWorkOS = () => {
     // Místo fetch požadavku použijeme přímé otevření v novém okně nebo záložce
     window.open(route('auth.workos'), '_self');
-}
-
-const openWorkOSDirectly = () => {
-    // Pro testování přímo ve stejném okně
-    window.location.href = route('auth.workos');
 }
 </script>

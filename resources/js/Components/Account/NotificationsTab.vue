@@ -1,11 +1,11 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title>Nastavení notifikací</v-card-title>
+    <v-card-title>{{ $t('account.notifications.title') }}</v-card-title>
     <v-card-text>
       <v-form @submit.prevent="updateNotifications" ref="notificationsFormRef" v-model="isNotificationsFormValid">
         <v-switch
           v-model="notificationsForm.email_notifications"
-          label="Emailové notifikace"
+          :label="$t('account.notifications.email')"
           color="primary"
           hide-details
           class="mb-4"
@@ -13,7 +13,7 @@
 
         <v-switch
           v-model="notificationsForm.push_notifications"
-          label="Push notifikace v prohlížeči"
+          :label="$t('account.notifications.push')"
           color="primary"
           hide-details
           class="mb-4"
@@ -21,7 +21,7 @@
 
         <v-switch
           v-model="notificationsForm.newsletter"
-          label="Odebírat newsletter"
+          :label="$t('account.notifications.newsletter')"
           color="primary"
           hide-details
           class="mb-4"
@@ -91,11 +91,12 @@ const updateNotifications = async () => {
   notificationsForm.put(route('user.notifications.update'), {
     onSuccess: () => {
       isNotificationsFormValid.value = true
+      emit('success', $t('account.notifications.success_message'))
     },
     onError: () => {
       isNotificationsFormValid.value = false
+      emit('error', $t('account.notifications.error_message'))
     }
   })
 }
-
 </script> 

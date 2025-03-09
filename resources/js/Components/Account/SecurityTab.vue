@@ -1,11 +1,11 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title>Zabezpečení účtu</v-card-title>
+    <v-card-title>{{ $t('account.security.title') }}</v-card-title>
     <v-card-text>
       <v-form ref="securityFormRef" v-model="isSecurityFormValid">
         <v-switch
           v-model="securityForm.two_factor_enabled"
-          label="Dvoufaktorové ověření"
+          :label="$t('account.security.two_factor')"
           color="primary"
           hide-details
           class="mb-4"
@@ -14,7 +14,7 @@
 
         <v-switch
           v-model="securityForm.login_notifications"
-          label="Upozornění na nové přihlášení"
+          :label="$t('account.security.login_notifications')"
           color="primary"
           hide-details
           class="mb-4"
@@ -24,7 +24,7 @@
         <v-expansion-panels class="mb-4">
           <v-expansion-panel>
             <v-expansion-panel-title>
-              Historie přihlášení
+              {{ $t('account.security.login_history') }}
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <v-skeleton-loader
@@ -37,7 +37,7 @@
               <v-alert
                 v-if="!isLoadingLoginHistory && loginHistory.length === 0"
                 type="info"
-                text="Zatím nejsou k dispozici žádné záznamy o přihlášení."
+                :text="$t('account.security.no_login_records')"
                 class="mb-4"
               ></v-alert>
               
@@ -67,7 +67,7 @@
                         size="x-small"
                         class="ml-2"
                       >
-                        Podezřelé
+                        {{ $t('account.security.suspicious') }}
                       </v-chip>
                     </v-list-item-title>
                     
@@ -107,12 +107,35 @@
                         size="x-small"
                         class="ml-1"
                       >
-                        Podezřelé
+                        {{ $t('account.security.suspicious') }}
                       </v-chip>
                     </v-list-item-subtitle>
                   </div>
                 </v-list-item>
               </v-list>
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
+        
+        <!-- Sekce aktivních relací -->
+        <v-expansion-panels class="mb-4">
+          <v-expansion-panel>
+            <v-expansion-panel-title>
+              {{ $t('account.security.active_sessions') }}
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
+              <!-- Obsah panelu pro aktivní relace -->
+              <v-btn 
+                color="error" 
+                variant="outlined"
+                class="mb-2"
+                @click="logoutOtherDevices"
+                :loading="isLoggingOutOtherDevices"
+              >
+                {{ $t('account.security.logout_other_devices') }}
+              </v-btn>
+              
+              <!-- ... active sessions code ... -->
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
@@ -137,6 +160,7 @@ import { useUserStore } from '@/stores/userStore'
 import { storeToRefs } from 'pinia'
 import TwoFactorDialog from '@/Components/Account/TwoFactorDialog.vue'
 import axios from 'axios'
+import { trans } from '@/i18n'
 
 const props = defineProps({
   user: {
@@ -156,6 +180,7 @@ const securityFormRef = ref(null)
 const isSecurityFormValid = ref(true)
 const isLoadingLoginHistory = ref(false)
 const showTwoFactorDialog = ref(false)
+const isLoggingOutOtherDevices = ref(false)
 
 const { parameters, isLoading, loginHistory } = storeToRefs(userStore)
 
@@ -186,10 +211,10 @@ watch(
     if (newValue !== oldValue) {
       userStore.updateSecurity({ login_notifications: newValue })
         .then(() => {
-          emit('success', 'Nastavení notifikací o přihlášení bylo uloženo')
+          emit('success', trans('account.security.login_notifications_saved'))
         })
         .catch(error => {
-          emit('error', 'Nepodařilo se uložit nastavení: ' + error.message)
+          emit('error', trans('account.security.save_error'))
         })
     }
   }
@@ -232,7 +257,7 @@ const loadLoginHistory = async () => {
   try {
     await userStore.fetchLoginHistory()
   } catch (error) {
-    emit('error', 'Nepodařilo se načíst historii přihlášení')
+    emit('error', trans('account.security.history_load_error'))
   } finally {
     isLoadingLoginHistory.value = false
   }
@@ -294,5 +319,23 @@ const formatMobileDate = (dateString) => {
     hour: '2-digit',
     minute: '2-digit'
   }).format(date)
+}
+
+// Funkce pro odhlášení všech ostatních relací
+const logoutOtherDevices = async () => {
+  if (isLoggingOutOtherDevices.value) return
+  
+  isLoggingOutOtherDevices.value = true
+  
+  try {
+    await axios.post(route('user.sessions.logout-others'))
+    emit('success', trans('account.security.logout_others_success'))
+    // Obnovit stránku pro aktualizaci seznamu relací
+    window.location.reload()
+  } catch (error) {
+    emit('error', trans('account.security.logout_others_error'))
+  } finally {
+    isLoggingOutOtherDevices.value = false
+  }
 }
 </script> 

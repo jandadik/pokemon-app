@@ -6,17 +6,17 @@
         <v-select
           v-model="activeTab"
           :items="[
-            { title: 'Osobní údaje', value: 'profile', icon: 'mdi-account' },
-            { title: 'Změna hesla', value: 'password', icon: 'mdi-lock' },
-            { title: 'Email', value: 'email', icon: 'mdi-email', badge: !user.email_verified_at },
-            { title: 'Notifikace', value: 'notifications', icon: 'mdi-bell' },
-            { title: 'Zabezpečení', value: 'security', icon: 'mdi-shield-account' },
-            { title: 'Nastavení', value: 'settings', icon: 'mdi-cog' },
-            { title: 'Smazat účet', value: 'delete', icon: 'mdi-delete' }
+            { title: $t('account.tabs.profile'), value: 'profile', icon: 'mdi-account' },
+            { title: $t('account.tabs.password'), value: 'password', icon: 'mdi-lock' },
+            { title: $t('account.tabs.email'), value: 'email', icon: 'mdi-email', badge: !user.email_verified_at },
+            { title: $t('account.tabs.notifications'), value: 'notifications', icon: 'mdi-bell' },
+            { title: $t('account.tabs.security'), value: 'security', icon: 'mdi-shield-account' },
+            { title: $t('account.tabs.settings'), value: 'settings', icon: 'mdi-cog' },
+            { title: $t('account.tabs.delete'), value: 'delete', icon: 'mdi-delete' }
           ]"
           item-title="title"
           item-value="value"
-          label="Vyberte sekci"
+          :label="$t('account.select_section')"
           variant="outlined"
           density="comfortable"
         >
@@ -24,14 +24,14 @@
             <v-icon :icon="item.raw.icon" class="mr-2"></v-icon>
             {{ item.raw.title }}
             <v-chip v-if="item.raw.value === 'email' && !user.email_verified_at" color="warning" size="x-small" class="ml-2">
-              Neověřeno
+              {{ $t('account.unverified') }}
             </v-chip>
           </template>
           
           <template v-slot:item="{ item, props }">
             <v-list-item v-bind="props" :prepend-icon="item.raw.icon" :title="item.raw.title">
               <template v-slot:append v-if="item.raw.badge">
-                <v-chip color="warning" size="x-small">Neověřeno</v-chip>
+                <v-chip color="warning" size="x-small">{{ $t('account.unverified') }}</v-chip>
               </template>
             </v-list-item>
           </template>
@@ -45,52 +45,52 @@
           <v-list>
             <v-list-item
               prepend-icon="mdi-account"
-              title="Osobní údaje"
+              :title="$t('account.tabs.profile')"
               value="profile"
               @click="activeTab = 'profile'"
             ></v-list-item>
             
             <v-list-item
               prepend-icon="mdi-lock"
-              title="Změna hesla"
+              :title="$t('account.tabs.password')"
               value="password"
               @click="activeTab = 'password'"
             ></v-list-item>
             
             <v-list-item
               prepend-icon="mdi-email"
-              title="Email"
+              :title="$t('account.tabs.email')"
               value="email"
               @click="activeTab = 'email'"
-              :subtitle="!user.email_verified_at ? 'Neověřeno' : ''"
+              :subtitle="!user.email_verified_at ? $t('account.unverified') : ''"
               :badge="!user.email_verified_at"
               badge-color="warning"
             ></v-list-item>
 
             <v-list-item
               prepend-icon="mdi-bell"
-              title="Notifikace"
+              :title="$t('account.tabs.notifications')"
               value="notifications"
               @click="activeTab = 'notifications'"
             ></v-list-item>
 
             <v-list-item
               prepend-icon="mdi-shield-account"
-              title="Zabezpečení"
+              :title="$t('account.tabs.security')"
               value="security"
               @click="activeTab = 'security'"
             ></v-list-item>
 
             <v-list-item
               prepend-icon="mdi-cog"
-              title="Nastavení"
+              :title="$t('account.tabs.settings')"
               value="settings"
               @click="activeTab = 'settings'"
             ></v-list-item>
 
             <v-list-item
               prepend-icon="mdi-delete"
-              title="Smazat účet"
+              :title="$t('account.tabs.delete')"
               value="delete"
               @click="activeTab = 'delete'"
               color="error"
@@ -169,7 +169,7 @@
           variant="text"
           @click="snackbar.show = false"
         >
-          Zavřít
+          {{ $t('account.general.close') }}
         </v-btn>
       </template>
     </v-snackbar>

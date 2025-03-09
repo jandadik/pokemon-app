@@ -3,14 +3,14 @@
     <v-row justify="center">
       <v-col cols="12" md="6" lg="4">
         <v-card class="pa-4">
-          <v-card-title class="text-center">Dvoufaktorové ověření</v-card-title>
-          <v-card-subtitle class="text-center">Pro pokračování zadejte kód z vaší autentifikační aplikace</v-card-subtitle>
+          <v-card-title class="text-center">{{ $t('auth.two_factor.title') }}</v-card-title>
+          <v-card-subtitle class="text-center">{{ $t('auth.two_factor.subtitle') }}</v-card-subtitle>
           
           <v-card-text>
             <v-alert
               v-if="showError"
               type="error"
-              text="Nesprávný ověřovací kód. Zkuste to prosím znovu."
+              :text="$t('auth.two_factor.invalid_code')"
               variant="tonal"
               class="mb-4"
               closable
@@ -20,12 +20,12 @@
             <v-form @submit.prevent="verify" ref="formRef" v-model="isFormValid">
               <v-text-field
                 v-model="form.code"
-                label="Ověřovací kód"
+                :label="$t('auth.two_factor.code')"
                 type="text"
                 inputmode="numeric"
                 pattern="[0-9]*"
                 maxlength="6"
-                placeholder="Zadejte 6místný kód"
+                :placeholder="$t('auth.two_factor.code_placeholder')"
                 required
                 :error-messages="errors.code"
                 autofocus
@@ -43,20 +43,17 @@
                 :disabled="!isFormValid || form.processing || form.code.length !== 6"
                 class="mb-4"
               >
-                Ověřit
+                {{ $t('auth.two_factor.submit') }}
               </v-btn>
               
               <div class="text-center">
                 <v-btn
                   variant="text"
-                  size="small"
-                  color="secondary"
-                  :href="route('auth.logout')"
-                  method="post"
-                  as="button"
-                  :disabled="form.processing"
+                  color="primary"
+                  @click="useRecoveryCode = !useRecoveryCode"
+                  class="text-none mb-2"
                 >
-                  Odhlásit se
+                  {{ $t('auth.two_factor.recovery') }}
                 </v-btn>
               </div>
             </v-form>
@@ -67,8 +64,8 @@
               class="mt-4 text-caption"
               density="compact"
             >
-              <p class="mb-1">Nemáte přístup k vaší autentifikační aplikaci?</p>
-              <p class="mb-0">Kontaktujte administrátora pro obnovení přístupu k vašemu účtu.</p>
+              <p class="mb-1">{{ $t('auth.two_factor.no_access') }}</p>
+              <p class="mb-0">{{ $t('auth.two_factor.contact_admin') }}</p>
             </v-alert>
           </v-card-text>
         </v-card>
@@ -79,7 +76,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { useForm, router } from '@inertiajs/vue3'
 
 const props = defineProps({
   errors: {
@@ -88,41 +85,35 @@ const props = defineProps({
   }
 })
 
-const formRef = ref(null)
-const isFormValid = ref(true)
-const showError = ref(false)
-
 const form = useForm({
   code: ''
 })
 
-// Omezení vstupu pouze na čísla
-const onlyNumbers = (event) => {
-  const charCode = event.which ? event.which : event.keyCode
+const isFormValid = ref(true)
+const formRef = ref(null)
+const showError = ref(false)
+const useRecoveryCode = ref(false)
+
+// Povolí pouze číselné vstupy pro pole kódu
+const onlyNumbers = (e) => {
+  const charCode = e.which ? e.which : e.keyCode
   if (charCode > 31 && (charCode < 48 || charCode > 57)) {
-    event.preventDefault()
+    e.preventDefault()
   }
 }
 
-const verify = async () => {
-  if (form.code.length !== 6) {
-    showError.value = true
-    return
-  }
-
-  if (formRef.value) {
-    const { valid } = await formRef.value.validate()
-    if (!valid) return
-  }
-
-  form.post(route('auth.two-factor.verify'), {
+const verify = () => {
+  form.post(route('auth.two-factor.challenge'), {
     onSuccess: () => {
-      // Po úspěšném ověření budeme přesměrováni na původní stránku
+      form.reset()
+      router.visit(route('index'))
     },
     onError: () => {
-      isFormValid.value = false
       showError.value = true
       form.reset()
+      if (formRef.value) {
+        formRef.value.$el.querySelector('input').focus()
+      }
     }
   })
 }

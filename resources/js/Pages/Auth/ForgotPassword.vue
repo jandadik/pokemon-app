@@ -3,7 +3,7 @@
     <v-row justify="center">
       <v-col cols="12" sm="8" md="6" lg="4">
         <v-card>
-          <v-card-title class="text-center">Obnovení hesla</v-card-title>
+          <v-card-title class="text-center">{{ $t('auth.forgot_password.title') }}</v-card-title>
           
           <v-card-text>
             <v-alert
@@ -15,7 +15,7 @@
             </v-alert>
 
             <p class="text-body-1 mb-4">
-              Zapomněli jste heslo? Žádný problém. Zadejte svou e-mailovou adresu a my vám zašleme odkaz pro obnovení hesla.
+              {{ $t('auth.forgot_password.description') }}
             </p>
 
             <v-form 
@@ -26,7 +26,7 @@
             >
               <v-text-field
                 v-model="form.email"
-                label="Email"
+                :label="$t('auth.forgot_password.email')"
                 type="email"
                 required
                 :rules="emailRules"
@@ -42,7 +42,7 @@
                 :loading="form.processing"
                 :disabled="form.processing"
               >
-                Odeslat odkaz pro obnovení hesla
+                {{ $t('auth.forgot_password.submit') }}
               </v-btn>
 
               <div class="text-center mt-4">
@@ -52,7 +52,7 @@
                   @click="router.visit(route('auth.login'))"
                   class="text-none"
                 >
-                  Zpět na přihlášení
+                  {{ $t('auth.forgot_password.back_to_login') }}
                 </v-btn>
               </div>
             </v-form>
@@ -85,9 +85,15 @@ const form = useForm({
 const isFormValid = ref(true)
 const formRef = ref(null)
 
+// Funkce pro získání validačních textů
+const validationText = {
+  emailRequired: 'E-mail je povinný',
+  emailValid: 'E-mail musí být platný'
+}
+
 const emailRules = [
-  v => !!v || 'E-mail je povinný',
-  v => /.+@.+\..+/.test(v) || 'E-mail musí být platný',
+  v => !!v || validationText.emailRequired,
+  v => /.+@.+\..+/.test(v) || validationText.emailValid,
 ]
 
 const submit = async () => {

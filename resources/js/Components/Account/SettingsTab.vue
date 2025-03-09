@@ -1,14 +1,14 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title>Nastavení účtu</v-card-title>
+    <v-card-title>{{ $t('account.settings.title') }}</v-card-title>
     <v-card-text>
       <v-form @submit.prevent="updateSettings" ref="settingsFormRef" v-model="isSettingsFormValid">
         <v-select
           v-model="settingsForm.language"
-          label="Jazyk rozhraní"
+          :label="$t('account.settings.language')"
           :items="[
-            { title: 'Čeština', value: 'cs' },
-            { title: 'English', value: 'en' }
+            { title: $t('account.settings.languages.cs'), value: 'cs' },
+            { title: $t('account.settings.languages.en'), value: 'en' }
           ]"
           prepend-inner-icon="mdi-translate"
           class="mb-4"
@@ -16,11 +16,11 @@
 
         <v-select
           v-model="settingsForm.theme"
-          label="Vzhled aplikace"
+          :label="$t('account.settings.theme')"
           :items="[
-            { title: 'Světlý', value: 'light' },
-            { title: 'Tmavý', value: 'dark' },
-            { title: 'Podle systému', value: 'system' }
+            { title: $t('account.settings.themes.light'), value: 'light' },
+            { title: $t('account.settings.themes.dark'), value: 'dark' },
+            { title: $t('account.settings.themes.system'), value: 'system' }
           ]"
           prepend-inner-icon="mdi-theme-light-dark"
           class="mb-4"
@@ -28,17 +28,17 @@
         
         <!-- Ukázka vybraného tématu -->
         <v-card class="mt-4 mb-4 pa-4" :theme="previewTheme">
-          <v-card-title class="text-center">Ukázka zvoleného vzhledu</v-card-title>
+          <v-card-title class="text-center">{{ $t('account.settings.theme_preview') }}</v-card-title>
           <v-card-text>
             <div class="d-flex flex-column align-center">
               <v-icon size="48" class="mb-2">mdi-theme-light-dark</v-icon>
               <div class="text-center">
                 {{ getThemeLabel(settingsForm.theme) }}
               </div>
-              <v-chip color="primary" class="ma-2">Primární</v-chip>
-              <v-chip color="secondary" class="ma-2">Sekundární</v-chip>
-              <v-chip color="accent" class="ma-2">Akcent</v-chip>
-              <v-chip color="error" class="ma-2">Chyba</v-chip>
+              <v-chip color="primary" class="ma-2">{{ $t('account.settings.colors.primary') }}</v-chip>
+              <v-chip color="secondary" class="ma-2">{{ $t('account.settings.colors.secondary') }}</v-chip>
+              <v-chip color="accent" class="ma-2">{{ $t('account.settings.colors.accent') }}</v-chip>
+              <v-chip color="error" class="ma-2">{{ $t('account.settings.colors.error') }}</v-chip>
             </div>
           </v-card-text>
         </v-card>
@@ -51,6 +51,7 @@
 import { ref, watch, computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { useUserStore } from '@/stores/userStore'
+import { trans } from '@/i18n'
 
 const props = defineProps({
   errors: {
@@ -84,9 +85,11 @@ const previewTheme = computed(() => {
 
 // Vrátí popis tématu
 function getThemeLabel(theme) {
-  if (theme === 'light') return 'Světlý režim'
-  if (theme === 'dark') return 'Tmavý režim'
-  return `Podle systému (${isDarkMode.value ? 'tmavý' : 'světlý'})`
+  if (theme === 'light') return trans('account.settings.theme_light')
+  if (theme === 'dark') return trans('account.settings.theme_dark')
+  return trans('account.settings.theme_system', { 
+    mode: isDarkMode.value ? trans('account.settings.theme_dark') : trans('account.settings.theme_light') 
+  })
 }
 
 // Sledování změn v store a aktualizace formuláře
@@ -123,11 +126,11 @@ const updateSettings = async () => {
   settingsForm.put(route('user.settings.update'), {
     onSuccess: () => {
       isSettingsFormValid.value = true
-      emit('success', 'Nastavení bylo úspěšně uloženo')
+      emit('success', trans('account.settings.success_message'))
     },
     onError: () => {
       isSettingsFormValid.value = false
-      emit('error', 'Při ukládání nastavení došlo k chybě')
+      emit('error', trans('account.settings.error_message'))
     }
   })
 }

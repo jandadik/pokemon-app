@@ -1,12 +1,12 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title>Email</v-card-title>
+    <v-card-title>{{ $t('account.email.title') }}</v-card-title>
     <v-card-text>
       <v-alert
         v-if="showEmailVerificationAlert"
         type="info"
-        title="Email změněn"
-        text="Na váš nový email byla odeslána zpráva s potvrzovacím odkazem. Pro dokončení změny emailu prosím klikněte na odkaz v této zprávě."
+        :title="$t('account.email.changed_title')"
+        :text="$t('account.email.verification_sent')"
         class="mb-4"
         closable
         @click:close="showEmailVerificationAlert = false"
@@ -15,8 +15,8 @@
       <v-alert
         v-if="!user.email_verified_at"
         type="warning"
-        title="Email není ověřen"
-        text="Pro plné využití účtu prosím ověřte svůj email."
+        :title="$t('account.email.not_verified_title')"
+        :text="$t('account.email.verification_needed')"
         class="mb-4"
       >
         <template v-slot:append>
@@ -25,7 +25,7 @@
             @click="resendVerification"
             :loading="verificationForm.processing"
           >
-            Znovu zaslat ověření
+            {{ $t('account.email.resend_verification') }}
           </v-btn>
         </template>
       </v-alert>
@@ -33,7 +33,7 @@
       <v-form @submit.prevent="updateEmail" ref="emailFormRef" v-model="isEmailFormValid">
         <v-text-field
           v-model="emailForm.email"
-          label="Email"
+          :label="$t('account.email.email')"
           type="email"
           required
           :error-messages="errors.email"
@@ -46,7 +46,7 @@
           :loading="emailForm.processing"
           :disabled="!isEmailFormValid || emailForm.processing"
         >
-          Změnit email
+          {{ $t('account.email.change') }}
         </v-btn>
       </v-form>
     </v-card-text>
@@ -91,7 +91,7 @@ const updateEmail = async () => {
     onSuccess: () => {
       isEmailFormValid.value = true
       showEmailVerificationAlert.value = true
-      emit('success', 'Email byl úspěšně změněn')
+      emit('success', $t('account.email.success_message'))
     },
     onError: () => {
       isEmailFormValid.value = false
@@ -102,7 +102,7 @@ const updateEmail = async () => {
 const resendVerification = () => {
   verificationForm.post(route('auth.verification.send'), {
     onSuccess: () => {
-      emit('success', 'Ověřovací email byl znovu odeslán')
+      emit('success', $t('account.email.verification_resent'))
     }
   })
 }

@@ -1,11 +1,11 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title>Změna hesla</v-card-title>
+    <v-card-title>{{ $t('account.password.title') }}</v-card-title>
     <v-card-text>
       <v-form @submit.prevent="updatePassword" ref="passwordFormRef" v-model="isPasswordFormValid">
         <v-text-field
           v-model="passwordForm.current_password"
-          label="Současné heslo"
+          :label="$t('account.password.current')"
           :type="showPassword ? 'text' : 'password'"
           required
           :error-messages="errors.current_password"
@@ -16,7 +16,7 @@
 
         <v-text-field
           v-model="passwordForm.password"
-          label="Nové heslo"
+          :label="$t('account.password.new')"
           :type="showPassword ? 'text' : 'password'"
           required
           :error-messages="errors.password"
@@ -25,7 +25,7 @@
 
         <v-text-field
           v-model="passwordForm.password_confirmation"
-          label="Potvrzení nového hesla"
+          :label="$t('account.password.confirm')"
           :type="showPassword ? 'text' : 'password'"
           required
           prepend-inner-icon="mdi-lock-check"
@@ -37,7 +37,7 @@
           :loading="passwordForm.processing"
           :disabled="!isPasswordFormValid || passwordForm.processing"
         >
-          Změnit heslo
+          {{ $t('account.password.change') }}
         </v-btn>
       </v-form>
     </v-card-text>
@@ -77,7 +77,7 @@ const updatePassword = async () => {
     onSuccess: () => {
       passwordForm.reset()
       isPasswordFormValid.value = true
-      emit('success', 'Heslo bylo úspěšně změněno')
+      emit('success', $t('account.password.success_message'))
     },
     onError: () => {
       isPasswordFormValid.value = false
