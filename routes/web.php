@@ -33,3 +33,8 @@ Route::prefix('/')
     ->name('user.')
     ->middleware(['auth', '2fa'])
     ->group(base_path('routes/profile.php'));
+
+// Katalog routy
+Route::prefix('/')
+    ->name('catalog.')
+    ->group(base_path('routes/catalog.php'));

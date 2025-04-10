@@ -4,7 +4,7 @@
             Home
         </v-btn>
     </Link>
-    <Link href="/set">
+    <Link href="/sets">
         <v-btn>
             Katalog
         </v-btn>
