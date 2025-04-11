@@ -122,4 +122,8 @@ return [
         'delete' => 'Smazat',
         'ok' => 'OK',
     ],
+    
+    // Obecné texty pro UI
+    'stats' => 'Statistiky',
+    'coming_soon' => 'Připravujeme pro vás',
 ]; 

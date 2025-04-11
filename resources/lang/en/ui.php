@@ -122,4 +122,8 @@ return [
         'delete' => 'Delete',
         'ok' => 'OK',
     ],
+    
+    // General UI texts
+    'stats' => 'Statistics',
+    'coming_soon' => 'Coming Soon',
 ]; 

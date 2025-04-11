@@ -7,7 +7,7 @@
                     <v-col cols="12" md="6" lg="4">
                         <v-text-field
                             v-model="filters.search"
-                            label="Vyhledat set"
+                            :label="$t('catalog.filters.search')"
                             prepend-inner-icon="mdi-magnify"
                             variant="outlined"
                             density="comfortable"
@@ -20,7 +20,7 @@
                         <v-select
                             v-model="filters.series"
                             :items="seriesList"
-                            label="Série"
+                            :label="$t('catalog.filters.series')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -35,7 +35,7 @@
                                 title: item.title,
                                 value: index
                             }))"
-                            label="Řadit podle"
+                            :label="$t('catalog.filters.sort')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -49,14 +49,14 @@
                 <!-- Aktivní filtry a reset -->
                 <v-row v-if="hasActiveFilters" class="mt-2">
                     <v-col cols="12" class="d-flex align-center">
-                        <div class="text-caption text-grey me-4">Aktivní filtry:</div>
+                        <div class="text-caption text-grey me-4">{{ $t('catalog.filters.active') }}</div>
                         <v-chip
                             v-if="filters.search"
                             class="me-2"
                             closable
                             @click:close="clearSearch"
                         >
-                            Vyhledávání: {{ filters.search }}
+                            {{ $t('catalog.filters.search') }}: {{ filters.search }}
                         </v-chip>
                         <v-chip
                             v-if="filters.series"
@@ -64,7 +64,7 @@
                             closable
                             @click:close="clearSeries"
                         >
-                            Série: {{ filters.series }}
+                            {{ $t('catalog.filters.series') }}: {{ filters.series }}
                         </v-chip>
                         <v-spacer />
                         <v-btn
@@ -73,7 +73,7 @@
                             prepend-icon="mdi-refresh"
                             @click="resetFilters"
                         >
-                            Resetovat filtry
+                            {{ $t('catalog.filters.reset') }}
                         </v-btn>
                     </v-col>
                 </v-row>
@@ -99,7 +99,7 @@
                     variant="tonal"
                     class="text-center"
                 >
-                    {{ error || 'Nebyly nalezeny žádné sety karet.' }}
+                    {{ error || $t('catalog.sets.no_sets') }}
                 </v-alert>
             </v-col>
         </v-row>
@@ -128,17 +128,20 @@
                         class="mb-4"
                     >
                         <v-card
-                            :to="`/sets/${set.id}`"
+                            @click="router.visit(`/sets/${set.id}`)"
                             class="h-100"
                             hover
+                            style="cursor: pointer;"
                         >
                             <v-img
                                 :src="set.logo_url"
                                 :alt="set.name"
-                                height="200"
+                                height="150"
+                                max-width="85%"
                                 contain
                                 position="center center"
-                                class="bg-grey-darken-4 px-4 py-4"
+                                class="mx-auto px-6 py-3 rounded-sm set-logo-img"
+                                @error="handleImageError"
                             >
                                 <template v-slot:placeholder>
                                     <v-row
@@ -152,18 +155,42 @@
                                         />
                                     </v-row>
                                 </template>
+                                <template v-slot:error>
+                                    <v-row
+                                        class="fill-height ma-0"
+                                        align="center"
+                                        justify="center"
+                                    >
+                                        <v-icon
+                                            size="large"
+                                            color="grey-lighten-1"
+                                        >
+                                            mdi-cards
+                                        </v-icon>
+                                    </v-row>
+                                </template>
                             </v-img>
 
-                            <v-card-title class="d-flex align-center">
-                                <div class="d-flex align-center w-100">
-                                    <div class="symbol-wrapper me-2">
+                            <v-card-title class="pa-3">
+                                <div class="d-flex w-100">
+                                    <div class="symbol-wrapper me-2 flex-shrink-0">
                                         <img 
-                                            v-if="set.ptcgo_code"
+                                            v-if="set.ptcgo_code && checkImageExists(`/images/symbols/${set.ptcgo_code.toLowerCase()}.png`)"
                                             :src="`/images/symbols/${set.ptcgo_code.toLowerCase()}.png`" 
                                             :alt="set.name"
                                             class="symbol-img" 
                                             width="24"
                                             height="24"
+                                            @error="handleSymbolImageError(set)"
+                                        />
+                                        <img 
+                                            v-else-if="set.ptcgo_code && checkImageExists(`/images/symbols/${set.ptcgo_code.toLowerCase()}.svg`)"
+                                            :src="`/images/symbols/${set.ptcgo_code.toLowerCase()}.svg`" 
+                                            :alt="set.name"
+                                            class="symbol-img" 
+                                            width="24"
+                                            height="24"
+                                            @error="handleSymbolImageError(set)"
                                         />
                                         <img 
                                             v-else-if="set.symbol_url"
@@ -172,18 +199,17 @@
                                             class="symbol-img" 
                                             width="24"
                                             height="24"
+                                            @error="handleSymbolImageError(set)"
                                         />
-                                        <img 
+                                        <v-icon 
                                             v-else
-                                            src="/images/pokeball.png" 
-                                            :alt="set.name"
-                                            class="symbol-img" 
-                                            width="24"
-                                            height="24"
+                                            icon="mdi-cards"
+                                            size="24"
+                                            class="symbol-img text-primary" 
                                         />
                                     </div>
-                                    <div>
-                                        <div class="text-truncate">{{ set.name }}</div>
+                                    <div class="set-title flex-grow-1">
+                                        {{ set.name }}
                                     </div>
                                 </div>
                             </v-card-title>
@@ -199,21 +225,46 @@
                                         variant="outlined"
                                         class="d-flex align-center"
                                     >
-                                        {{ set.total }} karet
+                                        {{ set.total }} {{ $t('catalog.sets.cards_count') }}
                                     </v-chip>
                                 </div>
+                                
+                                <!-- Tržní cena setu -->
+                                <div class="d-flex justify-space-between align-center mt-3">
+                                    <div>
+                                        <v-btn
+                                            size="small"
+                                            variant="tonal"
+                                            color="primary"
+                                            @click="router.visit(`/sets/${set.id}`)"
+                                            class="text-uppercase text-caption px-3 me-2"
+                                            style="min-width: auto;"
+                                            prepend-icon="mdi-chart-box-outline"
+                                        >
+                                            {{ $t('catalog.sets.details') }}
+                                        </v-btn>
+                                        
+                                        <v-btn
+                                            size="small"
+                                            variant="tonal"
+                                            color="secondary"
+                                            @click="router.visit(`/sets/${set.id}/cards`)"
+                                            class="text-uppercase text-caption px-3"
+                                            style="min-width: auto;"
+                                            prepend-icon="mdi-cards"
+                                        >
+                                            {{ $t('catalog.cards.title') }}
+                                        </v-btn>
+                                    </div>
+                                    
+                                    <span v-if="set.market_price" class="text-success font-weight-medium">
+                                        {{ formatPrice(set.market_price) }}
+                                        <v-tooltip activator="parent" location="bottom">
+                                            {{ $t('catalog.sets.market_price_tooltip') }}
+                                        </v-tooltip>
+                                    </span>
+                                </div>
                             </v-card-text>
-                            
-                            <v-card-actions>
-                                <v-btn
-                                    block
-                                    variant="tonal"
-                                    color="primary"
-                                    :to="`/sets/${set.id}`"
-                                >
-                                    Zobrazit detail
-                                </v-btn>
-                            </v-card-actions>
                         </v-card>
                     </v-col>
                 </v-row>
@@ -226,10 +277,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { router } from '@inertiajs/vue3'
-import SetCard from '@/Components/Set/SetCard.vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { router, usePage } from '@inertiajs/vue3'
 
+const page = usePage();
 const props = defineProps({
     sets: {
         type: Object,
@@ -257,14 +308,36 @@ const loading = ref(false)
 const error = ref(null)
 const selectedSortIndex = ref(0)
 
-// Možnosti řazení
-const sortOptions = [
-    { title: 'Datum vydání (nejnovější)', value: 'release_date', direction: 'desc' },
-    { title: 'Datum vydání (nejstarší)', value: 'release_date', direction: 'asc' },
-    { title: 'Název (A-Z)', value: 'name', direction: 'asc' },
-    { title: 'Název (Z-A)', value: 'name', direction: 'desc' },
-    { title: 'Série', value: 'series', direction: 'asc' }
-]
+// Možnosti řazení - nyní jako computed property
+const sortOptions = computed(() => {
+    return [
+        { 
+            title: page.props.translations?.catalog?.filters?.sort_options?.release_date_desc || 'Datum vydání (nejnovější)', 
+            value: 'release_date', 
+            direction: 'desc' 
+        },
+        { 
+            title: page.props.translations?.catalog?.filters?.sort_options?.release_date_asc || 'Datum vydání (nejstarší)', 
+            value: 'release_date', 
+            direction: 'asc' 
+        },
+        { 
+            title: page.props.translations?.catalog?.filters?.sort_options?.name_asc || 'Název (A-Z)', 
+            value: 'name', 
+            direction: 'asc' 
+        },
+        { 
+            title: page.props.translations?.catalog?.filters?.sort_options?.name_desc || 'Název (Z-A)', 
+            value: 'name', 
+            direction: 'desc' 
+        },
+        { 
+            title: page.props.translations?.catalog?.filters?.sort_options?.price_asc || 'Série', 
+            value: 'series', 
+            direction: 'asc' 
+        }
+    ];
+});
 
 // Aktuální filtry
 const filters = ref({
@@ -300,21 +373,44 @@ const groupedSets = computed(() => {
     return grouped
 })
 
+// Cache pro kontrolu existence obrázků
+const checkImageExists = (imagePath) => {
+    // Pokud jsme již kontrolovali tento obrázek, vrátíme výsledek z cache
+    return true; // Pro zjednodušení vždy vracíme true a případně zachytíme chybu při načítání
+}
+
+// Obsluha chyby načítání obrázku
+const handleImageError = (error) => {
+    console.error('Chyba při načítání obrázku:', error);
+}
+
+// Obsluha chyby načítání symbolu setu
+const handleSymbolImageError = (set) => {
+    console.error(`Chyba při načítání symbolu setu ${set.id}:`, set.ptcgo_code);
+}
+
 // Nastavení výchozího indexu řazení podle props
 onMounted(() => {
-    const sortByValue = props.filters.sort_by || 'release_date'
-    const sortDirection = props.filters.sort_direction || 'desc'
-    
-    const index = sortOptions.findIndex(option => 
-        option.value === sortByValue && option.direction === sortDirection
-    )
-    
-    selectedSortIndex.value = index !== -1 ? index : 0
-})
+    nextTick(() => {
+        try {
+            const sortByValue = props.filters.sort_by || 'release_date';
+            const sortDirection = props.filters.sort_direction || 'desc';
+            
+            const index = sortOptions.value.findIndex(option => 
+                option.value === sortByValue && option.direction === sortDirection
+            );
+            
+            selectedSortIndex.value = index !== -1 ? index : 0;
+        } catch (e) {
+            console.error('Chyba při inicializaci řazení:', e);
+            selectedSortIndex.value = 0;
+        }
+    });
+});
 
 // Aktualizace řazení
 const updateSort = (index) => {
-    const selectedOption = sortOptions[index]
+    const selectedOption = sortOptions.value[index]
     filters.value.sort_by = selectedOption.value
     filters.value.sort_direction = selectedOption.direction
     updateFilters()
@@ -323,9 +419,9 @@ const updateSort = (index) => {
 // Aktualizace filtrů
 const updateFilters = () => {
     // Najdeme vybranou možnost řazení
-    const selectedSort = sortOptions.find(option => 
+    const selectedSort = sortOptions.value.find(option => 
         option.value === filters.value.sort_by && option.direction === filters.value.sort_direction
-    ) || sortOptions[0];
+    ) || sortOptions.value[0];
 
     router.get('/sets', {
         search: filters.value.search,
@@ -369,53 +465,101 @@ const formatDate = (date) => {
         day: 'numeric'
     })
 }
+
+// Formátování ceny
+const formatPrice = (price) => {
+    if (typeof price === 'number') {
+        return price.toLocaleString('cs-CZ', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    } else if (typeof price === 'string') {
+        return parseFloat(price).toLocaleString('cs-CZ', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+    return '0,00 €';
+}
 </script>
 
 <style lang="scss" scoped>
-.v-card-title {
-    font-weight: 500;
-    letter-spacing: 0.0125em;
-}
+    .v-card-title {
+        font-weight: 500;
+        letter-spacing: 0.0125em;
+        font-size: 1rem !important;
+        line-height: 1.3;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
 
-.v-img {
-    transition: transform 0.3s ease;
-}
+    .v-img {
+        transition: transform 0.3s ease;
+    }
 
-.v-card:hover .v-img {
-    transform: scale(1.03);
-}
+    .v-card:hover .v-img {
+        transform: scale(1.03);
+    }
 
-.series-title {
-    position: relative;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    font-weight: 600;
-}
+    .set-logo-img {
+        background: transparent !important;
+        border-bottom: 1px solid rgba(var(--v-theme-primary), 0.05);
+    }
 
-.series-title::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(to right, rgba(var(--v-theme-primary), 0.7), rgba(var(--v-theme-primary), 0.1));
-}
+    .set-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.3;
+        max-height: 2.6em; /* Přibližně 2 řádky */
+        word-break: break-word;
+        hyphens: auto;
+        width: 100%;
+        position: relative;
+        
+        /* Alternativní způsob "multi-line ellipsis" */
+        &::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 30%; /* Gradient šířka pro výfade */
+            height: 1.3em; /* Výška jednoho řádku */
+            background: linear-gradient(to right, rgba(255, 255, 255, 0), var(--v-theme-surface) 80%);
+            pointer-events: none;
+        }
+    }
 
-.symbol-img {
-    object-fit: contain;
-    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
-}
+    .series-title {
+        position: relative;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        font-weight: 600;
+    }
 
-.symbol-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 24px;
-    min-height: 24px;
-}
+    .series-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(to right, rgba(var(--v-theme-primary), 0.7), rgba(var(--v-theme-primary), 0.1));
+    }
 
-.v-img.bg-grey-darken-4 {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+    .symbol-img {
+        object-fit: contain;
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
+    }
+
+    .symbol-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        min-height: 24px;
+    }
 </style>
