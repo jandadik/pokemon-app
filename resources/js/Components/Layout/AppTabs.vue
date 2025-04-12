@@ -9,7 +9,7 @@
             Katalog
         </v-btn>
     </Link>
-    <Link href="/card">
+    <Link href="/cards">
         <v-btn>
             Karty
         </v-btn>

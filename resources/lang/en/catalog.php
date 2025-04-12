@@ -26,6 +26,8 @@ return [
         'series' => 'Series',
         'type' => 'Type',
         'rarity' => 'Rarity',
+        'set' => 'Set',
+        'per_page' => 'Per page',
         'sort' => 'Sort',
         'sort_options' => [
             'release_date_desc' => 'Release date (newest)',
@@ -34,6 +36,10 @@ return [
             'name_desc' => 'Name (Z-A)',
             'price_asc' => 'Price (lowest)',
             'price_desc' => 'Price (highest)',
+            'number_asc' => 'Number (ascending)',
+            'number_desc' => 'Number (descending)',
+            'rarity_asc' => 'Rarity (lowest)',
+            'rarity_desc' => 'Rarity (highest)',
         ],
     ],
     
@@ -48,11 +54,13 @@ return [
         'view_set' => 'View set',
         'market_price' => 'Market price',
         'market_price_tooltip' => 'Total market price of the set',
+        'all' => 'All sets',
     ],
     
     // Cards
     'cards' => [
         'title' => 'Cards',
+        'all_cards' => 'All Cards',
         'search' => 'Search card',
         'no_cards' => 'No cards found',
         'view_card' => 'View card',
@@ -65,6 +73,12 @@ return [
         'collector_number' => 'Number',
         'add_to_collection' => 'Add to collection',
         'remove_from_collection' => 'Remove from collection',
+        'set' => 'Set',
+        'name' => 'Card name',
+        'type' => 'Type',
+        'rarity' => 'Rarity',
+        'price' => 'Price',
+        'number' => 'Number',
     ],
     
     // Card types

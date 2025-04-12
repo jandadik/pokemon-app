@@ -26,6 +26,8 @@ return [
         'series' => 'Série',
         'type' => 'Typ',
         'rarity' => 'Vzácnost',
+        'set' => 'Set',
+        'per_page' => 'Počet na stránku',
         'sort' => 'Řazení',
         'sort_options' => [
             'release_date_desc' => 'Datum vydání (nejnovější)',
@@ -34,6 +36,10 @@ return [
             'name_desc' => 'Název (Z-A)',
             'price_asc' => 'Cena (nejnižší)',
             'price_desc' => 'Cena (nejvyšší)',
+            'number_asc' => 'Číslo (vzestupně)',
+            'number_desc' => 'Číslo (sestupně)',
+            'rarity_asc' => 'Vzácnost (nejnižší)',
+            'rarity_desc' => 'Vzácnost (nejvyšší)',
         ],
     ],
     
@@ -48,11 +54,13 @@ return [
         'view_set' => 'Zobrazit set',
         'market_price' => 'Tržní cena',
         'market_price_tooltip' => 'Celková tržní cena setu',
+        'all' => 'Všechny sety',
     ],
     
     // Karty
     'cards' => [
         'title' => 'Karty',
+        'all_cards' => 'Všechny karty',
         'search' => 'Vyhledat kartu',
         'no_cards' => 'Nebyly nalezeny žádné karty',
         'view_card' => 'Zobrazit kartu',
@@ -65,6 +73,12 @@ return [
         'collector_number' => 'Číslo',
         'add_to_collection' => 'Přidat do sbírky',
         'remove_from_collection' => 'Odebrat ze sbírky',
+        'set' => 'Set',
+        'name' => 'Název karty',
+        'type' => 'Typ',
+        'rarity' => 'Vzácnost',
+        'price' => 'Cena',
+        'number' => 'Číslo',
     ],
     
     // Typy karet

@@ -284,7 +284,7 @@
                                 :aspect-ratio="0.716"
                                 cover
                                 class="rounded-sm card-img"
-                                :lazy-src="'/images/placeholder.jpg'"
+                                @error="$event.target.src = '/images/placeholder.jpg'"
                             >
                                 <template v-slot:placeholder>
                                     <v-row
@@ -720,7 +720,7 @@ function formatPrice(price) {
     }).format(price);
 }
 
-function updateFilters() {
+function updateFilters(resetPage = true) {
     // Zde by bylo volání API, pokud by filtrace probíhala na serveru
     // V našem případě jen aktualizujeme filtry a necháme computed property udělat svou práci
 }
@@ -750,30 +750,22 @@ function resetFilters() {
 }
 
 function getCardImageUrl(card) {
-    // Zpracování null nebo undefined
-    if (!card) {
-        return '/images/placeholder.jpg';
+    // 1. Priorita: Lokální soubor (img_file_small)
+    if (card && card.img_file_small) {
+        return card.img_file_small;
     }
     
-    // Pokud nemá card.set_id, použijeme ID setu z props
-    const setId = card.set_id || (props.set ? props.set.id : null);
-
-    // Lokální obrázek karty - struktura: card_images/{set_id}/{number}.png
-    if (setId && card.number) {
-        return `/images/card_images/${setId}/${card.number}.png`;
-    }
-    
-    // Pokud není k dispozici číslo karty, zkusíme img_file_small
-    if (card.img_file_small) {
-        return `/images/cards/${card.img_file_small}`;
-    }
-    
-    // Fallback na URL z databáze
-    if (card.img_small) {
+    // 2. Priorita: Externí URL (img_small)
+    if (card && card.img_small) {
         return card.img_small;
     }
     
-    // Fallback na placeholder
+    // 3. Priorita: Původní cesta (jako fallback pro kompatibilitu)
+    if (card && card.set_id && card.number) {
+        return `/images/card_images/${card.set_id}/${card.number}.png`;
+    }
+    
+    // 4. Fallback: Placeholder
     return '/images/placeholder.jpg';
 }
 
