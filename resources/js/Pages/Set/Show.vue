@@ -146,7 +146,7 @@
                 <v-card class="mb-4">
                     <v-card-text>
                         <v-row>
-                            <v-col cols="12" md="6" lg="4">
+                            <v-col cols="12" sm="6" md="3" lg="3">
                                 <v-text-field
                                     v-model="filters.search"
                                     :label="$t('catalog.filters.search')"
@@ -158,7 +158,7 @@
                                     @update:model-value="updateFilters"
                                 />
                             </v-col>
-                            <v-col cols="12" md="6" lg="4">
+                            <v-col cols="12" sm="6" md="3" lg="3">
                                 <v-select
                                     v-model="filters.type"
                                     :items="typeOptions"
@@ -170,7 +170,7 @@
                                     @update:model-value="updateFilters"
                                 />
                             </v-col>
-                            <v-col cols="12" md="6" lg="4">
+                            <v-col cols="12" sm="6" md="3" lg="3">
                                 <v-select
                                     v-model="filters.rarity"
                                     :items="rarityOptions"
@@ -180,6 +180,17 @@
                                     hide-details
                                     clearable
                                     @update:model-value="updateFilters"
+                                />
+                            </v-col>
+                            <v-col cols="12" sm="6" md="3" lg="3">
+                                <v-select
+                                    v-model="sortOption"
+                                    :items="sortOptions"
+                                    :label="$t('catalog.filters.sort')"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    hide-details
+                                    @update:model-value="updateSort"
                                 />
                             </v-col>
                         </v-row>
@@ -380,9 +391,9 @@
                             </v-avatar>
                         </template>
                         <template #[`item.name`]="{ item }">
-                            <router-link :to="`/cards/${item.id}`" class="text-decoration-none">
+                            <Link :href="`/cards/${item.id}`" class="text-decoration-none">
                                 {{ item.name }}
-                            </router-link>
+                            </Link>
                         </template>
                         <template #[`item.types`]="{ item }">
                             <v-icon 
@@ -449,13 +460,15 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, Link } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 
 const props = defineProps({
     set: Object,
 });
+
+const page = usePage();
 
 // Stav stránky
 const loading = ref(false);
@@ -471,18 +484,18 @@ const filters = ref({
 
 // Filtry
 const typeOptions = [
-    { title: 'Všechny typy', value: '' },
-    { title: 'Pokémon', value: 'Pokémon' },
-    { title: 'Trainer', value: 'Trainer' },
-    { title: 'Energy', value: 'Energy' },
+    { title: page.props.translations?.catalog?.types?.all || 'Všechny typy', value: '' },
+    { title: page.props.translations?.catalog?.types?.pokemon || 'Pokémon', value: 'Pokémon' },
+    { title: page.props.translations?.catalog?.types?.trainer || 'Trenér', value: 'Trainer' },
+    { title: page.props.translations?.catalog?.types?.energy || 'Energie', value: 'Energy' },
 ];
 
 const rarityOptions = computed(() => {
     // Výchozí položka "Všechny vzácnosti"
-    const options = [{ title: 'Všechny vzácnosti', value: '' }];
+    const rarityOpts = [{ title: page.props.translations?.catalog?.rarities?.all || 'Všechny vzácnosti', value: '' }];
     
     // Pokud nemáme set nebo karty, vrátíme jen výchozí položku
-    if (!hasCards.value) return options;
+    if (!hasCards.value) return rarityOpts;
     
     // Získáme všechny unikátní vzácnosti z karet v setu
     const uniqueRarities = [...new Set(props.set.cards
@@ -514,24 +527,38 @@ const rarityOptions = computed(() => {
     
     // Přidáme unikátní vzácnosti do seznamu možností
     uniqueRarities.forEach(rarity => {
-        options.push({ title: rarity, value: rarity });
+        rarityOpts.push({ title: rarity, value: rarity });
     });
     
-    return options;
+    return rarityOpts;
 });
 
 const tableHeaders = [
     { title: '', key: 'image', sortable: false, width: '50px' },
-    { title: 'Číslo', key: 'number', width: '80px', sortable: true },
-    { title: 'Název karty', key: 'name', sortable: true },
-    { title: 'Typ', key: 'types', width: '120px', sortable: true },
-    { title: 'Vzácnost', key: 'rarity', width: '100px', sortable: true },
-    { title: 'Cena', key: 'price', width: '80px', align: 'end', sortable: true },
+    { title: page.props.translations?.catalog?.cards?.number || 'Číslo', key: 'number', width: '80px', sortable: true },
+    { title: page.props.translations?.catalog?.cards?.name || 'Název karty', key: 'name', sortable: true },
+    { title: page.props.translations?.catalog?.cards?.type || 'Typ', key: 'types', width: '120px', sortable: true },
+    { title: page.props.translations?.catalog?.cards?.rarity || 'Vzácnost', key: 'rarity', width: '100px', sortable: true },
+    { title: page.props.translations?.catalog?.cards?.price || 'Cena', key: 'price', width: '80px', align: 'end', sortable: true },
 ];
 
 // Computed properties
 const hasCards = computed(() => props.set && props.set.cards && props.set.cards.length > 0);
 const hasActiveFilters = computed(() => filters.value.search || filters.value.type || filters.value.rarity);
+
+const sortOption = ref('number_asc'); // Výchozí řazení podle čísla vzestupně
+
+// Možnosti řazení
+const sortOptions = [
+    { title: page.props.translations?.catalog?.filters?.sort_options?.number_asc || 'Číslo (vzestupně)', value: 'number_asc' },
+    { title: page.props.translations?.catalog?.filters?.sort_options?.number_desc || 'Číslo (sestupně)', value: 'number_desc' },
+    { title: page.props.translations?.catalog?.filters?.sort_options?.name_asc || 'Název (A-Z)', value: 'name_asc' },
+    { title: page.props.translations?.catalog?.filters?.sort_options?.name_desc || 'Název (Z-A)', value: 'name_desc' },
+    { title: page.props.translations?.catalog?.filters?.sort_options?.price_asc || 'Cena (nejnižší)', value: 'price_asc' },
+    { title: page.props.translations?.catalog?.filters?.sort_options?.price_desc || 'Cena (nejvyšší)', value: 'price_desc' },
+    { title: page.props.translations?.catalog?.filters?.sort_options?.rarity_asc || 'Vzácnost (nejnižší)', value: 'rarity_asc' },
+    { title: page.props.translations?.catalog?.filters?.sort_options?.rarity_desc || 'Vzácnost (nejvyšší)', value: 'rarity_desc' },
+];
 
 const filteredCards = computed(() => {
     if (!hasCards.value) return [];
@@ -596,13 +623,49 @@ const filteredCards = computed(() => {
         return true;
     });
     
-    // Řazení karet podle čísla
+    // Řazení karet podle vybrané možnosti
     result.sort((a, b) => {
-        // Převedeme čísla karet na číselné hodnoty pro správné řazení
-        const numA = Number(a.number.replace(/\D/g, '')) || 0;
-        const numB = Number(b.number.replace(/\D/g, '')) || 0;
+        // Pomocné funkce pro extrakci číselných hodnot
+        const getNumericPart = (str) => Number(String(str).replace(/\D/g, '')) || 0;
+        const getPrice = (card) => card.prices_cm?.avg30 || 0;
         
-        return numA - numB;
+        // Řazení podle vzácnosti
+        const rarityOrder = {
+            'Common': 1,
+            'Uncommon': 2,
+            'Rare': 3,
+            'Rare Holo': 4,
+            'Rare Ultra': 5,
+            'Rare Secret': 6,
+            'Amazing Rare': 7,
+            'Ultra Rare': 8,
+            'Secret Rare': 9,
+            'Promo': 10
+        };
+        
+        const getRarityValue = (card) => rarityOrder[card.rarity] || 100;
+        
+        // Aplikace řazení
+        switch (sortOption.value) {
+            case 'number_asc':
+                return getNumericPart(a.number) - getNumericPart(b.number);
+            case 'number_desc':
+                return getNumericPart(b.number) - getNumericPart(a.number);
+            case 'name_asc':
+                return a.name.localeCompare(b.name);
+            case 'name_desc':
+                return b.name.localeCompare(a.name);
+            case 'price_asc':
+                return getPrice(a) - getPrice(b);
+            case 'price_desc':
+                return getPrice(b) - getPrice(a);
+            case 'rarity_asc':
+                return getRarityValue(a) - getRarityValue(b);
+            case 'rarity_desc':
+                return getRarityValue(b) - getRarityValue(a);
+            default:
+                return getNumericPart(a.number) - getNumericPart(b.number);
+        }
     });
     
     // Zajistíme, že vlastnosti jsou ve správném formátu
@@ -873,6 +936,11 @@ function formatNumberPrice(price) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(price);
+}
+
+function updateSort() {
+    // Metoda pro aktualizaci řazení karet
+    // V tuto chvíli není potřeba další logika, protože filteredCards je computed a reaguje na změny
 }
 </script>
 
