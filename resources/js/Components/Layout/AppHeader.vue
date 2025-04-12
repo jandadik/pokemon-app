@@ -1,31 +1,32 @@
 <template>
     <v-app-bar :elevation="2">
-        <!-- Levá část -->
-        <template v-slot:prepend>
+        <div class="header-container d-flex align-center">
+            <!-- Levá část -->
             <v-app-bar-nav-icon 
                 variant="text" 
                 @click="$emit('update:drawer', !drawer)"
+                class="flex-shrink-0"
             />
-        </template>
 
-        <!-- Střední část -->
-        <Link href="/">
-            <ApplicationLogo class="" />
-        </Link>
-        <v-app-bar-title>{{ $trans('app.app_name') }}</v-app-bar-title>
+            <!-- Střední část -->
+            <Link href="/" class="ml-3 mr-2">
+                <ApplicationLogo class="" />
+            </Link>
+            <v-app-bar-title>{{ $trans('app.app_name') }}</v-app-bar-title>
 
-        <!-- Pravá část -->
-        <template v-slot:append>
+            <v-spacer></v-spacer>
+
+            <!-- Pravá část -->
             <AppHeaderActions />
-        </template>
+        </div>
 
         <!-- Spodní část s taby -->
         <template v-slot:extension v-if="showTabs">
-            <v-container class="pa-0">
+            <div class="header-container">
                 <div class="d-flex justify-center">
                     <AppTabs />
                 </div>
-            </v-container>
+            </div>
         </template>
     </v-app-bar>
 </template>

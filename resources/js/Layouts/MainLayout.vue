@@ -1,22 +1,22 @@
 <template>
-    <v-responsive>
-        <v-app :theme="theme">
-            <!-- Levý drawer s menu -->
-            <AppNavDrawer
-                :model-value="drawer"
-                @update:model-value="drawer = $event"
-            />
-            <!-- Hlavní AppBar s taby -->
-            <AppHeader 
-                :drawer="drawer"
-                @update:drawer="drawer = $event"
-            />
-            <!-- Hlavní obsah -->
-            <v-main>
+    <v-app :theme="theme">
+        <!-- Levý drawer s menu -->
+        <AppNavDrawer
+            :model-value="drawer"
+            @update:model-value="drawer = $event"
+        />
+        <!-- Hlavní AppBar s taby -->
+        <AppHeader 
+            :drawer="drawer"
+            @update:drawer="drawer = $event"
+        />
+        <!-- Hlavní obsah -->
+        <v-main>
+            <v-layout class="app-content">
                 <slot></slot>
-            </v-main>
-        </v-app>
-    </v-responsive>
+            </v-layout>
+        </v-main>
+    </v-app>
 </template>
 
 <script setup>
@@ -75,3 +75,21 @@ watch(() => page.props.flash, (flash) => {
   }
 }, { immediate: true });
 </script>
+
+<style>
+/* Globální styl pro omezení šířky obsahu aplikace v hlavičce i obsahu */
+.app-content {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+/* Tento styl lze aplikovat pro kontejnery jak v hlavičce tak v obsahu */
+.header-container {
+    max-width: 1400px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+</style>

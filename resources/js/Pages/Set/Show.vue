@@ -1,5 +1,5 @@
 <template>
-    <v-container fluid>
+    <v-container>
         <!-- Hlavička setu -->
         <v-card class="mb-4 set-header">
             <v-card-text>
@@ -13,7 +13,7 @@
                                 max-width="85%"
                                 contain
                                 position="center center"
-                                class="mx-auto px-6 py-3 rounded-sm set-logo-img"
+                                class="mx-auto px-6 py-3 rounded-sm"
                             >
                                 <template v-slot:placeholder>
                                     <v-row
@@ -937,10 +937,6 @@ function formatNumberPrice(price) {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.set-logo-img {
-    background-color: var(--v-surface-variant-lighten5, #f5f5f5);
 }
 
 /* Styly pro různé vzácnosti karet */
