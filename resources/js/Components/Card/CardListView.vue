@@ -176,24 +176,28 @@
                     {{ formatCardNumber(item.number) }}
                 </template>
                 <template #[`item.price`]="{ item }">
-                    <div v-if="item.prices_cm && item.prices_cm.avg30 !== null" class="price-tag">
+                    <div v-if="item.prices_cm || item.price || item.prices" class="price-tag">
                         <v-tooltip location="bottom">
                             <template v-slot:activator="{ props }">
                                 <span v-bind="props">
-                                    {{ formatNumberPrice(item.prices_cm.avg30) }}
+                                    {{ getPriceValue(item) }}
                                     <v-icon size="x-small" icon="mdi-currency-eur" class="ms-1" />
                                 </span>
                             </template>
                             <div>
-                                <div>Aktualizace dne: {{ formatUpdateDate(item.prices_cm.updated_at) }}</div>
+                                <div v-if="item.prices_cm && item.prices_cm.updated_at">
+                                    Aktualizace dne: {{ formatUpdateDate(item.prices_cm.updated_at) }}
+                                </div>
                                 <div class="d-flex flex-column mt-1">
-                                    <div v-if="item.prices_cm.avg30 !== null" class="text-caption">
+                                    <div v-if="item.prices_cm && item.prices_cm.avg30 !== null" class="text-caption">
                                         Cena (normální): {{ formatPrice(item.prices_cm.avg30) }}
                                     </div>
-                                    <div v-if="item.prices_cm.reverse_holo_avg30 !== null" class="text-caption">
+                                    <div v-if="item.prices_cm && item.prices_cm.reverse_holo_avg30 !== null" class="text-caption">
                                         Cena (reverse holo): {{ formatPrice(item.prices_cm.reverse_holo_avg30) }}
                                     </div>
-                                    <div class="text-caption mt-1">ID: {{ item.prices_cm.card_id }}</div>
+                                    <div v-if="item.prices_cm && item.prices_cm.card_id" class="text-caption mt-1">
+                                        ID: {{ item.prices_cm.card_id }}
+                                    </div>
                                 </div>
                             </div>
                         </v-tooltip>
@@ -326,10 +330,10 @@ const setOptions = computed(() => {
 const tableHeaders = [
     { title: '', key: 'image', sortable: false, width: '50px' },
     { title: 'Název karty', key: 'name', sortable: true },
-    { title: 'Set', key: 'set', width: '120px', sortable: true },
+    { title: 'Set', key: 'set', width: '250px', sortable: true },
     { title: 'Číslo', key: 'number', width: '80px', sortable: true },
     { title: 'Typ', key: 'types', width: '120px', sortable: true },
-    { title: 'Vzácnost', key: 'rarity', width: '100px', sortable: true },
+    { title: 'Vzácnost', key: 'rarity', width: '220px', sortable: true },
     { title: 'Cena', key: 'price', width: '80px', align: 'end', sortable: true },
 ];
 
@@ -395,6 +399,11 @@ onMounted(() => {
     localFilters.type = props.filters.type || '';
     localFilters.rarity = props.filters.rarity || '';
     localFilters.set_id = props.filters.set_id || '';
+    
+    // Debug výpis
+    if (props.cards && props.cards.data && props.cards.data.length > 0) {
+        console.log('První karta ceny:', props.cards.data[10].prices_cm);
+    }
 });
 
 // Odpojení sledování událostí při unmount
@@ -643,8 +652,34 @@ function formatUpdateDate(dateString) {
 }
 
 function updatePage(newPage) {
-    tableOptions.value.page = newPage;
-    applyFilters(false);
+    // Místo pouze page aktualizujeme celý objekt filtrů
+    // a zachováme tak všechny parametry včetně řazení
+    const newFilters = {
+        ...localFilters,
+        page: newPage,
+        per_page: perPage.value,
+        sort_by: tableOptions.value.sortBy[0]?.key || 'name',
+        sort_direction: tableOptions.value.sortBy[0]?.order || 'asc'
+    };
+
+    // Aktualizujeme tableOptions
+    tableOptions.value = {
+        ...tableOptions.value,
+        page: newPage
+    };
+
+    // Informujeme rodičovskou komponentu o změně filtrů
+    emit('update:filters', newFilters);
+    
+    // Nastavíme loading
+    isLoading.value = true;
+
+    // Odešleme požadavek na server s kompletními parametry
+    router.get('/cards', newFilters, {
+        preserveState: true,
+        preserveScroll: true,
+        only: ['cards']
+    });
 }
 
 function updatePerPage(newPerPage) {
@@ -654,6 +689,18 @@ function updatePerPage(newPerPage) {
 
 function handleImageError(event) {
     event.target.src = '/images/placeholder.jpg';
+}
+
+function getPriceValue(item) {
+    // Zkontrolujte všechny možné varianty ceny
+    if (item.prices_cm && item.prices_cm.avg30 !== null) {
+        return formatNumberPrice(item.prices_cm.avg30);
+    } else if (item.price) {
+        return formatNumberPrice(item.price);
+    } else if (item.prices && item.prices.avg) {
+        return formatNumberPrice(item.prices.avg);
+    }
+    return '-';
 }
 </script>
 
@@ -668,7 +715,7 @@ function handleImageError(event) {
 .list-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 4px;
 }
 

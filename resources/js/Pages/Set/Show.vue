@@ -750,22 +750,31 @@ function resetFilters() {
 }
 
 function getCardImageUrl(card) {
-    // 1. Priorita: Lokální soubor (img_file_small)
-    if (card && card.img_file_small) {
-        return card.img_file_small;
+    // Pokud není karta definována, vrátíme placeholder
+    if (!card) {
+        return '/images/placeholder.jpg';
     }
     
-    // 2. Priorita: Externí URL (img_small)
-    if (card && card.img_small) {
+    // Priorita 1: Lokální soubor z databáze (img_file_small)
+    if (card.img_file_small) {
+        // V databázi je relativní cesta "card_images\cel25\1.png" bez '/images/'
+        // Převést obrácená lomítka na normální a přidat počáteční /images/
+        const path = '/images/' + card.img_file_small.replace(/\\/g, '/');
+        return path;
+    }
+    
+    // Priorita 2: URL z API/externího zdroje (img_small)
+    if (card.img_small) {
         return card.img_small;
     }
     
-    // 3. Priorita: Původní cesta (jako fallback pro kompatibilitu)
-    if (card && card.set_id && card.number) {
-        return `/images/card_images/${card.set_id}/${card.number}.png`;
+    // Fallback: Generovaná cesta podle čísla karty a setu
+    if (card.set_id && card.number) {
+        const localPath = `/images/card_images/${card.set_id}/${card.number}.png`;
+        return localPath;
     }
     
-    // 4. Fallback: Placeholder
+    // Fallback: Placeholder
     return '/images/placeholder.jpg';
 }
 
