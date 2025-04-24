@@ -13,7 +13,8 @@
                             density="comfortable"
                             hide-details
                             clearable
-                            @update:model-value="updateFilter('search', $event)"
+                            :loading="isLoading"
+                            @update:model-value="debouncedSearch"
                         />
                     </v-col>
                     <v-col cols="12" sm="6" md="2">
@@ -54,13 +55,13 @@
                     </v-col>
                     <v-col cols="12" sm="6" md="2">
                         <v-select
-                            v-model="perPage"
+                            v-model="localFilters.per_page"
                             :items="[30, 60, 120]"
                             label="Počet na stránku"
                             variant="outlined"
                             density="comfortable"
                             hide-details
-                            @update:model-value="updatePerPage"
+                            @update:model-value="updateFilter('per_page', $event)"
                         />
                     </v-col>
                 </v-row>
@@ -120,7 +121,7 @@
             <v-data-table
                 :headers="tableHeaders"
                 :items="cards.data"
-                :items-per-page="perPage"
+                :items-per-page="localFilters.per_page"
                 :server-items-length="cards.total"
                 :loading="isLoading"
                 v-model:options="tableOptions"
@@ -135,7 +136,14 @@
             >
                 <template #[`item.image`]="{ item }">
                     <div class="list-img-container">
+                        <v-skeleton-loader
+                            v-if="isLoading"
+                            type="image"
+                            width="30"
+                            height="30"
+                        />
                         <img 
+                            v-else
                             :src="getCardImageUrl(item)" 
                             :alt="item.name" 
                             width="30" 
@@ -210,10 +218,11 @@
             <div class="d-flex justify-center mt-4">
                 <v-pagination
                     v-model="currentPage"
-                    :length="Math.ceil(cards.total / perPage)"
+                    :length="Math.ceil(cards.total / localFilters.per_page)"
                     :total-visible="7"
                     @update:model-value="updatePage"
                     rounded
+                    :disabled="isLoading"
                 ></v-pagination>
             </div>
         </v-card>
@@ -238,8 +247,10 @@ import { ref, computed, watch, onMounted, reactive, onUnmounted } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
+import { debounce } from 'lodash';
 
 const page = usePage();
+const isLoading = ref(false);
 
 const props = defineProps({
     cards: {
@@ -260,32 +271,24 @@ const localFilters = reactive({
     search: props.filters?.search || '',
     type: props.filters?.type || '',
     rarity: props.filters?.rarity || '',
-    set_id: props.filters?.set_id || ''
+    set_id: props.filters?.set_id || '',
+    sort_by: props.filters?.sort_by || 'name',
+    sort_direction: props.filters?.sort_direction || 'asc',
+    per_page: props.filters?.per_page || 30
 });
 
 // Stav stránky
 const currentPage = ref(props.cards?.current_page || 1);
-const perPage = ref(props.filters?.per_page || 30);
-const isLoading = ref(false);
 
 // Nastavení tabulky
 const tableOptions = ref({
     page: currentPage.value,
-    itemsPerPage: perPage.value,
-    sortBy: [{ key: props.filters?.sort_by || 'name', order: props.filters?.sort_direction === 'desc' ? 'desc' : 'asc' }],
-    // Přidáme parametry dle dokumentace
+    itemsPerPage: localFilters.per_page,
+    sortBy: [{ key: localFilters.sort_by, order: localFilters.sort_direction === 'desc' ? 'desc' : 'asc' }],
     multiSort: false,
     mustSort: true,
-    sortDesc: props.filters?.sort_direction === 'desc',
+    sortDesc: localFilters.sort_direction === 'desc',
 });
-
-// Sledujeme změny v tableOptions
-watch(() => tableOptions.value, (newOptions) => {
-    // Aktualizujeme perPage, pokud se změnilo v tableOptions
-    if (newOptions.itemsPerPage !== perPage.value) {
-        perPage.value = newOptions.itemsPerPage;
-    }
-}, { deep: true });
 
 // Možnosti filtrů
 const typeOptions = [
@@ -356,36 +359,26 @@ watch(() => props.cards, (newCards) => {
 
 watch(() => props.filters, (newFilters) => {
     // Aktualizujeme lokální filtry podle změn v props
+    Object.keys(localFilters).forEach(key => {
+        if (newFilters[key] !== undefined) {
+            localFilters[key] = newFilters[key];
+        }
+    });
+    
+    // Aktualizujeme tableOptions, pokud se změnilo řazení nebo stránkování
     if (newFilters.page && parseInt(newFilters.page) !== currentPage.value) {
         currentPage.value = parseInt(newFilters.page);
-        
-        // Aktualizujeme i tableOptions
-        tableOptions.value = {
-            ...tableOptions.value,
-            page: parseInt(newFilters.page)
-        };
+        tableOptions.value.page = parseInt(newFilters.page);
     }
-    
-    if (newFilters.per_page && parseInt(newFilters.per_page) !== perPage.value) {
-        perPage.value = parseInt(newFilters.per_page);
-        
-        // Aktualizujeme i tableOptions
-        tableOptions.value = {
-            ...tableOptions.value,
-            itemsPerPage: parseInt(newFilters.per_page)
-        };
-    }
-    
-    // Ostatní filtry
-    localFilters.search = newFilters.search || '';
-    localFilters.type = newFilters.type || '';
-    localFilters.rarity = newFilters.rarity || '';
-    localFilters.set_id = newFilters.set_id || '';
 }, { deep: true });
+
+// Debounced funkce pro vyhledávání
+const debouncedSearch = debounce((value) => {
+    updateFilter('search', value);
+}, 500);
 
 // Sledování router událostí pro indikaci načítání
 onMounted(() => {
-    // Sledování stavu načítání
     router.on('start', () => {
         isLoading.value = true;
     });
@@ -395,25 +388,19 @@ onMounted(() => {
     });
     
     // Synchronizace lokalních filtrů s props
-    localFilters.search = props.filters.search || '';
-    localFilters.type = props.filters.type || '';
-    localFilters.rarity = props.filters.rarity || '';
-    localFilters.set_id = props.filters.set_id || '';
-    
-    // Debug výpis
-    if (props.cards && props.cards.data && props.cards.data.length > 0) {
-        console.log('První karta ceny:', props.cards.data[10].prices_cm);
-    }
+    Object.keys(localFilters).forEach(key => {
+        if (props.filters[key] !== undefined) {
+            localFilters[key] = props.filters[key];
+        }
+    });
 });
 
 // Odpojení sledování událostí při unmount
 onUnmounted(() => {
-    // Chybu router.off ignorujeme, protože nemá vliv na funkčnost aplikace
     try {
         router.off('start');
         router.off('finish');
     } catch (e) {
-        // Ignorujeme chybu, protože není kritická
         console.debug('Nelze odpojit router event, ignorujeme:', e);
     }
 });
@@ -431,39 +418,32 @@ function clearFilter(key) {
 
 function resetFilters() {
     Object.keys(localFilters).forEach(key => {
-        localFilters[key] = '';
+        if (key !== 'page' && key !== 'per_page' && key !== 'sort_by' && key !== 'sort_direction') {
+            localFilters[key] = '';
+        }
     });
+    localFilters.page = 1;
+    localFilters.per_page = 30;
+    localFilters.sort_by = 'name';
+    localFilters.sort_direction = 'asc';
     applyFilters(true);
 }
 
 function applyFilters(resetPage = true) {
-    // Vytvoříme nový objekt filtrů, který kombinuje lokální filtry a hodnoty z v-data-table
-    const newFilters = {
-        ...localFilters,
-        page: resetPage ? 1 : currentPage.value,
-        per_page: perPage.value
-    };
-
-    // Přidáme řazení z v-data-table
-    if (tableOptions.value.sortBy && tableOptions.value.sortBy.length > 0) {
-        const sortInfo = tableOptions.value.sortBy[0];
-        newFilters.sort_by = sortInfo.key;
-        newFilters.sort_direction = sortInfo.order;
+    // Vytvoříme nový objekt filtrů
+    const newFilters = { ...localFilters };
+    
+    // Pokud resetujeme stránku, nastavíme ji na 1
+    if (resetPage) {
+        newFilters.page = 1;
+        currentPage.value = 1;
+    } else {
+        newFilters.page = currentPage.value;
     }
-
-    // Aktualizujeme tableOptions, aby odpovídaly našim filtrům
-    tableOptions.value = {
-        ...tableOptions.value,
-        page: resetPage ? 1 : currentPage.value,
-        itemsPerPage: perPage.value
-    };
-
+    
     // Informujeme rodičovskou komponentu o změně filtrů
     emit('update:filters', newFilters);
     
-    // Před requestem nastavujeme loading
-    isLoading.value = true;
-
     // Odešleme požadavek na server
     router.get('/cards', newFilters, {
         preserveState: true,
@@ -474,39 +454,29 @@ function applyFilters(resetPage = true) {
 
 // Metoda pro v-data-table
 function updateOptions(options) {
-    // Aktualizujeme lokální stav - ale pouze pokud se skutečně změnil
     if (options.page !== currentPage.value) {
         currentPage.value = options.page;
     }
     
-    if (options.itemsPerPage !== perPage.value) {
-        perPage.value = options.itemsPerPage;
+    if (options.itemsPerPage !== localFilters.per_page) {
+        localFilters.per_page = options.itemsPerPage;
     }
     
-    // Vytvoříme filtr objekt přímo z options
-    const newFilters = { 
-        ...localFilters,
-        page: options.page,
-        per_page: options.itemsPerPage
-    };
-    
-    // Přidáme řazení
     if (options.sortBy && options.sortBy.length > 0) {
         const sortInfo = options.sortBy[0];
-        newFilters.sort_by = sortInfo.key;
-        newFilters.sort_direction = sortInfo.order;
+        localFilters.sort_by = sortInfo.key;
+        localFilters.sort_direction = sortInfo.order;
     }
     
-    // Aktualizujeme tableOptions před odesláním
     tableOptions.value = { ...options };
+    
+    // Vytvoříme nový objekt filtrů
+    const newFilters = { ...localFilters, page: currentPage.value };
     
     // Informujeme rodičovskou komponentu o změně filtrů
     emit('update:filters', newFilters);
     
-    // Před requestem nastavujeme loading
-    isLoading.value = true;
-    
-    // Odešleme požadavek na server s explicitním parametrem page
+    // Odešleme požadavek na server
     router.get('/cards', newFilters, {
         preserveState: true,
         preserveScroll: true,
@@ -652,39 +622,8 @@ function formatUpdateDate(dateString) {
 }
 
 function updatePage(newPage) {
-    // Místo pouze page aktualizujeme celý objekt filtrů
-    // a zachováme tak všechny parametry včetně řazení
-    const newFilters = {
-        ...localFilters,
-        page: newPage,
-        per_page: perPage.value,
-        sort_by: tableOptions.value.sortBy[0]?.key || 'name',
-        sort_direction: tableOptions.value.sortBy[0]?.order || 'asc'
-    };
-
-    // Aktualizujeme tableOptions
-    tableOptions.value = {
-        ...tableOptions.value,
-        page: newPage
-    };
-
-    // Informujeme rodičovskou komponentu o změně filtrů
-    emit('update:filters', newFilters);
-    
-    // Nastavíme loading
-    isLoading.value = true;
-
-    // Odešleme požadavek na server s kompletními parametry
-    router.get('/cards', newFilters, {
-        preserveState: true,
-        preserveScroll: true,
-        only: ['cards']
-    });
-}
-
-function updatePerPage(newPerPage) {
-    tableOptions.value.itemsPerPage = newPerPage;
-    applyFilters(true);
+    currentPage.value = newPage;
+    applyFilters(false);
 }
 
 function handleImageError(event) {
@@ -774,5 +713,10 @@ function getPriceValue(item) {
 /* Styly pro stránkování */
 :deep(.v-pagination__item--is-active) {
     font-weight: bold;
+}
+
+/* Přidání stylů pro loading stav */
+.v-skeleton-loader {
+    border-radius: 4px;
 }
 </style> 

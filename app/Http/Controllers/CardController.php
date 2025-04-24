@@ -19,7 +19,7 @@ class CardController extends Controller
      */
     public function index(Request $request)
     {
-        $perPage = $request->get('per_page', 30); // Výchozí hodnota 30 karet na stránku
+        $perPage = $request->get('per_page', 30);
         $page = $request->get('page', 1);
         $search = $request->get('search', '');
         $setId = $request->get('set_id', '');
@@ -28,44 +28,23 @@ class CardController extends Controller
         $sortBy = $request->get('sort_by', 'name');
         $sortDirection = $request->get('sort_direction', 'asc');
 
-        // Pro správné fungování s pagination vždy zajistíme, že máme platnou hodnotu stránky
+        // Validace vstupních parametrů
         if (!is_numeric($page) || $page < 1) {
             $page = 1;
         }
 
-        // Validace počtu karet na stránku
         if (!in_array($perPage, [30, 60, 120])) {
             $perPage = 30;
         }
 
-        // Debug: Vypsat informace o požadavku
-        \Log::info('CardController@index - Request: ' . json_encode([
-            'page' => $page,
-            'per_page' => $perPage,
-            'search' => $search,
-            'set_id' => $setId,
-            'type' => $type,
-            'rarity' => $rarity,
-            'sort_by' => $sortBy,
-            'sort_direction' => $sortDirection,
-            'url' => $request->fullUrl(),
-            'previous_url' => url()->previous()
-        ]));
-
-        // Debug: Vypsat strukturu databáze
-        \Log::info('Sloupce v tabulce cards: ' . implode(', ', Schema::getColumnListing('cards')));
-
         // Cache key pro stránkování a filtry
         $cacheKey = "cards_page_{$page}_per_page_{$perPage}_search_{$search}_set_{$setId}_type_{$type}_rarity_{$rarity}_sort_{$sortBy}_{$sortDirection}";
 
-        // Pro řazení podle ceny musíme použít jiný přístup - nelze cachovat (nebo musíme cache zneplatnit)
+        // Pro řazení podle ceny musíme použít jiný přístup
         if ($sortBy === 'price') {
-            // Zneplatníme cache pro tento požadavek, protože řazení podle ceny vyžaduje vždy aktuální data
             Cache::forget($cacheKey);
-            
             $result = $this->getCardsOrderedByPrice($perPage, $page, $search, $setId, $type, $rarity, $sortDirection);
         } else {
-            // Standardní cacheování pro ostatní typy řazení
             $result = Cache::remember($cacheKey, 3600, function () use ($perPage, $page, $search, $setId, $type, $rarity, $sortBy, $sortDirection) {
                 return $this->getCards($perPage, $page, $search, $setId, $type, $rarity, $sortBy, $sortDirection);
             });
@@ -93,11 +72,11 @@ class CardController extends Controller
         \Log::info("Řazení podle ceny - vstupní parametry: page={$page}, perPage={$perPage}, sortDirection={$sortDirection}");
         
         $query = Card::select(['id', 'set_id', 'name', 'number', 'supertype', 'types', 'rarity', 'hp', 'img_file_small', 'img_small'])
-            ->with(['set:id,name,series']); // Eager loading pro set
+            ->with(['set:id,name,series']);
 
         // Aplikace filtrů
         if ($search) {
-            $query->where('name', 'like', "%{$search}%");
+            $query->whereRaw('MATCH(name, number) AGAINST(? IN BOOLEAN MODE)', [$search . '*']);
         }
         if ($setId) {
             $query->where('set_id', $setId);
@@ -109,78 +88,64 @@ class CardController extends Controller
             $query->where('rarity', $rarity);
         }
 
-        // Pro řazení podle ceny potřebujeme nejprve získat všechny karty bez paginace
+        // Získáme všechny karty bez paginace
         $allCards = $query->get();
         
         \Log::info("Řazení podle ceny - počet karet před načtením cen: " . count($allCards));
         
-        // Načítání cen pro všechny karty
+        // Načteme ceny pro všechny karty najednou
+        $cardIds = $allCards->map(function($card) {
+            return $card->set_id . '-' . $card->number;
+        })->toArray();
+        
+        // Načtení nejnovějších cen pro všechny karty v jednom dotazu
+        $prices = DB::table('prices_cm')
+            ->whereIn('card_id', $cardIds)
+            ->whereIn('updated_at', function($query) use ($cardIds) {
+                $query->select(DB::raw('MAX(updated_at)'))
+                    ->from('prices_cm')
+                    ->whereIn('card_id', $cardIds)
+                    ->groupBy('card_id');
+            })
+            ->get()
+            ->keyBy('card_id');
+        
+        // Přiřazení cen ke kartám
         foreach ($allCards as $card) {
             $cardId = $card->set_id . '-' . $card->number;
-            
-            $latestUpdate = DB::table('prices_cm')
-                ->where('card_id', $cardId)
-                ->select(DB::raw('MAX(updated_at) as latest_update'))
-                ->first();
-            
-            if ($latestUpdate && $latestUpdate->latest_update) {
-                $priceData = DB::table('prices_cm')
-                    ->where('card_id', $cardId)
-                    ->where('updated_at', $latestUpdate->latest_update)
-                    ->first();
-                
-                if ($priceData) {
-                    $card->prices_cm = (object)[
-                        'avg30' => $priceData->avg30,
-                        'avg7' => $priceData->avg7,
-                        'avg1' => $priceData->avg1,
-                        'reverse_holo_avg30' => $priceData->reverse_holo_avg30,
-                        'trend_price' => $priceData->trend_price,
-                        'updated_at' => $priceData->updated_at,
-                        'card_id' => $priceData->card_id
-                    ];
-                }
-            }
-        }
-        
-        // Vždy inicializujeme price hodnotu, aby bylo řazení konzistentní
-        foreach ($allCards as $card) {
-            // Pokud karta nemá cenu, nastavíme ji na NULL
-            if (!isset($card->prices_cm) || !isset($card->prices_cm->avg30)) {
-                $card->price_value_for_sort = null;
+            if (isset($prices[$cardId])) {
+                $card->prices_cm = (object)[
+                    'avg30' => $prices[$cardId]->avg30,
+                    'avg7' => $prices[$cardId]->avg7,
+                    'avg1' => $prices[$cardId]->avg1,
+                    'reverse_holo_avg30' => $prices[$cardId]->reverse_holo_avg30,
+                    'trend_price' => $prices[$cardId]->trend_price,
+                    'updated_at' => $prices[$cardId]->updated_at,
+                    'card_id' => $prices[$cardId]->card_id
+                ];
+                $card->price_value_for_sort = $prices[$cardId]->avg30;
             } else {
-                $card->price_value_for_sort = $card->prices_cm->avg30;
+                $card->price_value_for_sort = null;
             }
         }
         
-        // Řazení všech karet podle ceny
+        // Řazení karet podle ceny
         $sortedCards = $allCards->sortBy([
             ['price_value_for_sort', $sortDirection === 'desc' ? 'desc' : 'asc'],
-            ['name', 'asc']  // Sekundární řazení podle jména pro konzistentní výsledky
+            ['name', 'asc']
         ])->values();
         
-        // Pro sestupné řazení musíme karty bez ceny přesunout na konec
+        // Pro sestupné řazení přesuneme karty bez ceny na konec
         if ($sortDirection === 'desc') {
-            // Rozdělíme kolekci na karty s cenou a bez ceny
-            $withPrice = $sortedCards->filter(function($card) {
-                return $card->price_value_for_sort !== null;
-            });
-            
-            $withoutPrice = $sortedCards->filter(function($card) {
-                return $card->price_value_for_sort === null;
-            });
-            
-            // Spojíme je zpět dohromady - karty s cenou před kartami bez ceny
+            $withPrice = $sortedCards->filter(fn($card) => $card->price_value_for_sort !== null);
+            $withoutPrice = $sortedCards->filter(fn($card) => $card->price_value_for_sort === null);
             $sortedCards = $withPrice->concat($withoutPrice)->values();
         }
         
-        \Log::info("Řazení podle ceny - počet karet po řazení: " . count($sortedCards));
-        
-        // Manuální paginace - získáme pouze část karet pro aktuální stránku
+        // Manuální paginace
         $total = $sortedCards->count();
         $offset = ($page - 1) * $perPage;
         
-        // Ošetření pro případ, kdy offset je mimo rozsah
         if ($offset >= $total) {
             $offset = 0;
             $page = 1;
@@ -188,42 +153,22 @@ class CardController extends Controller
         
         $paginatedCards = $sortedCards->slice($offset, $perPage);
         
-        \Log::info("Řazení podle ceny - paginace: offset={$offset}, count=" . $paginatedCards->count());
-        
-        // Pokus o alternativní řešení s manualním nastavením paginace
-        // Vytvořím kompletní URL pro každou stránku, aby nedocházelo k problémům s relativními cestami
-        $baseUrl = url('/cards'); // Absolutní URL
-        $queryString = http_build_query(array_merge(
-            request()->except(['page']), 
-            ['sort_by' => 'price', 'sort_direction' => $sortDirection]
-        ));
-        
-        $paginateOptions = [
-            'path' => $baseUrl,
-            'query' => request()->except(['page'])
-        ];
-        
-        \Log::info("Řazení podle ceny - Absolutní URL pro paginaci: {$baseUrl}?{$queryString}");
-        
-        // Vytvoříme manuálně instanci LengthAwarePaginator pro správné zobrazení na frontendu
+        // Vytvoření paginatoru
         $cards = new \Illuminate\Pagination\LengthAwarePaginator(
             $paginatedCards,
             $total,
             $perPage,
             $page,
-            $paginateOptions
+            [
+                'path' => url('/cards'),
+                'query' => request()->except(['page'])
+            ]
         );
         
-        // Explicitně nastavím všechny query parametry pro odkazy
         $cards->appends(array_merge(
             request()->except(['page']),
             ['sort_by' => 'price', 'sort_direction' => $sortDirection]
         ));
-        
-        // Zkontrolujeme vygenerované URL pro další stránky
-        if ($cards->hasMorePages()) {
-            \Log::info("Řazení podle ceny - URL pro další stránku: " . $cards->nextPageUrl());
-        }
         
         return $cards;
     }
@@ -234,12 +179,15 @@ class CardController extends Controller
     private function getCards($perPage, $page, $search, $setId, $type, $rarity, $sortBy, $sortDirection)
     {
         $query = Card::select(['id', 'set_id', 'name', 'number', 'supertype', 'types', 'rarity', 'hp', 'img_file_small', 'img_small'])
-            ->with(['set:id,name,series']); // Eager loading pro set
+            ->with(['set:id,name,series']);
 
-        // Aplikace filtrů
+        // Fulltextové vyhledávání
         if ($search) {
-            $query->where('name', 'like', "%{$search}%");
+            // Použijeme fulltext index pro vyhledávání
+            $query->whereRaw('MATCH(name, number) AGAINST(? IN BOOLEAN MODE)', [$search . '*']);
         }
+
+        // Ostatní filtry
         if ($setId) {
             $query->where('set_id', $setId);
         }
@@ -250,63 +198,63 @@ class CardController extends Controller
             $query->where('rarity', $rarity);
         }
 
-        // Standardní řazení podle sloupců v databázi
+        // Řazení
         $query->orderBy($sortBy, $sortDirection);
+        
+        // Stránkování
         $cards = $query->paginate($perPage);
         
         // Načítání cen pro karty
-        foreach ($cards as $card) {
-            $cardId = $card->set_id . '-' . $card->number;
-            
-            $latestUpdate = DB::table('prices_cm')
-                ->where('card_id', $cardId)
-                ->select(DB::raw('MAX(updated_at) as latest_update'))
-                ->first();
-            
-            if ($latestUpdate && $latestUpdate->latest_update) {
-                $priceData = DB::table('prices_cm')
-                    ->where('card_id', $cardId)
-                    ->where('updated_at', $latestUpdate->latest_update)
-                    ->first();
-                
-                if ($priceData) {
-                    $card->prices_cm = (object)[
-                        'avg30' => $priceData->avg30,
-                        'avg7' => $priceData->avg7,
-                        'avg1' => $priceData->avg1,
-                        'reverse_holo_avg30' => $priceData->reverse_holo_avg30,
-                        'trend_price' => $priceData->trend_price,
-                        'updated_at' => $priceData->updated_at,
-                        'card_id' => $priceData->card_id
-                    ];
-                }
-            }
-        }
-        
-        // Debug obrazků a existenci souborů
-        foreach ($cards as $card) {
-            // Debug: Logujeme všechny údaje o obrázcích
-            \Log::info("Karta ID: {$card->id}, img_file_small: " . ($card->img_file_small ?: 'NULL') . 
-                ", img_small: " . ($card->img_small ?: 'NULL'));
-            
-            if (!empty($card->img_file_small)) {
-                // Cesta v databázi je ve formátu "card_images\cel25\1.png" (relativní bez /images/)
-                // Převést obrácená lomítka na normální
-                $normalizedPath = 'images/' . str_replace('\\', '/', $card->img_file_small);
-                $fullPath = public_path($normalizedPath);
-                
-                \Log::info("Kontroluji cestu: {$normalizedPath}, Plná cesta: {$fullPath}");
-                
-                // Pouze pro případné logování - soubor neexistuje
-                if (!file_exists($fullPath)) {
-                    \Log::info("Soubor pro kartu ID {$card->id} neexistuje: {$normalizedPath} (plná cesta: {$fullPath})");
-                } else {
-                    \Log::info("Soubor pro kartu ID {$card->id} existuje: {$normalizedPath}");
-                }
-            }
-        }
+        $this->loadCardPrices($cards);
         
         return $cards;
+    }
+
+    private function loadCardPrices($cards)
+    {
+        // Pokud nejsou žádné karty, ukončíme metodu
+        if ($cards->isEmpty()) {
+            return;
+        }
+        
+        // Vytvoříme cache key pro ceny
+        $cacheKey = 'card_prices_' . md5(implode(',', $cards->pluck('id')->toArray()));
+        
+        // Pokusíme se získat ceny z cache
+        $prices = Cache::remember($cacheKey, 300, function() use ($cards) {
+            // Vytvoříme ID karet ve formátu set_id-number
+            $cardIds = $cards->map(function($card) {
+                return $card->set_id . '-' . $card->number;
+            })->toArray();
+            
+            // Načteme nejnovější ceny pro všechny karty v jednom dotazu
+            return DB::table('prices_cm')
+                ->whereIn('card_id', $cardIds)
+                ->whereIn('updated_at', function($query) use ($cardIds) {
+                    $query->select(DB::raw('MAX(updated_at)'))
+                        ->from('prices_cm')
+                        ->whereIn('card_id', $cardIds)
+                        ->groupBy('card_id');
+                })
+                ->get()
+                ->keyBy('card_id');
+        });
+        
+        // Přiřazení cen ke kartám
+        foreach ($cards as $card) {
+            $cardId = $card->set_id . '-' . $card->number;
+            if (isset($prices[$cardId])) {
+                $card->prices_cm = (object)[
+                    'avg30' => $prices[$cardId]->avg30,
+                    'avg7' => $prices[$cardId]->avg7,
+                    'avg1' => $prices[$cardId]->avg1,
+                    'reverse_holo_avg30' => $prices[$cardId]->reverse_holo_avg30,
+                    'trend_price' => $prices[$cardId]->trend_price,
+                    'updated_at' => $prices[$cardId]->updated_at,
+                    'card_id' => $prices[$cardId]->card_id
+                ];
+            }
+        }
     }
 
     /**
