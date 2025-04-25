@@ -41,7 +41,7 @@ export const useCardStore = defineStore('cards', () => {
             return `${sort_by.value}_${sort_direction.value}`;
         },
         set: (val) => {
-            console.log('cardStore: sortOption setter received:', val);
+            //console.log('cardStore: sortOption setter received:', val);
             if (!val || typeof val !== 'string') {
                  console.error("cardStore: Neplatná hodnota pro řazení:", val);
                  // Možná nastavit default?
@@ -72,7 +72,7 @@ export const useCardStore = defineStore('cards', () => {
                  sort_by.value = 'name'; 
                  sort_direction.value = 'asc';
              }
-            console.log(`cardStore: Parsed - sort_by: ${sort_by.value}, sort_direction: ${sort_direction.value}`);
+            //console.log(`cardStore: Parsed - sort_by: ${sort_by.value}, sort_direction: ${sort_direction.value}`);
         }
     });
 
@@ -186,7 +186,7 @@ export const useCardStore = defineStore('cards', () => {
             currentPage.value = 1;
         }
 
-        console.log('cardStore: Applying filters with request data:', filters.value);
+        //console.log('cardStore: Applying filters with request data:', filters.value);
         router.get('/cards', filters.value, {
             preserveState: true,
             preserveScroll: true,

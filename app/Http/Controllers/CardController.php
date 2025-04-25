@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\Set;
 
 class CardController extends Controller
 {
@@ -65,10 +66,15 @@ class CardController extends Controller
         // Přímé volání getCards bez cache celého výsledku
         $cards = $this->getCards($perPage, $search, $setId, $type, $rarity, $sortBy, $sortDirection);
 
+        // Načtení všech setů pro filtr (s cachováním)
+        $sets = Cache::remember('all_sets_for_filter', 3600, function () {
+            return Set::select(['id', 'name'])->orderBy('name')->get();
+        });
 
         return inertia('Card/Index', [
             'cards' => $cards,
             'filters' => $request->only(['search', 'set_id', 'type', 'rarity', 'sort_by', 'sort_direction', 'per_page']), // Použít only pro čistotu
+            'sets' => $sets, // Přidat sety do props
         ]);
     }
 
@@ -103,7 +109,16 @@ class CardController extends Controller
 
         // Fulltextové vyhledávání
         if ($search) {
-            $query->whereRaw('MATCH(cards.name, cards.number_txt) AGAINST(? IN BOOLEAN MODE)', [$search . '*']);
+            // Rozdělení hledaného výrazu na slova
+            $searchTerms = preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY);
+            // Přidání '+' a '*' ke každému slovu pro BOOLEAN MODE
+            $booleanSearchQuery = implode(' ', array_map(function($term) {
+                return '+' . $term . '*';
+            }, $searchTerms));
+
+            if (!empty($booleanSearchQuery)) {
+                $query->whereRaw('MATCH(cards.name, cards.number_txt) AGAINST(? IN BOOLEAN MODE)', [$booleanSearchQuery]);
+            }
         }
 
         // Ostatní filtry
