@@ -6,20 +6,20 @@
                 <v-row>
                     <v-col cols="12" sm="6" md="3">
                         <v-text-field
-                            v-model="localFilters.search"
+                            v-model="cardStore.filters.search"
                             label="Hledat"
                             prepend-inner-icon="mdi-magnify"
                             variant="outlined"
                             density="comfortable"
                             hide-details
                             clearable
-                            :loading="isLoading"
+                            :loading="cardStore.isLoading"
                             @update:model-value="debouncedSearch"
                         />
                     </v-col>
                     <v-col cols="12" sm="6" md="2">
                         <v-select
-                            v-model="localFilters.type"
+                            v-model="cardStore.filters.type"
                             :items="typeOptions"
                             label="Typ"
                             variant="outlined"
@@ -31,7 +31,7 @@
                     </v-col>
                     <v-col cols="12" sm="6" md="2">
                         <v-select
-                            v-model="localFilters.rarity"
+                            v-model="cardStore.filters.rarity"
                             :items="rarityOptions"
                             label="Vzácnost"
                             variant="outlined"
@@ -43,7 +43,7 @@
                     </v-col>
                     <v-col cols="12" sm="6" md="2">
                         <v-select
-                            v-model="localFilters.set_id"
+                            v-model="cardStore.filters.set_id"
                             :items="setOptions"
                             label="Set"
                             variant="outlined"
@@ -55,7 +55,7 @@
                     </v-col>
                     <v-col cols="12" sm="6" md="2">
                         <v-select
-                            v-model="localFilters.per_page"
+                            v-model="cardStore.filters.per_page"
                             :items="[30, 60, 120]"
                             label="Počet na stránku"
                             variant="outlined"
@@ -71,36 +71,36 @@
                     <v-col cols="12" class="d-flex align-center flex-wrap">
                         <div class="text-caption text-grey me-4">Aktivní filtry:</div>
                         <v-chip
-                            v-if="localFilters.search"
+                            v-if="cardStore.filters.search"
                             class="me-2 mb-1"
                             closable
                             @click:close="clearFilter('search')"
                         >
-                            Hledat: {{ localFilters.search }}
+                            Hledat: {{ cardStore.filters.search }}
                         </v-chip>
                         <v-chip
-                            v-if="localFilters.type"
+                            v-if="cardStore.filters.type"
                             class="me-2 mb-1"
                             closable
                             @click:close="clearFilter('type')"
                         >
-                            Typ: {{ localFilters.type }}
+                            Typ: {{ cardStore.filters.type }}
                         </v-chip>
                         <v-chip
-                            v-if="localFilters.rarity"
+                            v-if="cardStore.filters.rarity"
                             class="me-2 mb-1"
                             closable
                             @click:close="clearFilter('rarity')"
                         >
-                            Vzácnost: {{ localFilters.rarity }}
+                            Vzácnost: {{ cardStore.filters.rarity }}
                         </v-chip>
                         <v-chip
-                            v-if="localFilters.set_id"
+                            v-if="cardStore.filters.set_id"
                             class="me-2 mb-1"
                             closable
                             @click:close="clearFilter('set_id')"
                         >
-                            Set: {{ getSetName(localFilters.set_id) }}
+                            Set: {{ getSetName(cardStore.filters.set_id) }}
                         </v-chip>
                         <v-spacer />
                         <v-btn
@@ -121,11 +121,12 @@
             <v-data-table
                 :headers="tableHeaders"
                 :items="cards.data"
-                :items-per-page="localFilters.per_page"
+                :items-per-page="cardStore.filters.per_page"
+                :page="cardStore.filters.page"
+                :sort-by="dataTableSortBy"
                 :server-items-length="cards.total"
-                :loading="isLoading"
-                v-model:options="tableOptions"
-                @update:options="updateOptions"
+                :loading="cardStore.isLoading"
+                @update:options="updateTableOptionsInStore"
                 item-value="id"
                 hover
                 density="compact"
@@ -137,7 +138,7 @@
                 <template #[`item.image`]="{ item }">
                     <div class="list-img-container">
                         <v-skeleton-loader
-                            v-if="isLoading"
+                            v-if="cardStore.isLoading"
                             type="image"
                             width="30"
                             height="30"
@@ -183,8 +184,8 @@
                 <template #[`item.number`]="{ item }">
                     {{ formatCardNumber(item.number) }}
                 </template>
-                <template #[`item.price`]="{ item }">
-                    <div v-if="item.prices_cm || item.price || item.prices" class="price-tag">
+                <template #[`item.price_cm_avg30`]="{ item }">
+                    <div v-if="item.price_cm_avg30 !== null || item.price_cm_trend !== null || item.price_tcg_market !== null" class="price-tag">
                         <v-tooltip location="bottom">
                             <template v-slot:activator="{ props }">
                                 <span v-bind="props">
@@ -193,18 +194,21 @@
                                 </span>
                             </template>
                             <div>
-                                <div v-if="item.prices_cm && item.prices_cm.updated_at">
-                                    Aktualizace dne: {{ formatUpdateDate(item.prices_cm.updated_at) }}
+                                <div v-if="item.price_cm_updated_at">
+                                    Aktualizace CM: {{ formatUpdateDate(item.price_cm_updated_at) }}
                                 </div>
                                 <div class="d-flex flex-column mt-1">
-                                    <div v-if="item.prices_cm && item.prices_cm.avg30 !== null" class="text-caption">
-                                        Cena (normální): {{ formatPrice(item.prices_cm.avg30) }}
+                                    <div v-if="item.price_cm_avg30 !== null" class="text-caption">
+                                        Cardmarket Avg30: {{ formatPrice(item.price_cm_avg30) }}
                                     </div>
-                                    <div v-if="item.prices_cm && item.prices_cm.reverse_holo_avg30 !== null" class="text-caption">
-                                        Cena (reverse holo): {{ formatPrice(item.prices_cm.reverse_holo_avg30) }}
+                                    <div v-if="item.price_cm_trend !== null" class="text-caption">
+                                        Cardmarket Trend: {{ formatPrice(item.price_cm_trend) }}
                                     </div>
-                                    <div v-if="item.prices_cm && item.prices_cm.card_id" class="text-caption mt-1">
-                                        ID: {{ item.prices_cm.card_id }}
+                                    <div v-if="item.price_tcg_market !== null" class="text-caption mt-1">
+                                        TCGPlayer Market: {{ formatNumberPrice(item.price_tcg_market) }} USD
+                                    </div>
+                                    <div v-if="item.price_tcg_updated_at">
+                                        Aktualizace TCG: {{ formatUpdateDate(item.price_tcg_updated_at) }}
                                     </div>
                                 </div>
                             </div>
@@ -217,12 +221,12 @@
             <!-- Externí paginace -->
             <div class="d-flex justify-center mt-4">
                 <v-pagination
-                    v-model="currentPage"
-                    :length="Math.ceil(cards.total / localFilters.per_page)"
+                    :model-value="cardStore.filters.page"
+                    :length="paginationLength"
                     :total-visible="7"
-                    @update:model-value="updatePage"
+                    @update:model-value="setPageInStore"
                     rounded
-                    :disabled="isLoading"
+                    :disabled="cardStore.isLoading"
                 ></v-pagination>
             </div>
         </v-card>
@@ -243,14 +247,29 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, reactive, onUnmounted } from 'vue';
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { computed, watch } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import { debounce } from 'lodash';
+import { useCardStore } from '@/stores/cardStore';
+// Import sdílených utilit
+import {
+    getCardImageUrl,
+    getTypeIcon,
+    getTypeColor,
+    getRarityClass,
+    formatCardNumber,
+    formatNumberPrice,
+    formatPrice,
+    formatUpdateDate,
+    handleImageError,
+    getPriceValue
+} from '@/composables/useCardUtils';
 
 const page = usePage();
-const isLoading = ref(false);
+
+const cardStore = useCardStore();
 
 const props = defineProps({
     cards: {
@@ -259,38 +278,10 @@ const props = defineProps({
     },
     filters: {
         type: Object,
-        required: true
+        default: () => ({})
     }
 });
 
-// Emitované události
-const emit = defineEmits(['update:filters']);
-
-// Lokální filtry pro ListView
-const localFilters = reactive({
-    search: props.filters?.search || '',
-    type: props.filters?.type || '',
-    rarity: props.filters?.rarity || '',
-    set_id: props.filters?.set_id || '',
-    sort_by: props.filters?.sort_by || 'name',
-    sort_direction: props.filters?.sort_direction || 'asc',
-    per_page: props.filters?.per_page || 30
-});
-
-// Stav stránky
-const currentPage = ref(props.cards?.current_page || 1);
-
-// Nastavení tabulky
-const tableOptions = ref({
-    page: currentPage.value,
-    itemsPerPage: localFilters.per_page,
-    sortBy: [{ key: localFilters.sort_by, order: localFilters.sort_direction === 'desc' ? 'desc' : 'asc' }],
-    multiSort: false,
-    mustSort: true,
-    sortDesc: localFilters.sort_direction === 'desc',
-});
-
-// Možnosti filtrů
 const typeOptions = [
     { title: 'Všechny typy', value: '' },
     { title: 'Pokémon', value: 'Pokémon' },
@@ -298,7 +289,6 @@ const typeOptions = [
     { title: 'Energie', value: 'Energy' },
 ];
 
-// Vzácnosti pro filtrování
 const rarityOptions = [
     { title: 'Všechny vzácnosti', value: '' },
     { title: 'Common', value: 'Common' },
@@ -313,12 +303,10 @@ const rarityOptions = [
     { title: 'Promo', value: 'Promo' }
 ];
 
-// Sety pro filtrování
 const setOptions = computed(() => {
     const options = [{ title: 'Všechny sety', value: '' }];
     
     if (page.props.sets && page.props.sets.length > 0) {
-        // Seřadíme sety podle názvu
         const sortedSets = [...page.props.sets].sort((a, b) => a.name.localeCompare(b.name));
         
         sortedSets.forEach(set => {
@@ -329,317 +317,123 @@ const setOptions = computed(() => {
     return options;
 });
 
-// Tabulkové záhlaví
 const tableHeaders = [
     { title: '', key: 'image', sortable: false, width: '50px' },
     { title: 'Název karty', key: 'name', sortable: true },
-    { title: 'Set', key: 'set', width: '250px', sortable: true },
+    { title: 'Set', key: 'set.name', width: '250px', sortable: true },
     { title: 'Číslo', key: 'number', width: '80px', sortable: true },
-    { title: 'Typ', key: 'types', width: '120px', sortable: true },
     { title: 'Vzácnost', key: 'rarity', width: '220px', sortable: true },
-    { title: 'Cena', key: 'price', width: '80px', align: 'end', sortable: true },
+    { title: 'Cena (Avg30)', key: 'price_cm_avg30', width: '110px', align: 'end', sortable: true },
 ];
 
-// Počítané vlastnosti
 const hasCards = computed(() => props.cards && props.cards.data && props.cards.data.length > 0);
-const hasActiveFilters = computed(() => localFilters.search || localFilters.type || localFilters.rarity || localFilters.set_id);
+const hasActiveFilters = computed(() => 
+    cardStore.filters.search || 
+    cardStore.filters.type || 
+    cardStore.filters.rarity || 
+    cardStore.filters.set_id
+);
+const paginationLength = computed(() => 
+    Math.ceil((props.cards?.total || 0) / (cardStore.filters.per_page || 30))
+);
+const dataTableSortBy = computed(() => {
+    return [{ 
+        key: cardStore.filters.sort_by, 
+        order: cardStore.filters.sort_direction === 'desc' ? 'desc' : 'asc' 
+    }];
+});
 
-// Sledování změn props
-watch(() => props.cards, (newCards) => {
-    if (newCards?.current_page && newCards.current_page !== currentPage.value) {
-        currentPage.value = newCards.current_page;
-        
-        // Aktualizujeme i tableOptions
-        tableOptions.value = {
-            ...tableOptions.value,
-            page: newCards.current_page
-        };
-    }
-}, { immediate: true, deep: true });
-
-watch(() => props.filters, (newFilters) => {
-    // Aktualizujeme lokální filtry podle změn v props
-    Object.keys(localFilters).forEach(key => {
-        if (newFilters[key] !== undefined) {
-            localFilters[key] = newFilters[key];
-        }
-    });
-    
-    // Aktualizujeme tableOptions, pokud se změnilo řazení nebo stránkování
-    if (newFilters.page && parseInt(newFilters.page) !== currentPage.value) {
-        currentPage.value = parseInt(newFilters.page);
-        tableOptions.value.page = parseInt(newFilters.page);
-    }
-}, { deep: true });
-
-// Debounced funkce pro vyhledávání
 const debouncedSearch = debounce((value) => {
-    updateFilter('search', value);
+    cardStore.setSearch(value ?? '');
 }, 500);
 
-// Sledování router událostí pro indikaci načítání
-onMounted(() => {
-    router.on('start', () => {
-        isLoading.value = true;
-    });
-    
-    router.on('finish', () => {
-        isLoading.value = false;
-    });
-    
-    // Synchronizace lokalních filtrů s props
-    Object.keys(localFilters).forEach(key => {
-        if (props.filters[key] !== undefined) {
-            localFilters[key] = props.filters[key];
-        }
-    });
-});
-
-// Odpojení sledování událostí při unmount
-onUnmounted(() => {
-    try {
-        router.off('start');
-        router.off('finish');
-    } catch (e) {
-        console.debug('Nelze odpojit router event, ignorujeme:', e);
-    }
-});
-
-// Metody pro filtry
 function updateFilter(key, value) {
-    localFilters[key] = value;
-    applyFilters(true);
+    const newValue = value ?? '';
+    switch (key) {
+        case 'type':
+            cardStore.setType(newValue);
+            break;
+        case 'rarity':
+            cardStore.setRarity(newValue);
+            break;
+        case 'set_id':
+            cardStore.setSetId(newValue);
+            break;
+        case 'per_page':
+            cardStore.setPerPage(newValue || 30);
+            break;
+    }
 }
 
 function clearFilter(key) {
-    localFilters[key] = '';
-    applyFilters(true);
+    switch (key) {
+        case 'search':
+            cardStore.setSearch('');
+            break;
+        case 'type':
+            cardStore.setType('');
+            break;
+        case 'rarity':
+            cardStore.setRarity('');
+            break;
+        case 'set_id':
+            cardStore.setSetId('');
+            break;
+    }
 }
 
 function resetFilters() {
-    Object.keys(localFilters).forEach(key => {
-        if (key !== 'page' && key !== 'per_page' && key !== 'sort_by' && key !== 'sort_direction') {
-            localFilters[key] = '';
-        }
-    });
-    localFilters.page = 1;
-    localFilters.per_page = 30;
-    localFilters.sort_by = 'name';
-    localFilters.sort_direction = 'asc';
-    applyFilters(true);
+    cardStore.resetFilters();
 }
 
-function applyFilters(resetPage = true) {
-    // Vytvoříme nový objekt filtrů
-    const newFilters = { ...localFilters };
-    
-    // Pokud resetujeme stránku, nastavíme ji na 1
-    if (resetPage) {
-        newFilters.page = 1;
-        currentPage.value = 1;
-    } else {
-        newFilters.page = currentPage.value;
-    }
-    
-    // Informujeme rodičovskou komponentu o změně filtrů
-    emit('update:filters', newFilters);
-    
-    // Odešleme požadavek na server
-    router.get('/cards', newFilters, {
-        preserveState: true,
-        preserveScroll: true,
-        only: ['cards']
-    });
-}
+function updateTableOptionsInStore(options) {
+    // console.log('updateTableOptionsInStore - options:', JSON.parse(JSON.stringify(options)));
+    // console.log('updateTableOptionsInStore - current filters:', JSON.parse(JSON.stringify(cardStore.filters)));
 
-// Metoda pro v-data-table
-function updateOptions(options) {
-    if (options.page !== currentPage.value) {
-        currentPage.value = options.page;
-    }
-    
-    if (options.itemsPerPage !== localFilters.per_page) {
-        localFilters.per_page = options.itemsPerPage;
-    }
-    
     if (options.sortBy && options.sortBy.length > 0) {
         const sortInfo = options.sortBy[0];
-        localFilters.sort_by = sortInfo.key;
-        localFilters.sort_direction = sortInfo.order;
+        let newSortKey = sortInfo.key;
+        const newSortOrder = sortInfo.order === 'desc' ? 'desc' : 'asc';
+
+        // Mapování klíčů z v-data-table na klíče pro backend/store
+        if (newSortKey === 'price_cm_avg30') { 
+            newSortKey = 'cm_avg30';
+        } else if (newSortKey === 'set.name') {
+            // Klíč 'set.name' je již správný pro backend
+            // newSortKey = 'set.name'; // ponechat nebo odstranit, je to redundantní
+        }
+
+        if (newSortKey !== cardStore.filters.sort_by || newSortOrder !== cardStore.filters.sort_direction) {
+            const sortValue = `${newSortKey}_${newSortOrder}`;
+            // console.log(` -> Změna řazení, volám setSortOption("${sortValue}")`);
+            cardStore.setSortOption(sortValue);
+            return;
+        }
     }
-    
-    tableOptions.value = { ...options };
-    
-    // Vytvoříme nový objekt filtrů
-    const newFilters = { ...localFilters, page: currentPage.value };
-    
-    // Informujeme rodičovskou komponentu o změně filtrů
-    emit('update:filters', newFilters);
-    
-    // Odešleme požadavek na server
-    router.get('/cards', newFilters, {
-        preserveState: true,
-        preserveScroll: true,
-        only: ['cards']
-    });
+
+    if (options.itemsPerPage && options.itemsPerPage !== cardStore.filters.per_page) {
+        // console.log(` -> Změna počtu položek, volám setPerPage(${options.itemsPerPage})`);
+        cardStore.setPerPage(options.itemsPerPage);
+        return;
+    }
+
+    if (options.page && options.page !== cardStore.filters.page) {
+        // console.log(` -> Změna stránky, volám setPage(${options.page})`);
+        cardStore.setPage(options.page);
+        return;
+    }
+
+    // console.log('updateTableOptionsInStore - žádná relevantní změna');
 }
 
-// Pomocné metody
+function setPageInStore(newPage) {
+    cardStore.setPage(newPage);
+}
+
 function getSetName(setId) {
     if (!setId || !page.props.sets) return '';
     const set = page.props.sets.find(s => s.id === setId);
     return set ? set.name : '';
-}
-
-function getCardImageUrl(card) {
-    // Pokud není karta definována, vrátíme placeholder
-    if (!card) {
-        return '/images/placeholder.jpg';
-    }
-    
-    // Priorita 1: Lokální soubor z databáze (img_file_small)
-    if (card.img_file_small) {
-        // V databázi je relativní cesta "card_images\cel25\1.png" bez '/images/'
-        // Převést obrácená lomítka na normální a přidat počáteční /images/
-        const path = '/images/' + card.img_file_small.replace(/\\/g, '/');
-        return path;
-    }
-    
-    // Priorita 2: URL z API/externího zdroje (img_small)
-    if (card.img_small) {
-        return card.img_small;
-    }
-    
-    // Fallback: Generovaná cesta podle čísla karty a setu
-    if (card.set_id && card.number) {
-        const localPath = `/images/card_images/${card.set_id}/${card.number}.png`;
-        return localPath;
-    }
-    
-    // Fallback: Placeholder
-    return '/images/placeholder.jpg';
-}
-
-function getTypeIcon(type) {
-    const icons = {
-        'Colorless': 'mdi-circle-outline',
-        'Darkness': 'mdi-moon-waning-crescent',
-        'Dragon': 'mdi-dragon',
-        'Fairy': 'mdi-butterfly',
-        'Fighting': 'mdi-boxing-glove',
-        'Fire': 'mdi-fire',
-        'Grass': 'mdi-leaf',
-        'Lightning': 'mdi-lightning-bolt',
-        'Metal': 'mdi-anvil',
-        'Psychic': 'mdi-eye',
-        'Water': 'mdi-water',
-    };
-    
-    return icons[type] || 'mdi-circle-outline';
-}
-
-function getTypeColor(type) {
-    const colors = {
-        'Colorless': 'grey',
-        'Darkness': 'purple-darken-3',
-        'Dragon': 'amber-darken-2',
-        'Fairy': 'pink-lighten-2',
-        'Fighting': 'brown',
-        'Fire': 'red',
-        'Grass': 'green',
-        'Lightning': 'yellow-darken-2',
-        'Metal': 'grey-darken-1',
-        'Psychic': 'purple',
-        'Water': 'blue',
-    };
-    
-    return colors[type] || 'grey';
-}
-
-function getRarityClass(rarity) {
-    if (!rarity) return 'text-grey';
-    
-    // Převedeme rarity na lowercase bez mezer pro jednodušší mapování
-    const rarityKey = rarity.toLowerCase().replace(/\s+/g, '-');
-    
-    const classes = {
-        'common': 'text-common',
-        'uncommon': 'text-uncommon',
-        'rare': 'text-rare',
-        'rare-holo': 'text-rare-holo',
-        'rare-ultra': 'text-rare-ultra',
-        'rare-secret': 'text-rare-secret',
-        'amazing-rare': 'text-rare-holo',
-        'ultra-rare': 'text-rare-ultra',
-        'secret-rare': 'text-rare-secret',
-        'promo': 'text-uncommon',
-    };
-    
-    return classes[rarityKey] || 'text-grey';
-}
-
-function formatCardNumber(number) {
-    if (!number) return '000';
-    
-    // Extrahujeme číselnou část
-    const numericPart = String(number).replace(/\D/g, '');
-    
-    // Doplníme nuly zleva
-    return numericPart.padStart(3, '0');
-}
-
-function formatNumberPrice(price) {
-    if (price === null || price === undefined) {
-        return '-';
-    }
-    
-    // Formátování ceny v EUR bez ikony (ikona je přidána v template)
-    return new Intl.NumberFormat('cs-CZ', {
-        style: 'decimal',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(price);
-}
-
-function formatPrice(price) {
-    if (price === null || price === undefined) {
-        return '-';
-    }
-    
-    // Formátování ceny pro tooltip
-    return new Intl.NumberFormat('cs-CZ', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(price);
-}
-
-function formatUpdateDate(dateString) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return format(date, 'd. MMMM yyyy', { locale: cs });
-}
-
-function updatePage(newPage) {
-    currentPage.value = newPage;
-    applyFilters(false);
-}
-
-function handleImageError(event) {
-    event.target.src = '/images/placeholder.jpg';
-}
-
-function getPriceValue(item) {
-    // Zkontrolujte všechny možné varianty ceny
-    if (item.prices_cm && item.prices_cm.avg30 !== null) {
-        return formatNumberPrice(item.prices_cm.avg30);
-    } else if (item.price) {
-        return formatNumberPrice(item.price);
-    } else if (item.prices && item.prices.avg) {
-        return formatNumberPrice(item.prices.avg);
-    }
-    return '-';
 }
 </script>
 
@@ -664,7 +458,6 @@ function getPriceValue(item) {
     white-space: nowrap;
 }
 
-/* Styly pro různé vzácnosti karet */
 .text-common {
     color: #666;
 }
@@ -700,7 +493,6 @@ function getPriceValue(item) {
     }
 }
 
-/* Styly pro tabulku */
 :deep(.v-data-table__tr:hover) {
     background-color: rgba(25, 118, 210, 0.04);
 }
@@ -710,12 +502,10 @@ function getPriceValue(item) {
     background-color: rgba(0, 0, 0, 0.02);
 }
 
-/* Styly pro stránkování */
 :deep(.v-pagination__item--is-active) {
     font-weight: bold;
 }
 
-/* Přidání stylů pro loading stav */
 .v-skeleton-loader {
     border-radius: 4px;
 }

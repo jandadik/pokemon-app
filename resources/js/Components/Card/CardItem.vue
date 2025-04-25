@@ -25,24 +25,31 @@
                 <div :class="getRarityClass(card.rarity)" class="card-rarity text-caption">
                     {{ card.rarity }}
                 </div>
-                <div v-if="card.prices_cm && card.prices_cm.avg30 !== null" class="text-caption price-tag">
+                <div v-if="card.price_cm_avg30 !== null || card.price_cm_trend !== null" class="text-caption price-tag">
                     <v-tooltip location="bottom">
                         <template v-slot:activator="{ props }">
                             <span v-bind="props">
-                                {{ formatNumberPrice(card.prices_cm.avg30) }}
+                                {{ formatNumberPrice(card.price_cm_avg30) }}
                                 <v-icon size="x-small" icon="mdi-currency-eur" class="ms-1" />
                             </span>
                         </template>
                         <div>
-                            <div>Aktualizace dne: {{ formatUpdateDate(card.prices_cm.updated_at) }}</div>
+                            <div v-if="card.price_cm_updated_at">
+                                Aktualizace CM: {{ formatUpdateDate(card.price_cm_updated_at) }}
+                            </div>
                             <div class="d-flex flex-column mt-1">
-                                <div v-if="card.prices_cm.avg30 !== null" class="text-caption">
-                                    Cena (normální): {{ formatPrice(card.prices_cm.avg30) }}
+                                <div v-if="card.price_cm_avg30 !== null" class="text-caption">
+                                    CM Avg30: {{ formatPrice(card.price_cm_avg30) }}
                                 </div>
-                                <div v-if="card.prices_cm.reverse_holo_avg30 !== null" class="text-caption">
-                                    Cena (reverse holo): {{ formatPrice(card.prices_cm.reverse_holo_avg30) }}
+                                <div v-if="card.price_cm_trend !== null" class="text-caption">
+                                    CM Trend: {{ formatPrice(card.price_cm_trend) }}
                                 </div>
-                                <div class="text-caption mt-1">ID: {{ card.prices_cm.card_id }}</div>
+                                <div v-if="card.price_tcg_market !== null" class="text-caption mt-1">
+                                    TCG Market: {{ formatNumberPrice(card.price_tcg_market) }} USD
+                                </div>
+                                <div v-if="card.price_tcg_updated_at">
+                                    Aktualizace TCG: {{ formatUpdateDate(card.price_tcg_updated_at) }}
+                                </div>
                             </div>
                         </div>
                     </v-tooltip>
@@ -58,6 +65,19 @@
 <script setup>
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
+// Import sdílených utilit
+import {
+    getCardImageUrl,
+    // getTypeIcon, // Není potřeba v CardItem
+    // getTypeColor, // Není potřeba v CardItem
+    getRarityClass,
+    formatCardNumber,
+    formatNumberPrice,
+    formatPrice,
+    formatUpdateDate,
+    handleImageError
+    // getPriceValue // Není potřeba, cena se řeší přímo v šabloně
+} from '@/composables/useCardUtils';
 
 const props = defineProps({
     card: {
@@ -70,104 +90,16 @@ const props = defineProps({
     }
 });
 
-function getCardImageUrl(card) {
-    // Pokud není karta definována, vrátíme placeholder
-    if (!card) {
-        return '/images/placeholder.jpg';
-    }
-    
-    // Priorita 1: Lokální soubor z databáze (img_file_small)
-    if (card.img_file_small) {
-        // V databázi je relativní cesta "card_images\cel25\1.png" bez '/images/'
-        // Převést obrácená lomítka na normální a přidat počáteční /images/
-        const path = '/images/' + card.img_file_small.replace(/\\/g, '/');
-        return path;
-    }
-    
-    // Priorita 2: URL z API/externího zdroje (img_small)
-    if (card.img_small) {
-        return card.img_small;
-    }
-    
-    // Fallback: Generovaná cesta podle čísla karty a setu
-    if (card.set_id && card.number) {
-        const localPath = `/images/card_images/${card.set_id}/${card.number}.png`;
-        return localPath;
-    }
-    
-    // Fallback: Placeholder
-    return '/images/placeholder.jpg';
-}
-
-function getRarityClass(rarity) {
-    if (!rarity) return 'text-grey';
-    
-    // Převedeme rarity na lowercase bez mezer pro jednodušší mapování
-    const rarityKey = rarity.toLowerCase().replace(/\s+/g, '-');
-    
-    const classes = {
-        'common': 'text-common',
-        'uncommon': 'text-uncommon',
-        'rare': 'text-rare',
-        'rare-holo': 'text-rare-holo',
-        'rare-ultra': 'text-rare-ultra',
-        'rare-secret': 'text-rare-secret',
-        'amazing-rare': 'text-rare-holo',
-        'ultra-rare': 'text-rare-ultra',
-        'secret-rare': 'text-rare-secret',
-        'promo': 'text-uncommon',
-    };
-    
-    return classes[rarityKey] || 'text-grey';
-}
-
-function formatCardNumber(number) {
-    if (!number) return '000';
-    
-    // Extrahujeme číselnou část
-    const numericPart = String(number).replace(/\D/g, '');
-    
-    // Doplníme nuly zleva
-    return numericPart.padStart(3, '0');
-}
-
-function formatNumberPrice(price) {
-    if (price === null || price === undefined) {
-        return '-';
-    }
-    
-    // Formátování ceny v EUR bez ikony (ikona je přidána v template)
-    return new Intl.NumberFormat('cs-CZ', {
-        style: 'decimal',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(price);
-}
-
-function formatPrice(price) {
-    if (price === null || price === undefined) {
-        return '-';
-    }
-    
-    // Formátování ceny pro tooltip
-    return new Intl.NumberFormat('cs-CZ', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(price);
-}
-
-function formatUpdateDate(dateString) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return format(date, 'd. MMMM yyyy', { locale: cs });
-}
-
-function handleImageError(event) {
-    console.log('Chyba načítání obrázku', event.target.src);
-    event.target.src = '/images/placeholder.jpg';
-}
+// ODSTRANIT NÁSLEDUJÍCÍ FUNKCE (byly přesunuty do useCardUtils.js)
+/*
+function getCardImageUrl(card) { ... }
+function getRarityClass(rarity) { ... }
+function formatCardNumber(number) { ... }
+function formatNumberPrice(price) { ... }
+function formatPrice(price) { ... }
+function formatUpdateDate(dateString) { ... }
+function handleImageError(event) { ... }
+*/
 </script>
 
 <style scoped>

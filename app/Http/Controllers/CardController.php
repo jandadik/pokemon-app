@@ -20,6 +20,8 @@ class CardController extends Controller
      */
     public function index(Request $request)
     {
+        \Log::debug('CardController@index received request with data:', $request->all());
+
         $perPage = $request->input('per_page', 30);
         $page = $request->input('page', 1);
         $search = $request->input('search', '');
@@ -43,33 +45,23 @@ class CardController extends Controller
         // Validace sortBy - AKTUALIZOVÁNO pro cards_prices_mv
         $allowedSortColumns = [
             'name', 'number', 'set.name', 'rarity', 
-            'cm_avg30', 'cm_trend', 'tcg_market' // Sloupce z cards_prices_mv
+            'cm_avg30' // Sloupce z cards_prices_mv
         ]; 
         if (!in_array($sortBy, $allowedSortColumns)) {
             // Zde můžete logovat chybu nebo použít default
              \Log::warning("Neplatný sloupec pro řazení: {$sortBy}. Používám 'name'.");
             $sortBy = 'name';
         }
-
-
-        // Cache key by se měl ideálně generovat až po validaci a normalizaci parametrů
-        // $cacheKey = "cards_page_{{$page}}_per_page_{$perPage}_search_{$search}_set_{$setId}_type_{$type}_rarity_{$rarity}_sort_{$sortBy}_{$sortDirection}";
-
-        // Zvážit odstranění cachování celého výsledku kvůli komplexitě a potenciální neaktuálnosti
-        // $result = Cache::remember($cacheKey, 3600, function () use ($perPage, $page, $search, $setId, $type, $rarity, $sortBy, $sortDirection) {
-        //     return $this->getCards($perPage, $page, $search, $setId, $type, $rarity, $sortBy, $sortDirection);
-        // });
-
-        // Odstraněno větvení pro price sort, vše řeší getCards
-        // if ($sortBy === 'price') { // ODSTRANĚNO
-        //     Cache::forget($cacheKey); // ODSTRANĚNO
-        //     $result = $this->getCardsOrderedByPrice($perPage, $page, $search, $setId, $type, $rarity, $sortDirection); // ODSTRANĚNO
-        // } else { // ODSTRANĚNO
-        //     $result = Cache::remember($cacheKey, 3600, function () use ($perPage, $page, $search, $setId, $type, $rarity, $sortBy, $sortDirection) { // ODSTRANĚNO
-        //         return $this->getCards($perPage, $page, $search, $setId, $type, $rarity, $sortBy, $sortDirection); // ODSTRANĚNO
-        //     }); // ODSTRANĚNO
-        // } // ODSTRANĚNO
         
+        \Log::debug('Parametry pro getCards:', [
+            'perPage' => $perPage,
+            'search' => $search,
+            'setId' => $setId,
+            'type' => $type,
+            'rarity' => $rarity,
+            'sortBy' => $sortBy,
+            'sortDirection' => $sortDirection
+        ]);
         // Přímé volání getCards bez cache celého výsledku
         $cards = $this->getCards($perPage, $search, $setId, $type, $rarity, $sortBy, $sortDirection);
 
@@ -126,7 +118,7 @@ class CardController extends Controller
         }
 
         // Řazení - ZJEDNODUŠENO s cards_prices_mv
-        $priceSortColumns = ['cm_avg30', 'cm_trend', 'tcg_market']; // Sloupce pro řazení podle ceny
+        $priceSortColumns = ['cm_avg30']; // Sloupce pro řazení podle ceny
 
         if (in_array($sortBy, $priceSortColumns)) {
             // Mapování sortBy na skutečný název sloupce v joinu (s aliasem, pokud jsme ho definovali)
@@ -167,22 +159,6 @@ class CardController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
      * Display the specified resource.
      */
     public function show(Card $card)
@@ -199,27 +175,4 @@ class CardController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
 }

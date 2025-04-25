@@ -6,119 +6,119 @@
                 <v-row>
                     <v-col cols="12" sm="6" md="3" lg="2">
                         <v-text-field
-                            v-model="localFilters.search"
+                            v-model="cardStore.search"
                             label="Hledat"
                             prepend-inner-icon="mdi-magnify"
                             variant="outlined"
                             density="comfortable"
                             hide-details
                             clearable
-                            :loading="isLoading"
-                            @update:model-value="debouncedSearch"
+                            :loading="cardStore.isLoading"
+                            @update:model-value="cardStore.setSearch"
                         />
                     </v-col>
                     <v-col cols="12" sm="6" md="3" lg="2">
                         <v-select
-                            v-model="localFilters.type"
+                            v-model="cardStore.type"
                             :items="typeOptions"
                             label="Typ"
                             variant="outlined"
                             density="comfortable"
                             hide-details
                             clearable
-                            @update:model-value="updateFilter('type', $event)"
+                            @update:model-value="cardStore.setType"
                         />
                     </v-col>
                     <v-col cols="12" sm="6" md="3" lg="2">
                         <v-select
-                            v-model="localFilters.rarity"
+                            v-model="cardStore.rarity"
                             :items="rarityOptions"
                             label="Vzácnost"
                             variant="outlined"
                             density="comfortable"
                             hide-details
                             clearable
-                            @update:model-value="updateFilter('rarity', $event)"
+                            @update:model-value="cardStore.setRarity"
                         />
                     </v-col>
                     <v-col cols="12" sm="6" md="3" lg="2">
                         <v-select
-                            v-model="localFilters.set_id"
+                            v-model="cardStore.set_id"
                             :items="setOptions"
                             label="Set"
                             variant="outlined"
                             density="comfortable"
                             hide-details
                             clearable
-                            @update:model-value="updateFilter('set_id', $event)"
+                            @update:model-value="cardStore.setSetId"
                         />
                     </v-col>
                     <v-col cols="12" sm="6" md="3" lg="2">
                         <v-select
-                            v-model="sortOption"
+                            v-model="cardStore.sortOption"
                             :items="sortOptions"
                             label="Řazení"
                             variant="outlined"
                             density="comfortable"
                             hide-details
-                            @update:model-value="updateSortOption"
+                            @update:model-value="cardStore.setSortOption"
                         />
                     </v-col>
                     <v-col cols="12" sm="6" md="3" lg="2">
                         <v-select
-                            v-model="localFilters.per_page"
+                            v-model="cardStore.per_page"
                             :items="perPageOptions"
                             label="Počet na stránku"
                             variant="outlined"
                             density="comfortable"
                             hide-details
-                            @update:model-value="updateFilter('per_page', $event)"
+                            @update:model-value="cardStore.setPerPage"
                         />
                     </v-col>
                 </v-row>
 
                 <!-- Aktivní filtry a reset -->
-                <v-row v-if="hasActiveFilters" class="mt-2">
+                <v-row v-if="cardStore.hasActiveFilters" class="mt-2">
                     <v-col cols="12" class="d-flex align-center flex-wrap">
                         <div class="text-caption text-grey me-4">Aktivní filtry:</div>
                         <v-chip
-                            v-if="localFilters.search"
+                            v-if="cardStore.search"
                             class="me-2 mb-1"
                             closable
                             @click:close="clearFilter('search')"
                         >
-                            Hledat: {{ localFilters.search }}
+                            Hledat: {{ cardStore.search }}
                         </v-chip>
                         <v-chip
-                            v-if="localFilters.type"
+                            v-if="cardStore.type"
                             class="me-2 mb-1"
                             closable
                             @click:close="clearFilter('type')"
                         >
-                            Typ: {{ localFilters.type }}
+                            Typ: {{ cardStore.type }}
                         </v-chip>
                         <v-chip
-                            v-if="localFilters.rarity"
+                            v-if="cardStore.rarity"
                             class="me-2 mb-1"
                             closable
                             @click:close="clearFilter('rarity')"
                         >
-                            Vzácnost: {{ localFilters.rarity }}
+                            Vzácnost: {{ cardStore.rarity }}
                         </v-chip>
                         <v-chip
-                            v-if="localFilters.set_id"
+                            v-if="cardStore.set_id"
                             class="me-2 mb-1"
                             closable
                             @click:close="clearFilter('set_id')"
                         >
-                            Set: {{ getSetName(localFilters.set_id) }}
+                            Set: {{ getSetName(cardStore.set_id) }}
                         </v-chip>
                         <v-spacer />
                         <v-btn
                             color="primary"
                             variant="text"
                             prepend-icon="mdi-refresh"
-                            @click="resetFilters"
+                            @click="cardStore.resetFilters"
                         >
                             Resetovat filtry
                         </v-btn>
@@ -139,18 +139,18 @@
                 xl="2"
                 class="mb-4"
             >
-                <CardItem :card="card" :is-loading="isLoading" />
+                <CardItem :card="card" :is-loading="cardStore.isLoading" />
             </v-col>
             
             <!-- Stránkování pro mřížku -->
             <v-col cols="12" class="d-flex justify-center mt-4">
                 <v-pagination
-                    v-model="currentPage"
+                    v-model="cardStore.currentPage"
                     :length="cards.last_page"
                     :total-visible="7"
-                    @update:model-value="updatePage"
+                    @update:model-value="cardStore.setPage"
                     rounded
-                    :disabled="isLoading"
+                    :disabled="cardStore.isLoading"
                 ></v-pagination>
             </v-col>
         </v-row>
@@ -171,13 +171,13 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, reactive } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
-import { debounce } from 'lodash';
+import { computed, onMounted } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import CardItem from './CardItem.vue';
+import { useCardStore } from '@/stores/cardStore';
 
 const page = usePage();
-const isLoading = ref(false);
+const cardStore = useCardStore();
 
 const props = defineProps({
     cards: {
@@ -190,23 +190,6 @@ const props = defineProps({
     }
 });
 
-// Emitované události
-const emit = defineEmits(['update:filters']);
-
-// Lokální filtry
-const localFilters = reactive({
-    search: props.filters?.search || '',
-    type: props.filters?.type || '',
-    rarity: props.filters?.rarity || '',
-    set_id: props.filters?.set_id || '',
-    sort_by: props.filters?.sort_by || 'name',
-    sort_direction: props.filters?.sort_direction || 'asc',
-    per_page: props.filters?.per_page || 30
-});
-
-// Stav stránky
-const currentPage = ref(props.cards?.current_page || 1);
-
 // Možnosti stránkování
 const perPageOptions = [
     { title: '30', value: 30 },
@@ -214,7 +197,7 @@ const perPageOptions = [
     { title: '120', value: 120 }
 ];
 
-// Filtry
+// Typy pro filtrování
 const typeOptions = [
     { title: 'Všechny typy', value: '' },
     { title: 'Pokémon', value: 'Pokémon' },
@@ -253,135 +236,40 @@ const setOptions = computed(() => {
     return options;
 });
 
-// Počítané vlastnosti
-const hasCards = computed(() => props.cards && props.cards.data && props.cards.data.length > 0);
-const hasActiveFilters = computed(() => localFilters.search || localFilters.type || localFilters.rarity || localFilters.set_id);
-
-// Možnosti řazení
-const sortOption = computed({
-    get: () => {
-        return `${localFilters.sort_by}_${localFilters.sort_direction}`;
-    },
-    set: (val) => {
-        const [sort_by, sort_direction] = val.split('_');
-        localFilters.sort_by = sort_by;
-        localFilters.sort_direction = sort_direction;
-    }
-});
-
+// Možnosti řazení - OPRAVENO KLÍČE CENY
 const sortOptions = [
     { title: 'Číslo (vzestupně)', value: 'number_asc' },
     { title: 'Číslo (sestupně)', value: 'number_desc' },
     { title: 'Název (A-Z)', value: 'name_asc' },
     { title: 'Název (Z-A)', value: 'name_desc' },
-    { title: 'Cena (nejnižší)', value: 'price_asc' },
-    { title: 'Cena (nejvyšší)', value: 'price_desc' },
+    // Použít správné klíče z backendu
+    { title: 'Cena (nejnižší)', value: 'cm_avg30_asc' }, 
+    { title: 'Cena (nejvyšší)', value: 'cm_avg30_desc' },
+    // Volitelně přidat i trend cenu:
+    // { title: 'Cena Trend (nejnižší)', value: 'price_cm_trend_asc' }, 
     { title: 'Vzácnost (nejnižší)', value: 'rarity_asc' },
     { title: 'Vzácnost (nejvyšší)', value: 'rarity_desc' },
 ];
 
-// Sledování změn
-watch(() => props.cards?.current_page, (newValue) => {
-    if (newValue !== undefined && newValue !== currentPage.value) {
-        currentPage.value = newValue;
-    }
-}, { immediate: true });
+// Počítané vlastnosti
+const hasCards = computed(() => props.cards && props.cards.data && props.cards.data.length > 0);
 
-// Sledování změn props.filters
-watch(() => props.filters, (newFilters) => {
-    // Aktualizujeme lokální filtry podle změn v props
-    Object.keys(localFilters).forEach(key => {
-        if (newFilters[key] !== undefined) {
-            localFilters[key] = newFilters[key];
-        }
-    });
-}, { deep: true });
-
-// Debounced funkce pro vyhledávání
-const debouncedSearch = debounce((value) => {
-    updateFilter('search', value);
-}, 500);
-
-// Sledování router událostí pro indikaci načítání
+// Inicializace stavu
 onMounted(() => {
-    router.on('start', () => {
-        isLoading.value = true;
-    });
-    
-    router.on('finish', () => {
-        isLoading.value = false;
-    });
-    
-    // Synchronizace lokalních filtrů s props
-    Object.keys(localFilters).forEach(key => {
-        if (props.filters[key] !== undefined) {
-            localFilters[key] = props.filters[key];
-        }
-    });
+    // Inicializujeme store z props
+    cardStore.initializeFromProps(props);
+    // Načteme preferované zobrazení z localStorage
+    cardStore.initializeFromLocalStorage();
 });
 
-// Metody pro filtry
-function updateFilter(key, value) {
-    localFilters[key] = value;
-    applyFilters(true);
-}
-
-function updateSortOption(value) {
-    const [sort_by, sort_direction] = value.split('_');
-    localFilters.sort_by = sort_by;
-    localFilters.sort_direction = sort_direction;
-    applyFilters(true);
-}
-
-function clearFilter(key) {
-    localFilters[key] = '';
-    applyFilters(true);
-}
-
-function resetFilters() {
-    localFilters.search = '';
-    localFilters.type = '';
-    localFilters.rarity = '';
-    localFilters.set_id = '';
-    localFilters.sort_by = 'name';
-    localFilters.sort_direction = 'asc';
-    localFilters.per_page = 30;
-    applyFilters(true);
-}
-
-function applyFilters(resetPage = true) {
-    // Vytvoříme nový objekt filtrů
-    const newFilters = { ...localFilters };
-    
-    // Pokud resetujeme stránku, nastavíme ji na 1
-    if (resetPage) {
-        newFilters.page = 1;
-        currentPage.value = 1;
-    } else {
-        newFilters.page = currentPage.value;
-    }
-    
-    // Informujeme rodičovskou komponentu o změně filtrů
-    emit('update:filters', newFilters);
-    
-    // Odešleme požadavek na server
-    router.get('/cards', newFilters, {
-        preserveState: true,
-        preserveScroll: true,
-        only: ['cards']
-    });
-}
-
-// Metody pro stránkování
-function updatePage(newPage) {
-    currentPage.value = newPage;
-    
-    const newFilters = { ...localFilters, page: newPage };
-    
-    applyFilters(false);
-}
-
 // Pomocné metody
+function clearFilter(key) {
+    if (key === 'search') cardStore.setSearch('');
+    if (key === 'type') cardStore.setType('');
+    if (key === 'rarity') cardStore.setRarity('');
+    if (key === 'set_id') cardStore.setSetId('');
+}
+
 function getSetName(setId) {
     if (!setId || !page.props.sets) return '';
     const set = page.props.sets.find(s => s.id === setId);

@@ -846,7 +846,7 @@ function formatCardNumber(number) {
     if (!number) return '000';
     
     // Extrahujeme číselnou část
-    const numericPart = number.replace(/\D/g, '');
+    const numericPart = String(number).replace(/\D/g, '');
     
     // Doplníme nuly zleva
     return numericPart.padStart(3, '0');

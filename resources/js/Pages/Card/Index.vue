@@ -30,7 +30,7 @@
                                 </v-chip>
                                 
                                 <v-btn-toggle
-                                    :value="viewMode"
+                                    :model-value="cardStore.view_mode"
                                     color="primary"
                                     density="comfortable"
                                 >
@@ -46,18 +46,16 @@
 
         <!-- Grid pohled -->
         <card-grid-view
-            v-if="viewMode === 'grid'"
+            v-if="cardStore.view_mode === 'grid'"
             :cards="cards"
-            :filters="filters"
-            @update:filters="updateComponentFilters"
+            :filters="cardStore.filters"
         />
 
         <!-- Seznam pohled -->
         <card-list-view
             v-else
             :cards="cards"
-            :filters="filters"
-            @update:filters="updateComponentFilters"
+            :filters="cardStore.filters"
         />
         
         <!-- Plovoucí tlačítko pro přesun zpět nahoru -->
@@ -72,8 +70,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
+import { useCardStore } from '@/stores/cardStore';
 
 import CardGridView from '@/Components/Card/CardGridView.vue';
 import CardListView from '@/Components/Card/CardListView.vue';
@@ -90,76 +89,18 @@ const props = defineProps({
     }
 });
 
-// Stav aplikace
-const viewMode = ref('grid');
-const isLoading = ref(false);
-
-// Nastavení výchozích filtrů
-const filters = ref({
-    search: props.filters.search || '',
-    type: props.filters.type || '',
-    rarity: props.filters.rarity || '',
-    set_id: props.filters.set_id || '',
-    sort_by: props.filters.sort_by || 'name',
-    sort_direction: props.filters.sort_direction || 'asc',
-    per_page: props.filters.per_page || 30,
-    page: props.filters.page || 1,
-    view: props.filters.view || 'grid'
-});
+// Inicializace Pinia store
+const cardStore = useCardStore();
 
 // Počet karet celkem
 const totalCards = computed(() => {
     return props.cards?.total || 0;
 });
 
-// Inicializace
-watch(() => filters.value.view, (newView) => {
-    if (newView && viewMode.value !== newView) {
-        // Nastavíme pohled bez volání switchView
-        viewMode.value = newView;
-    }
-}, { immediate: true });
-
-// Metoda pro aktualizaci filtrů z child komponent
-function updateComponentFilters(newFilters) {
-    // Aktualizace lokálních filtrů podle komponent
-    Object.keys(newFilters).forEach(key => {
-        filters.value[key] = newFilters[key];
-    });
-}
-
-// Funkce pro přepnutí pohledu
+// Funkce pro přepnutí pohledu - OPRAVENO
 function switchView(newView) {
-    // Nastavím nový pohled
-    viewMode.value = newView;
-    
-    // Uložíme preference do localStorage
-    localStorage.setItem('preferredCardView', newView);
-    
-    // Resetujeme všechny filtry
-    filters.value = {
-        view: newView,
-        search: '',
-        type: '',
-        rarity: '',
-        set_id: '',
-        page: 1,
-        per_page: 30,
-        sort_by: 'name',
-        sort_direction: 'asc'
-    };
-    
-    // Nejprve vyčistíme URL od všech parametrů
-    window.history.pushState({}, '', '/cards');
-    
-    // Pak odešleme request pouze s parametrem view
-    router.visit('/cards?view=' + newView, {
-        method: 'get',
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
-        only: ['cards']
-    });
+    // Zavolat správnou akci ve store
+    cardStore.setViewMode(newView); // Správný název akce
 }
 
 // Funkce pro přesun zpět nahoru
@@ -169,15 +110,6 @@ function scrollToTop() {
         behavior: 'smooth'
     });
 }
-
-// Sledování navigačních událostí
-router.on('start', () => {
-    isLoading.value = true;
-});
-
-router.on('finish', () => {
-    isLoading.value = false;
-});
 </script>
 
 <style scoped>
