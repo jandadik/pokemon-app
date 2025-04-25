@@ -7,7 +7,7 @@
                     <v-col cols="12" sm="6" md="3" lg="2">
                         <v-text-field
                             v-model="cardStore.search"
-                            label="Hledat"
+                            :label="$t('catalog.filters.search')"
                             prepend-inner-icon="mdi-magnify"
                             variant="outlined"
                             density="comfortable"
@@ -21,7 +21,7 @@
                         <v-select
                             v-model="cardStore.type"
                             :items="typeOptions"
-                            label="Typ"
+                            :label="$t('catalog.filters.type')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -33,7 +33,7 @@
                         <v-select
                             v-model="cardStore.rarity"
                             :items="rarityOptions"
-                            label="Vzácnost"
+                            :label="$t('catalog.filters.rarity')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -45,7 +45,7 @@
                         <v-select
                             v-model="cardStore.set_id"
                             :items="setOptions"
-                            label="Set"
+                            :label="$t('catalog.filters.set')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -57,7 +57,7 @@
                         <v-select
                             v-model="cardStore.sortOption"
                             :items="sortOptions"
-                            label="Řazení"
+                            :label="$t('catalog.filters.sort')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -68,7 +68,7 @@
                         <v-select
                             v-model="cardStore.per_page"
                             :items="perPageOptions"
-                            label="Počet na stránku"
+                            :label="$t('catalog.filters.per_page')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -80,14 +80,14 @@
                 <!-- Aktivní filtry a reset -->
                 <v-row v-if="cardStore.hasActiveFilters" class="mt-2">
                     <v-col cols="12" class="d-flex align-center flex-wrap">
-                        <div class="text-caption text-grey me-4">Aktivní filtry:</div>
+                        <div class="text-caption text-grey me-4">{{ $t('catalog.filters.active_filters') }}</div>
                         <v-chip
                             v-if="cardStore.search"
                             class="me-2 mb-1"
                             closable
                             @click:close="clearFilter('search')"
                         >
-                            Hledat: {{ cardStore.search }}
+                            {{ $t('catalog.filters.search') }}: {{ cardStore.search }}
                         </v-chip>
                         <v-chip
                             v-if="cardStore.type"
@@ -95,7 +95,7 @@
                             closable
                             @click:close="clearFilter('type')"
                         >
-                            Typ: {{ cardStore.type }}
+                            {{ $t('catalog.filters.type') }}: {{ cardStore.type }}
                         </v-chip>
                         <v-chip
                             v-if="cardStore.rarity"
@@ -103,7 +103,7 @@
                             closable
                             @click:close="clearFilter('rarity')"
                         >
-                            Vzácnost: {{ cardStore.rarity }}
+                            {{ $t('catalog.filters.rarity') }}: {{ cardStore.rarity }}
                         </v-chip>
                         <v-chip
                             v-if="cardStore.set_id"
@@ -111,7 +111,7 @@
                             closable
                             @click:close="clearFilter('set_id')"
                         >
-                            Set: {{ getSetName(cardStore.set_id) }}
+                            {{ $t('catalog.filters.set') }}: {{ getSetName(cardStore.set_id) }}
                         </v-chip>
                         <v-spacer />
                         <v-btn
@@ -120,7 +120,7 @@
                             prepend-icon="mdi-refresh"
                             @click="cardStore.resetFilters"
                         >
-                            Resetovat filtry
+                            {{ $t('catalog.filters.reset') }}
                         </v-btn>
                     </v-col>
                 </v-row>
@@ -198,16 +198,16 @@ const perPageOptions = [
 ];
 
 // Typy pro filtrování
-const typeOptions = [
-    { title: 'Všechny typy', value: '' },
-    { title: 'Pokémon', value: 'Pokémon' },
-    { title: 'Trenér', value: 'Trainer' },
-    { title: 'Energie', value: 'Energy' },
-];
+const typeOptions = computed(() => [
+    { title: page.props.translations?.catalog?.filters?.all_types || 'Všechny typy', value: '' },
+    { title: page.props.translations?.catalog?.types?.Pokémon || 'Pokémon', value: 'Pokémon' },
+    { title: page.props.translations?.catalog?.types?.Trainer || 'Trenér', value: 'Trainer' },
+    { title: page.props.translations?.catalog?.types?.Energy || 'Energie', value: 'Energy' },
+]);
 
 // Vzácnosti pro filtrování
-const rarityOptions = [
-    { title: 'Všechny vzácnosti', value: '' },
+const rarityOptions = computed(() => [
+    { title: page.props.translations?.catalog?.filters?.all_rarities || 'Všechny vzácnosti', value: '' },
     { title: 'Common', value: 'Common' },
     { title: 'Uncommon', value: 'Uncommon' },
     { title: 'Rare', value: 'Rare' },
@@ -218,11 +218,14 @@ const rarityOptions = [
     { title: 'Ultra Rare', value: 'Ultra Rare' },
     { title: 'Secret Rare', value: 'Secret Rare' },
     { title: 'Promo', value: 'Promo' }
-];
+]);
 
 // Sety pro filtrování
 const setOptions = computed(() => {
-    const options = [{ title: 'Všechny sety', value: '' }];
+    const options = [{ 
+        title: page.props.translations?.catalog?.filters?.all_sets || 'Všechny sety', 
+        value: '' 
+    }];
     
     if (page.props.sets && page.props.sets.length > 0) {
         // Seřadíme sety podle názvu
@@ -237,19 +240,19 @@ const setOptions = computed(() => {
 });
 
 // Možnosti řazení - OPRAVENO KLÍČE CENY
-const sortOptions = [
-    { title: 'Číslo (vzestupně)', value: 'number_asc' },
-    { title: 'Číslo (sestupně)', value: 'number_desc' },
-    { title: 'Název (A-Z)', value: 'name_asc' },
-    { title: 'Název (Z-A)', value: 'name_desc' },
+const sortOptions = computed(() => [
+    { title: page.props.translations?.catalog?.sorting?.number_asc || 'Číslo (vzestupně)', value: 'number_asc' },
+    { title: page.props.translations?.catalog?.sorting?.number_desc || 'Číslo (sestupně)', value: 'number_desc' },
+    { title: page.props.translations?.catalog?.sorting?.name_asc || 'Název (A-Z)', value: 'name_asc' },
+    { title: page.props.translations?.catalog?.sorting?.name_desc || 'Název (Z-A)', value: 'name_desc' },
     // Použít správné klíče z backendu
-    { title: 'Cena (nejnižší)', value: 'cm_avg30_asc' }, 
-    { title: 'Cena (nejvyšší)', value: 'cm_avg30_desc' },
+    { title: page.props.translations?.catalog?.sorting?.price_asc || 'Cena (nejnižší)', value: 'cm_avg30_asc' }, 
+    { title: page.props.translations?.catalog?.sorting?.price_desc || 'Cena (nejvyšší)', value: 'cm_avg30_desc' },
     // Volitelně přidat i trend cenu:
     // { title: 'Cena Trend (nejnižší)', value: 'price_cm_trend_asc' }, 
-    { title: 'Vzácnost (nejnižší)', value: 'rarity_asc' },
-    { title: 'Vzácnost (nejvyšší)', value: 'rarity_desc' },
-];
+    { title: page.props.translations?.catalog?.sorting?.rarity_asc || 'Vzácnost (nejnižší)', value: 'rarity_asc' },
+    { title: page.props.translations?.catalog?.sorting?.rarity_desc || 'Vzácnost (nejvyšší)', value: 'rarity_desc' },
+]);
 
 // Počítané vlastnosti
 const hasCards = computed(() => props.cards && props.cards.data && props.cards.data.length > 0);

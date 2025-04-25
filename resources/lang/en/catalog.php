@@ -21,7 +21,7 @@ return [
         'title' => 'Filters',
         'apply' => 'Apply filters',
         'reset' => 'Reset filters',
-        'active' => 'Active filters:',
+        'active_filters' => 'Active filters:',
         'search' => 'Search',
         'series' => 'Series',
         'type' => 'Type',
@@ -29,18 +29,28 @@ return [
         'set' => 'Set',
         'per_page' => 'Per page',
         'sort' => 'Sort',
-        'sort_options' => [
-            'release_date_desc' => 'Release date (newest)',
-            'release_date_asc' => 'Release date (oldest)',
-            'name_asc' => 'Name (A-Z)',
-            'name_desc' => 'Name (Z-A)',
-            'price_asc' => 'Price (lowest)',
-            'price_desc' => 'Price (highest)',
-            'number_asc' => 'Number (ascending)',
-            'number_desc' => 'Number (descending)',
-            'rarity_asc' => 'Rarity (lowest)',
-            'rarity_desc' => 'Rarity (highest)',
+        'all_types' => 'All types',
+        'all_rarities' => 'All rarities',
+        'all_sets' => 'All sets',
+        'per_page_options' => [
+            '30' => '30',
+            '60' => '60',
+            '120' => '120',
         ],
+    ],
+    
+    // New section for sorting
+    'sorting' => [
+        'number_asc' => 'Number (ascending)',
+        'number_desc' => 'Number (descending)',
+        'name_asc' => 'Name (A-Z)',
+        'name_desc' => 'Name (Z-A)',
+        'price_asc' => 'Price (lowest)',
+        'price_desc' => 'Price (highest)',
+        'rarity_asc' => 'Rarity (lowest)',
+        'rarity_desc' => 'Rarity (highest)',
+        'release_date_desc' => 'Release date (newest)',
+        'release_date_asc' => 'Release date (oldest)',
     ],
     
     // Sets
@@ -61,7 +71,7 @@ return [
     'cards' => [
         'title' => 'Cards',
         'all_cards' => 'All Cards',
-        'search' => 'Search card',
+        'search' => 'Search',
         'no_cards' => 'No cards found',
         'view_card' => 'View card',
         'card_details' => 'Card details',
@@ -83,6 +93,9 @@ return [
     
     // Card types
     'types' => [
+        'Pokémon' => 'Pokémon',
+        'Trainer' => 'Trainer',
+        'Energy' => 'Energy',
         'pokemon' => 'Pokémon',
         'trainer' => 'Trainer',
         'energy' => 'Energy',
@@ -91,6 +104,16 @@ return [
     
     // Rarities
     'rarities' => [
+        'Common' => 'Common',
+        'Uncommon' => 'Uncommon',
+        'Rare' => 'Rare',
+        'RareHolo' => 'Rare Holo',
+        'RareUltra' => 'Rare Ultra',
+        'RareSecret' => 'Rare Secret',
+        'AmazingRare' => 'Amazing Rare',
+        'UltraRare' => 'Ultra Rare',
+        'SecretRare' => 'Secret Rare',
+        'Promo' => 'Promo',
         'common' => 'Common',
         'uncommon' => 'Uncommon',
         'rare' => 'Rare',
@@ -98,6 +121,18 @@ return [
         'ultra_rare' => 'Ultra Rare',
         'secret_rare' => 'Secret Rare',
         'all' => 'All rarities',
+    ],
+    
+    // New section for table headers
+    'table' => [
+        'headers' => [
+            'image' => '',
+            'name' => 'Card name',
+            'set' => 'Set',
+            'number' => 'Number',
+            'rarity' => 'Rarity',
+            'price_avg30' => 'Price (Avg30)',
+        ]
     ],
     
     // Pagination

@@ -7,7 +7,7 @@
                     <v-col cols="12" sm="6" md="3">
                         <v-text-field
                             v-model="cardStore.filters.search"
-                            label="Hledat"
+                            :label="$t('catalog.filters.search')"
                             prepend-inner-icon="mdi-magnify"
                             variant="outlined"
                             density="comfortable"
@@ -21,7 +21,7 @@
                         <v-select
                             v-model="cardStore.filters.type"
                             :items="typeOptions"
-                            label="Typ"
+                            :label="$t('catalog.filters.type')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -33,7 +33,7 @@
                         <v-select
                             v-model="cardStore.filters.rarity"
                             :items="rarityOptions"
-                            label="Vzácnost"
+                            :label="$t('catalog.filters.rarity')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -45,7 +45,7 @@
                         <v-select
                             v-model="cardStore.filters.set_id"
                             :items="setOptions"
-                            label="Set"
+                            :label="$t('catalog.filters.set')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -57,7 +57,7 @@
                         <v-select
                             v-model="cardStore.filters.per_page"
                             :items="[30, 60, 120]"
-                            label="Počet na stránku"
+                            :label="$t('catalog.filters.per_page')"
                             variant="outlined"
                             density="comfortable"
                             hide-details
@@ -69,14 +69,14 @@
                 <!-- Aktivní filtry a reset -->
                 <v-row v-if="hasActiveFilters" class="mt-2">
                     <v-col cols="12" class="d-flex align-center flex-wrap">
-                        <div class="text-caption text-grey me-4">Aktivní filtry:</div>
+                        <div class="text-caption text-grey me-4">{{ $t('catalog.filters.active_filters') }}</div>
                         <v-chip
                             v-if="cardStore.filters.search"
                             class="me-2 mb-1"
                             closable
                             @click:close="clearFilter('search')"
                         >
-                            Hledat: {{ cardStore.filters.search }}
+                            {{ $t('catalog.filters.search') }}: {{ cardStore.filters.search }}
                         </v-chip>
                         <v-chip
                             v-if="cardStore.filters.type"
@@ -84,7 +84,7 @@
                             closable
                             @click:close="clearFilter('type')"
                         >
-                            Typ: {{ cardStore.filters.type }}
+                            {{ $t('catalog.filters.type') }}: {{ cardStore.filters.type }}
                         </v-chip>
                         <v-chip
                             v-if="cardStore.filters.rarity"
@@ -92,7 +92,7 @@
                             closable
                             @click:close="clearFilter('rarity')"
                         >
-                            Vzácnost: {{ cardStore.filters.rarity }}
+                            {{ $t('catalog.filters.rarity') }}: {{ cardStore.filters.rarity }}
                         </v-chip>
                         <v-chip
                             v-if="cardStore.filters.set_id"
@@ -100,7 +100,7 @@
                             closable
                             @click:close="clearFilter('set_id')"
                         >
-                            Set: {{ getSetName(cardStore.filters.set_id) }}
+                            {{ $t('catalog.filters.set') }}: {{ getSetName(cardStore.filters.set_id) }}
                         </v-chip>
                         <v-spacer />
                         <v-btn
@@ -109,7 +109,7 @@
                             prepend-icon="mdi-refresh"
                             @click="resetFilters"
                         >
-                            Resetovat filtry
+                            {{ $t('catalog.filters.reset') }}
                         </v-btn>
                     </v-col>
                 </v-row>
@@ -282,15 +282,15 @@ const props = defineProps({
     }
 });
 
-const typeOptions = [
-    { title: 'Všechny typy', value: '' },
-    { title: 'Pokémon', value: 'Pokémon' },
-    { title: 'Trenér', value: 'Trainer' },
-    { title: 'Energie', value: 'Energy' },
-];
+const typeOptions = computed(() => [
+    { title: page.props.translations?.catalog?.filters?.all_types || 'Všechny typy', value: '' },
+    { title: page.props.translations?.catalog?.types?.Pokémon || 'Pokémon', value: 'Pokémon' },
+    { title: page.props.translations?.catalog?.types?.Trainer || 'Trenér', value: 'Trainer' },
+    { title: page.props.translations?.catalog?.types?.Energy || 'Energie', value: 'Energy' },
+]);
 
-const rarityOptions = [
-    { title: 'Všechny vzácnosti', value: '' },
+const rarityOptions = computed(() => [
+    { title: page.props.translations?.catalog?.filters?.all_rarities || 'Všechny vzácnosti', value: '' },
     { title: 'Common', value: 'Common' },
     { title: 'Uncommon', value: 'Uncommon' },
     { title: 'Rare', value: 'Rare' },
@@ -301,10 +301,13 @@ const rarityOptions = [
     { title: 'Ultra Rare', value: 'Ultra Rare' },
     { title: 'Secret Rare', value: 'Secret Rare' },
     { title: 'Promo', value: 'Promo' }
-];
+]);
 
 const setOptions = computed(() => {
-    const options = [{ title: 'Všechny sety', value: '' }];
+    const options = [{ 
+        title: page.props.translations?.catalog?.filters?.all_sets || 'Všechny sety', 
+        value: '' 
+    }];
     
     if (page.props.sets && page.props.sets.length > 0) {
         const sortedSets = [...page.props.sets].sort((a, b) => a.name.localeCompare(b.name));
@@ -317,14 +320,14 @@ const setOptions = computed(() => {
     return options;
 });
 
-const tableHeaders = [
+const tableHeaders = computed(() => [
     { title: '', key: 'image', sortable: false, width: '50px' },
-    { title: 'Název karty', key: 'name', sortable: true },
-    { title: 'Set', key: 'set.name', width: '250px', sortable: true },
-    { title: 'Číslo', key: 'number', width: '80px', sortable: true },
-    { title: 'Vzácnost', key: 'rarity', width: '220px', sortable: true },
-    { title: 'Cena (Avg30)', key: 'price_cm_avg30', width: '110px', align: 'end', sortable: true },
-];
+    { title: page.props.translations?.catalog?.table?.headers?.name || 'Název karty', key: 'name', sortable: true },
+    { title: page.props.translations?.catalog?.table?.headers?.set || 'Set', key: 'set.name', width: '250px', sortable: true },
+    { title: page.props.translations?.catalog?.table?.headers?.number || 'Číslo', key: 'number', width: '80px', sortable: true },
+    { title: page.props.translations?.catalog?.table?.headers?.rarity || 'Vzácnost', key: 'rarity', width: '220px', sortable: true },
+    { title: page.props.translations?.catalog?.table?.headers?.price_avg30 || 'Cena (Avg30)', key: 'price_cm_avg30', width: '110px', align: 'end', sortable: true },
+]);
 
 const hasCards = computed(() => props.cards && props.cards.data && props.cards.data.length > 0);
 const hasActiveFilters = computed(() => 

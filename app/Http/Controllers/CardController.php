@@ -21,7 +21,7 @@ class CardController extends Controller
      */
     public function index(Request $request)
     {
-        \Log::debug('CardController@index received request with data:', $request->all());
+        //\Log::debug('CardController@index received request with data:', $request->all());
 
         $perPage = $request->input('per_page', 30);
         $page = $request->input('page', 1);
@@ -54,15 +54,15 @@ class CardController extends Controller
             $sortBy = 'name';
         }
         
-        \Log::debug('Parametry pro getCards:', [
-            'perPage' => $perPage,
-            'search' => $search,
-            'setId' => $setId,
-            'type' => $type,
-            'rarity' => $rarity,
-            'sortBy' => $sortBy,
-            'sortDirection' => $sortDirection
-        ]);
+        // \Log::debug('Parametry pro getCards:', [
+        //     'perPage' => $perPage,
+        //     'search' => $search,
+        //     'setId' => $setId,
+        //     'type' => $type,
+        //     'rarity' => $rarity,
+        //     'sortBy' => $sortBy,
+        //     'sortDirection' => $sortDirection
+        // ]);
         // Přímé volání getCards bez cache celého výsledku
         $cards = $this->getCards($perPage, $search, $setId, $type, $rarity, $sortBy, $sortDirection);
 
