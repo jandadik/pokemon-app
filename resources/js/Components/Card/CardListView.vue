@@ -155,9 +155,13 @@
                     </div>
                 </template>
                 <template #[`item.name`]="{ item }">
-                    <Link :href="`/cards/${item.id}`" class="text-decoration-none">
+                    <a 
+                        href="#" 
+                        @click.prevent="navigateToCardDetail(item.id)" 
+                        class="text-decoration-none"
+                    >
                         {{ item.name }}
-                    </Link>
+                    </a>
                 </template>
                 <template #[`item.types`]="{ item }">
                     <v-icon 
@@ -248,7 +252,7 @@
 
 <script setup>
 import { computed, watch } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage, router } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import { debounce } from 'lodash';
@@ -437,6 +441,17 @@ function getSetName(setId) {
     if (!setId || !page.props.sets) return '';
     const set = page.props.sets.find(s => s.id === setId);
     return set ? set.name : '';
+}
+
+function navigateToCardDetail(cardId) {
+    // Získání aktuální URL jako referrer
+    const currentUrl = window.location.pathname + window.location.search;
+    
+    // Návštěva detailu karty s předáním referreru
+    router.visit(`/cards/${cardId}?referrer=${encodeURIComponent(currentUrl)}`, {
+        preserveScroll: true,
+        preserveState: true
+    });
 }
 </script>
 

@@ -120,23 +120,7 @@ class SetController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
+        /**
      * Display the specified resource.
      */
     public function show(Set $set)
@@ -155,76 +139,60 @@ class SetController extends Controller
         $cardsCacheKey = "set_{$set->id}_all_cards";
 
         $cards = Cache::remember($cardsCacheKey, 3600, function () use ($set) {
-            // Načtení karet
+            // Načtení karet s cenami pomocí JOIN na materializovaný pohled
             $cards = $set->cards()
                 ->select([
-                    'id', 
-                    'set_id', 
-                    'name', 
-                    'number', 
-                    'supertype', 
-                    'types', 
-                    'rarity', 
-                    'hp', 
-                    'img_small',
-                    'img_file_small'
+                    'cards.id', 
+                    'cards.set_id', 
+                    'cards.name', 
+                    'cards.number', 
+                    'cards.supertype', 
+                    'cards.types', 
+                    'cards.rarity', 
+                    'cards.hp', 
+                    'cards.img_small',
+                    'cards.img_file_small',
+                    // Ceny z materializovaného pohledu
+                    'cp.cm_price_low as price_cm_low',
+                    'cp.cm_price_trend as price_cm_trend',
+                    'cp.cm_avg7 as price_cm_avg7',
+                    'cp.cm_avg30 as price_cm_avg30',
+                    'cp.cm_updated_at as price_cm_updated_at'
                 ])
-                ->orderBy('number')
+                ->leftJoin('cards_prices_mv as cp', 'cards.id', '=', 'cp.card_id')
+                ->orderBy('cards.number')
                 ->get();
                 
-            // Pro každou kartu načteme ceny z CardMarket
-            $cardsWithPrices = 0;
-            $samplePrice = null;
-            $sampleCardId = null;
-            
-            // Nejprve získáme nejnovější updated_at pro všechny karty v tomto setu
-            $latestCardUpdates = DB::table('prices_cm')
-                ->where('card_id', 'like', $set->id . '-%')
-                ->select('card_id', DB::raw('MAX(updated_at) as latest_update'))
-                ->groupBy('card_id')
-                ->get()
-                ->keyBy('card_id');
-            
-            // Pro ladící účely
-            \Log::info("Set {$set->id}: Nalezeno " . count($latestCardUpdates) . " záznamů cen");
-            
-            // Načtení nejaktuálnějších cen pro každou kartu
+            // Mapování hodnot pro zpětnou kompatibilitu
             foreach ($cards as $card) {
-                // Vytvoříme card_id ve stejném formátu jako se používá v tabulce prices_cm
-                $cardId = $set->id . '-' . $card->number;
-                
-                // Pokud existuje záznam pro tuto kartu
-                if (isset($latestCardUpdates[$cardId])) {
-                    // Získáme nejnovější cenu pro tuto kartu
-                    $latestUpdate = $latestCardUpdates[$cardId]->latest_update;
-                    
-                    $priceData = DB::table('prices_cm')
-                        ->where('card_id', $cardId)
-                        ->where('updated_at', $latestUpdate)
-                        ->first();
-                    
-                    if ($priceData) {
-                        $cardsWithPrices++;
-                        if (!$samplePrice) {
-                            $samplePrice = $priceData->avg30;
-                            $sampleCardId = $priceData->card_id;
-                        }
-                        
-                        $card->prices_cm = (object)[
-                            'avg30' => $priceData->avg30,
-                            'avg7' => $priceData->avg7,
-                            'avg1' => $priceData->avg1,
-                            'reverse_holo_avg30' => $priceData->reverse_holo_avg30,
-                            'trend_price' => $priceData->trend_price,
-                            'updated_at' => $priceData->updated_at,
-                            'card_id' => $priceData->card_id
-                        ];
-                    }
+                if ($card->price_cm_avg30) {
+                    $card->prices_cm = (object)[
+                        'avg30' => $card->price_cm_avg30,
+                        'avg7' => $card->price_cm_avg7,
+                        'avg1' => $card->price_cm_trend, // Používáme trend místo avg1
+                        'reverse_holo_avg30' => null, // Toto pole není v materializovaném pohledu
+                        'trend_price' => $card->price_cm_trend,
+                        'updated_at' => $card->price_cm_updated_at,
+                        'card_id' => $card->id
+                    ];
                 }
+                
+                // Odstranění sloupců, které jsou nyní v prices_cm objektu
+                unset(
+                    $card->price_cm_low,
+                    $card->price_cm_trend,
+                    $card->price_cm_avg7,
+                    $card->price_cm_avg30,
+                    $card->price_cm_updated_at
+                );
             }
             
             // Log počet karet s cenami
-            \Log::info("Set {$set->id}: {$cardsWithPrices} karet s cenami z celkem " . count($cards) . " karet. Sample price: {$samplePrice} pro kartu {$sampleCardId}");
+            $cardsWithPrices = $cards->filter(function($card) {
+                return isset($card->prices_cm);
+            })->count();
+            
+            \Log::info("Set {$set->id}: {$cardsWithPrices} karet s cenami z celkem " . count($cards) . " karet.");
             
             return $cards;
         });
@@ -242,31 +210,7 @@ class SetController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
-    /**
+       /**
      * Zobrazení karet konkrétního setu
      */
     public function cards(Request $request, Set $set)
@@ -291,86 +235,70 @@ class SetController extends Controller
         $cards = Cache::remember($cardsCacheKey, 3600, function () use ($set, $search, $type, $rarity) {
             $query = $set->cards()
                 ->select([
-                    'id', 
-                    'set_id', 
-                    'name', 
-                    'number', 
-                    'supertype', 
-                    'types', 
-                    'rarity', 
-                    'hp', 
-                    'img_small',
-                    'img_file_small'
+                    'cards.id', 
+                    'cards.set_id', 
+                    'cards.name', 
+                    'cards.number', 
+                    'cards.supertype', 
+                    'cards.types', 
+                    'cards.rarity', 
+                    'cards.hp', 
+                    'cards.img_small',
+                    'cards.img_file_small',
+                    // Ceny z materializovaného pohledu
+                    'cp.cm_price_low as price_cm_low',
+                    'cp.cm_price_trend as price_cm_trend',
+                    'cp.cm_avg7 as price_cm_avg7',
+                    'cp.cm_avg30 as price_cm_avg30',
+                    'cp.cm_updated_at as price_cm_updated_at'
                 ])
-                ->orderBy('number');
+                ->leftJoin('cards_prices_mv as cp', 'cards.id', '=', 'cp.card_id')
+                ->orderBy('cards.number');
 
             // Aplikace filtrů
             if ($search) {
-                $query->where('name', 'like', "%{$search}%");
+                $query->where('cards.name', 'like', "%{$search}%");
             }
             if ($type) {
-                $query->where('supertype', $type);
+                $query->where('cards.supertype', $type);
             }
             if ($rarity) {
-                $query->where('rarity', $rarity);
+                $query->where('cards.rarity', $rarity);
             }
 
             // Načtení karet
             $cards = $query->get();
             
-            // Pro každou kartu načteme ceny z CardMarket
-            $cardsWithPrices = 0;
-            $samplePrice = null;
-            $sampleCardId = null;
-            
-            // Nejprve získáme nejnovější updated_at pro všechny karty v tomto setu
-            $latestCardUpdates = DB::table('prices_cm')
-                ->where('card_id', 'like', $set->id . '-%')
-                ->select('card_id', DB::raw('MAX(updated_at) as latest_update'))
-                ->groupBy('card_id')
-                ->get()
-                ->keyBy('card_id');
-            
-            // Pro ladící účely
-            \Log::info("Set {$set->id}: Nalezeno " . count($latestCardUpdates) . " záznamů cen");
-            
-            // Načtení nejaktuálnějších cen pro každou kartu
+            // Mapování hodnot pro zpětnou kompatibilitu
             foreach ($cards as $card) {
-                // Vytvoříme card_id ve stejném formátu jako se používá v tabulce prices_cm
-                $cardId = $set->id . '-' . $card->number;
-                
-                // Pokud existuje záznam pro tuto kartu
-                if (isset($latestCardUpdates[$cardId])) {
-                    // Získáme nejnovější cenu pro tuto kartu
-                    $latestUpdate = $latestCardUpdates[$cardId]->latest_update;
-                    
-                    $priceData = DB::table('prices_cm')
-                        ->where('card_id', $cardId)
-                        ->where('updated_at', $latestUpdate)
-                        ->first();
-                    
-                    if ($priceData) {
-                        $cardsWithPrices++;
-                        if (!$samplePrice) {
-                            $samplePrice = $priceData->avg30;
-                            $sampleCardId = $priceData->card_id;
-                        }
-                        
-                        $card->prices_cm = (object)[
-                            'avg30' => $priceData->avg30,
-                            'avg7' => $priceData->avg7,
-                            'avg1' => $priceData->avg1,
-                            'reverse_holo_avg30' => $priceData->reverse_holo_avg30,
-                            'trend_price' => $priceData->trend_price,
-                            'updated_at' => $priceData->updated_at,
-                            'card_id' => $priceData->card_id
-                        ];
-                    }
+                if ($card->price_cm_avg30) {
+                    $card->prices_cm = (object)[
+                        'avg30' => $card->price_cm_avg30,
+                        'avg7' => $card->price_cm_avg7,
+                        'avg1' => $card->price_cm_trend, // Používáme trend místo avg1
+                        'reverse_holo_avg30' => null, // Toto pole není v materializovaném pohledu
+                        'trend_price' => $card->price_cm_trend,
+                        'updated_at' => $card->price_cm_updated_at,
+                        'card_id' => $card->id
+                    ];
                 }
+                
+                // Odstranění sloupců, které jsou nyní v prices_cm objektu
+                unset(
+                    $card->price_cm_low,
+                    $card->price_cm_trend,
+                    $card->price_cm_avg7,
+                    $card->price_cm_avg30,
+                    $card->price_cm_updated_at
+                );
             }
             
             // Log počet karet s cenami
-            \Log::info("Set {$set->id}: {$cardsWithPrices} karet s cenami z celkem " . count($cards) . " karet. Sample price: {$samplePrice} pro kartu {$sampleCardId}");
+            $cardsWithPrices = $cards->filter(function($card) {
+                return isset($card->prices_cm);
+            })->count();
+            
+            \Log::info("Set {$set->id}: {$cardsWithPrices} karet s cenami z celkem " . count($cards) . " karet.");
             
             return $cards;
         });

@@ -176,17 +176,66 @@ class CardController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Card $card)
+    public function show(Card $card, Request $request)
     {
-        // Načtení karty s eager loadingem pro související data
-        $card->load([
-            'set:id,name,series,release_date',
-            'attacks:id,card_id,name,cost,damage,text',
-            'variants:id,card_id,variant_normal,variant_holo,variant_reverse,variant_promo'
-        ]);
+        // Explicitní načtení pouze konkrétního setu pro danou kartu
+        $card->load(['set' => function($query) use ($card) {
+            $query->select('id', 'name', 'series', 'release_date')
+                  ->where('id', $card->set_id);
+        }]);
+        
+        // Explicitní načtení útoků pro konkrétní kartu
+        $card->load(['attacks' => function($query) use ($card) {
+            $query->select('id', 'card_id', 'name', 'cost', 'damage', 'text')
+                  ->where('card_id', $card->id);
+        }]);
+
+        // Načtení cenových dat z materializovaného view
+        $priceData = DB::table('cards_prices_mv')
+            ->where('card_id', $card->id)
+            ->first();
+            
+        if ($priceData) {
+            // Připojení cenových dat ke kartě - TCG ceny
+            $card->price_tcg_market = $priceData->tcg_price_market;
+            $card->price_tcg_low = $priceData->tcg_price_low;
+            $card->price_tcg_mid = $priceData->tcg_price_mid;
+            $card->price_tcg_high = $priceData->tcg_price_high;
+            $card->price_tcg_direct_low = $priceData->tcg_price_direct_low;
+            $card->price_tcg_updated_at = $priceData->tcg_updated_at;
+            
+            // TCG reverse holo ceny
+            $card->price_tcg_reverse_holo_market = $priceData->tcg_reverse_holo_price_market ?? null;
+            $card->price_tcg_reverse_holo_low = $priceData->tcg_reverse_holo_price_low ?? null;
+            $card->price_tcg_reverse_holo_mid = $priceData->tcg_reverse_holo_price_mid ?? null;
+            $card->price_tcg_reverse_holo_high = $priceData->tcg_reverse_holo_price_high ?? null;
+            
+            // CM ceny - normal
+            $card->price_cm_low = $priceData->cm_price_low;
+            $card->price_cm_avg7 = $priceData->cm_avg7;
+            $card->price_cm_avg30 = $priceData->cm_avg30;
+            $card->price_cm_trend = $priceData->cm_price_trend;
+            $card->price_cm_updated_at = $priceData->cm_updated_at;
+            
+            // CM ceny - další, které mohou být potřebné
+            $card->price_cm_avg = $priceData->cm_price_avg; 
+            $card->price_cm_suggested = $priceData->cm_price_suggested;
+            
+            // CM reverse holo ceny
+            $card->price_cm_reverse_holo_low = $priceData->cm_reverse_holo_low ?? null;
+            $card->price_cm_reverse_holo_avg7 = $priceData->cm_reverse_holo_avg7 ?? null;
+            $card->price_cm_reverse_holo_avg30 = $priceData->cm_reverse_holo_avg30 ?? null;
+            $card->price_cm_reverse_holo_trend = $priceData->cm_reverse_holo_trend ?? null;
+            $card->price_cm_reverse_holo_sell = $priceData->cm_reverse_holo_sell ?? null;
+            $card->price_cm_reverse_holo_avg1 = $priceData->cm_reverse_holo_avg1 ?? null;
+        }
+
+        // Získání referreru z URL - odkud byla stránka volána
+        $referrer = $request->query('referrer', null);
 
         return inertia('Card/Show', [
-            'card' => $card
+            'card' => $card,
+            'referrer' => $referrer
         ]);
     }
 

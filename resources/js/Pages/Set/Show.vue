@@ -274,7 +274,7 @@
                         class="mb-4"
                     >
                         <v-card
-                            :to="`/cards/${card.id}`"
+                            @click="navigateToCardDetail(card.id)"
                             class="h-100 card-item"
                             hover
                         >
@@ -391,9 +391,13 @@
                             </v-avatar>
                         </template>
                         <template #[`item.name`]="{ item }">
-                            <Link :href="`/cards/${item.id}`" class="text-decoration-none">
+                            <a 
+                                href="#" 
+                                @click.prevent="navigateToCardDetail(item.id)" 
+                                class="text-decoration-none"
+                            >
                                 {{ item.name }}
-                            </Link>
+                            </a>
                         </template>
                         <template #[`item.types`]="{ item }">
                             <v-icon 
@@ -460,7 +464,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { usePage, Link } from '@inertiajs/vue3';
+import { usePage, Link, router } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 
@@ -942,6 +946,17 @@ function formatNumberPrice(price) {
 function updateSort() {
     // Metoda pro aktualizaci řazení karet
     // V tuto chvíli není potřeba další logika, protože filteredCards je computed a reaguje na změny
+}
+
+function navigateToCardDetail(cardId) {
+    // Získání aktuální URL jako referrer
+    const currentUrl = window.location.pathname + window.location.search;
+    
+    // Návštěva detailu karty s předáním referreru
+    router.visit(`/cards/${cardId}?referrer=${encodeURIComponent(currentUrl)}`, {
+        preserveScroll: true,
+        preserveState: true
+    });
 }
 </script>
 

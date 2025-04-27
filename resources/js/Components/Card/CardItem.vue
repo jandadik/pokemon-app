@@ -1,6 +1,6 @@
 <template>
     <v-card
-        :to="`/cards/${card.id}`"
+        @click="navigateToDetail"
         class="h-100 card-item"
         hover
     >
@@ -65,6 +65,7 @@
 <script setup>
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
+import { router } from '@inertiajs/vue3';
 // Import sdílených utilit
 import {
     getCardImageUrl,
@@ -100,6 +101,17 @@ function formatPrice(price) { ... }
 function formatUpdateDate(dateString) { ... }
 function handleImageError(event) { ... }
 */
+
+const navigateToDetail = () => {
+    // Získání aktuální URL jako referrer
+    const currentUrl = window.location.pathname + window.location.search;
+    
+    // Návštěva detailu karty s předáním referreru
+    router.visit(`/cards/${props.card.id}?referrer=${encodeURIComponent(currentUrl)}`, {
+        preserveScroll: true,
+        preserveState: true
+    });
+};
 </script>
 
 <style scoped>

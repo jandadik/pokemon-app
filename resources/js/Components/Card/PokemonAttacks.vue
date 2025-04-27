@@ -30,16 +30,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 
 const props = defineProps({
-  cardId: {
-    type: String,
-    required: true
+  attacks: {
+    type: Array,
+    required: true,
+    default: () => []
   }
 })
-
-const attacks = ref([])
 
 const getEnergyCosts = (costJson) => {
   if (!costJson) return []
@@ -50,18 +49,6 @@ const getEnergyCosts = (costJson) => {
     return []
   }
 }
-
-onMounted(async () => {
-  try {
-    const response = await fetch(`/api/cards/${props.cardId}/attacks`)
-    const data = await response.json()
-    if (data.data) {
-      attacks.value = data.data
-    }
-  } catch (error) {
-    console.error('Error fetching attacks:', error)
-  }
-})
 </script>
 
 <style scoped>
