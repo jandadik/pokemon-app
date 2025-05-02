@@ -38,3 +38,9 @@ Route::prefix('/')
 Route::prefix('/')
     ->name('catalog.')
     ->group(base_path('routes/catalog.php'));
+
+// Routy pro sbírky uživatelů
+Route::prefix('collections')
+    ->name('collections.')
+    ->middleware(['auth', '2fa'])
+    ->group(base_path('routes/collections.php'));

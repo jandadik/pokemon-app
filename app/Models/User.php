@@ -100,4 +100,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(LoginHistory::class);
     }
+
+    /**
+     * Vztah ke sbírkám uživatele.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function collections()
+    {
+        return $this->hasMany(UserCollection::class);
+    }
 }

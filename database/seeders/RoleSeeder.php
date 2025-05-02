@@ -52,28 +52,44 @@ class RoleSeeder extends Seeder
             'register.view',
             'register.create',
             'register.edit',
-            'register.delete'
+            'register.delete',
+            
+            // --- Nová oprávnění pro Sbírky ---
+            'collections.view',
+            'collections.create',
+            'collections.edit.own',
+            'collections.delete.own',
+            'collections.edit.any',
+            'collections.delete.any',
+            // ----------------------------------
         ];
 
         // Vytvoření pouze chybějících oprávnění
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
         // Vytvoření rolí a přiřazení oprávnění
-        $userRole = Role::firstOrCreate(['name' => 'user']);
-        $userRole->syncPermissions(['card.view', 'set.view']);
+        $userRole = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
+        $userRole->syncPermissions([
+            'card.view', 
+            'set.view',
+            'collections.view', 
+            'collections.create', 
+            'collections.edit.own', 
+            'collections.delete.own'
+        ]);
 
-        $editorRole = Role::firstOrCreate(['name' => 'editor']);
+        $editorRole = Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'web']);
         $editorRole->syncPermissions([
             'card.view', 'card.create', 'card.edit',
             'set.view', 'set.create', 'set.edit'
         ]);
 
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $adminRole->syncPermissions(Permission::all());
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $adminRole->syncPermissions(Permission::where('guard_name', 'web')->pluck('name')->toArray());
 
-        Role::firstOrCreate(['name' => 'super-admin']);
+        Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
         // super-admin má automaticky všechna oprávnění přes gate::before v AuthServiceProvider
     }
 }

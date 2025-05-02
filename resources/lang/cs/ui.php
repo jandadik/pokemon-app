@@ -11,7 +11,15 @@ return [
     |
     */
 
-    // Hlavní menu a navigace
+    // Hlavní menu a navigace - Přejmenováno s prefixem 'menu.'
+    'menu' => [
+        'home' => 'Domů',
+        'catalog' => 'Katalog',
+        'cards' => 'Karty',
+        'collections' => 'Sbírky',
+        'admin' => 'Admin',
+    ],
+
     'header' => [
         'menu' => 'Menu',
         'dashboard' => 'Dashboard',
@@ -126,4 +134,6 @@ return [
     // Obecné texty pro UI
     'stats' => 'Statistiky',
     'coming_soon' => 'Připravujeme pro vás',
+
+
 ]; 

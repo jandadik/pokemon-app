@@ -9,7 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
     const isLoggedIn = computed(() => !!user.value)
     const hasRole = computed(() => (role) => user.value?.roles.includes(role))
 
-    // Mapování rolí na oprávnění - pouze dočasně, dokud nebudou implementována skutečná oprávnění
+    // Mapování rolí na oprávnění - PONECHÁNO
     const rolePermissionsMap = {
         'super-admin': ['admin.access', 'user.create', 'user.edit', 'user.delete'],
         'admin': ['admin.access', 'user.create', 'user.edit', 'user.delete'],
@@ -17,6 +17,7 @@ export const useAuthStore = defineStore('auth', () => {
         'user': []
     }
 
+    // Původní logika can() - PONECHÁNA
     const can = computed(() => (permission) => {
         // Pokud není uživatel přihlášen, nemá žádná oprávnění
         if (!user.value) return false

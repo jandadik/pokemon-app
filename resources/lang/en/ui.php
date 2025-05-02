@@ -11,7 +11,15 @@ return [
     |
     */
 
-    // Main menu and navigation
+    // Main menu and navigation - Renamed with 'menu.' prefix
+    'menu' => [
+        'home' => 'Home',
+        'catalog' => 'Catalog',
+        'cards' => 'Cards',
+        'collections' => 'Collections',
+        'admin' => 'Admin',
+    ],
+
     'header' => [
         'menu' => 'Menu',
         'dashboard' => 'Dashboard',

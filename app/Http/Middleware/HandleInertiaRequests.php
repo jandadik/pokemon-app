@@ -67,7 +67,7 @@ class HandleInertiaRequests extends Middleware
         $translations = [];
 
         // Načteme překlady z jednotlivých souborů
-        foreach (['app', 'auth', 'ui', 'validation', 'account', 'catalog'] as $file) {
+        foreach (['app', 'auth', 'ui', 'validation', 'account', 'catalog', 'collections'] as $file) {
             if (file_exists(resource_path("lang/{$locale}/{$file}.php"))) {
                 $translations[$file] = trans($file, [], $locale);
             }
