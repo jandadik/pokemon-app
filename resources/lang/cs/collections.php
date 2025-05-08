@@ -12,10 +12,110 @@ return [
 
     'title' => 'Moje sbírky',
     
+    'default_badge' => 'Výchozí',
+    'public_badge' => 'Veřejná',
+    
     'buttons' => [
         'create' => 'Vytvořit sbírku',
-        'edit' => 'Upravit',
+        'create_first' => 'Vytvořit první sbírku',
+        'save' => 'Uložit',
+        'cancel' => 'Zrušit',
         'delete' => 'Smazat',
+        'edit' => 'Upravit',
+        'add_card' => 'Přidat kartu',
+        'add_first_card' => 'Přidat první kartu',
+        'back_to_collection' => 'Zpět na sbírku',
+        'export' => 'Exportovat',
+        'print' => 'Tisknout',
+        'set_default' => 'Nastavit jako výchozí',
+        'sort_asc' => 'Seřadit vzestupně',
+        'sort_desc' => 'Seřadit sestupně',
+        'grid_view' => 'Zobrazit jako mřížku',
+        'list_view' => 'Zobrazit jako seznam',
     ],
-    // Zde budou další překlady...
+    
+    'table' => [
+        'name' => 'Název',
+        'cards' => 'Karty',
+        'public' => 'Veřejná',
+        'default' => 'Výchozí',
+        'actions' => 'Akce',
+    ],
+    
+    'empty' => [
+        'title' => 'Zatím žádné sbírky',
+        'text' => 'Zatím jste nevytvořili žádnou sbírku. Začněte vytvořením své první sbírky!',
+        'no_description' => 'Bez popisu',
+    ],
+    
+    'create' => [
+        'title' => 'Vytvořit novou sbírku',
+    ],
+    
+    'edit' => [
+        'title' => 'Upravit sbírku',
+        'form_title' => 'Údaje o sbírce',
+        'info_title' => 'Informace',
+        'created_at' => 'Vytvořeno',
+        'updated_at' => 'Poslední aktualizace',
+    ],
+    
+    'delete' => [
+        'title' => 'Smazat sbírku',
+        'confirmation' => 'Opravdu chcete smazat sbírku ":name"? Tuto akci nelze vrátit zpět.',
+        'default_warning' => 'Toto je vaše výchozí sbírka. Pokud ji smažete, bude jako výchozí nastavena jiná sbírka.',
+    ],
+    
+    'form' => [
+        'name' => 'Název sbírky',
+        'description' => 'Popis',
+        'is_public' => 'Zveřejnit sbírku',
+        'is_public_hint' => 'Veřejné sbírky mohou prohlížet ostatní uživatelé',
+        'is_default' => 'Nastavit jako výchozí sbírku',
+        'is_default_hint' => 'Výchozí sbírka se používá při přidávání karet bez specifikace sbírky',
+    ],
+    
+    'danger_zone' => [
+        'title' => 'Nebezpečná zóna',
+        'delete_warning' => 'Smazáním této sbírky trvale odstraníte ji a veškerý její obsah. Tuto akci nelze vrátit zpět.',
+    ],
+    
+    'cards' => [
+        'title' => 'Karty ve sbírce',
+        'empty' => [
+            'title' => 'Zatím žádné karty',
+            'text' => 'Tato sbírka zatím neobsahuje žádné karty. Začněte přidáním své první karty!',
+        ],
+        'table' => [
+            'name' => 'Název karty',
+            'set' => 'Set',
+            'condition' => 'Stav',
+            'quantity' => 'Množství',
+            'actions' => 'Akce',
+        ],
+    ],
+    
+    'stats' => [
+        'title' => 'Statistiky sbírky',
+        'total_cards' => 'Celkem karet',
+        'unique_cards' => 'Unikátní karty',
+        'total_value' => 'Celková hodnota',
+    ],
+    
+    'filters' => [
+        'title' => 'Filtrovat karty',
+        'search' => 'Hledat',
+        'rarity' => 'Rarita',
+        'condition' => 'Stav',
+        'reset' => 'Resetovat filtry',
+    ],
+    
+    'condition' => [
+        'mint' => 'Mint',
+        'near_mint' => 'Near Mint',
+        'excellent' => 'Excellent',
+        'good' => 'Good',
+        'played' => 'Played',
+        'poor' => 'Poor',
+    ],
 ]; 

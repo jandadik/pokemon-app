@@ -44,3 +44,5 @@ Route::prefix('collections')
     ->name('collections.')
     ->middleware(['auth', '2fa'])
     ->group(base_path('routes/collections.php'));
+
+//require __DIR__.'/auth.php';
