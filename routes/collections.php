@@ -9,11 +9,34 @@ use App\Http\Controllers\CollectionController;
 |--------------------------------------------------------------------------
 |
 | Routy specifické pro správu uživatelských sbírek.
+| Tyto routy jsou automaticky prefixovány URL segmentem 'collections'
+| a jménem 'collections.' díky grupování v routes/web.php.
 |
 */
 
-// Hlavní stránka sbírek
-Route::get('/', [CollectionController::class, 'index'])->name('index');
+Route::resource('/', CollectionController::class)->parameters(['' => 'collection']);
 
-// Zde budou routy pro collections, např.:
-// Route::get('/', [CollectionController::class, 'index'])->name('collections.index'); 
+// Routy pro rychlou aktualizaci stavů
+Route::patch('/{collection}/toggle-default', [CollectionController::class, 'toggleDefault'])->name('toggle_default');
+Route::patch('/{collection}/toggle-visibility', [CollectionController::class, 'toggleVisibility'])->name('toggle_visibility');
+
+// TODO: Routa pro přidání karty do sbírky
+// Route::post('/{collection}/cards', [CollectionCardController::class, 'store'])->name('cards.store');
+
+// Výsledné routy budou například:
+// GET /collections -> collections.index (CollectionController@index)
+// GET /collections/create -> collections.create (CollectionController@create)
+// POST /collections -> collections.store (CollectionController@store)
+// GET /collections/{collection} -> collections.show (CollectionController@show)
+// GET /collections/{collection}/edit -> collections.edit (CollectionController@edit)
+// PUT/PATCH /collections/{collection} -> collections.update (CollectionController@update)
+// DELETE /collections/{collection} -> collections.destroy (CollectionController@destroy)
+
+// Poznámka: Použitím ->parameters(['' => 'collection']) zajistíme,
+// že parametr v URL pro resource routy bude pojmenován '{collection}'
+// namísto výchozího '{\/}' (což by bylo nevalidní) nebo '{collection}' pokud by resource byl pojmenován.
+// Jelikož náš resource je '/', explicitně definujeme jméno parametru.
+// Alternativně, pokud bychom resource pojmenovali např. 'items', bylo by to:
+// Route::resource('items', CollectionController::class); // a parametr by byl {item}
+// Ale vzhledem k tomu, že prefix 'collections' je už v web.php,
+// chceme, aby se cesty generovaly jako /collections/{id} a ne /collections/collections/{id} 

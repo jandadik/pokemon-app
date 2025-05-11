@@ -1,7 +1,7 @@
 <template>
     <v-card
         @click="navigateToDetail"
-        class="h-100 card-item"
+        class="card-item"
         hover
     >
         <v-skeleton-loader

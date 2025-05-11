@@ -134,4 +134,62 @@ return [
     // General UI texts
     'stats' => 'Statistics',
     'coming_soon' => 'Coming Soon',
+
+    'buttons' => [
+        'scroll_to_top' => 'Scroll to top',
+        'create' => 'Create',
+        'cancel' => 'Cancel',
+        'delete' => 'Delete',
+        'edit' => 'Edit',
+        'save' => 'Save',
+        'submit' => 'Submit',
+        'back' => 'Back',
+        'close' => 'Close',
+        'confirm' => 'Confirm',
+        'proceed' => 'Proceed',
+        'yes' => 'Yes',
+        'no' => 'No',
+        'view' => 'View',
+        'download' => 'Download',
+        'upload' => 'Upload',
+        'search' => 'Search',
+        'reset' => 'Reset',
+    ],
+
+    'messages' => [
+        'validation_errors' => 'Please fix the errors in the form.',
+        'data_saved' => 'Data was successfully saved.',
+        'data_deleted' => 'Data was successfully deleted.',
+        'operation_successful' => 'Operation completed successfully.',
+        'operation_failed' => 'An error occurred while performing the operation.',
+        'no_data' => 'No data to display.',
+        'loading' => 'Loading...',
+        'processing' => 'Processing...',
+        'confirm_delete' => 'Are you sure you want to delete this item?',
+    ],
+
+    'labels' => [
+        'search' => 'Search',
+        'filter' => 'Filter',
+        'sort' => 'Sort',
+        'from' => 'From',
+        'to' => 'To',
+        'status' => 'Status',
+        'actions' => 'Actions',
+        'details' => 'Details',
+        'settings' => 'Settings',
+    ],
+
+    'placeholders' => [
+        'search' => 'Enter search term...',
+        'select' => 'Select an item',
+    ],
+
+    'statuses' => [
+        'active' => 'Active',
+        'inactive' => 'Inactive',
+        'pending' => 'Pending',
+        'completed' => 'Completed',
+        'failed' => 'Failed',
+    ],
 ]; 

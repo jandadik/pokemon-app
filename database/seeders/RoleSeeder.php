@@ -83,7 +83,11 @@ class RoleSeeder extends Seeder
         $editorRole = Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'web']);
         $editorRole->syncPermissions([
             'card.view', 'card.create', 'card.edit',
-            'set.view', 'set.create', 'set.edit'
+            'set.view', 'set.create', 'set.edit',
+            'collections.view',
+            'collections.create',
+            'collections.edit.any',
+            'collections.delete.any'
         ]);
 
         $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);

@@ -42,7 +42,7 @@ Route::prefix('/')
 // Routy pro sbírky uživatelů
 Route::prefix('collections')
     ->name('collections.')
-    ->middleware(['auth', '2fa'])
+    // ->middleware(['auth', '2fa']) // Dočasně zakomentováno, řešíme v controlleru
     ->group(base_path('routes/collections.php'));
 
 //require __DIR__.'/auth.php';

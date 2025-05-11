@@ -13,6 +13,10 @@ use Database\Seeders\SetsSeeder;
 use Database\Seeders\CardsSeeder;
 use Database\Seeders\CardsVariantSeeder;
 use Database\Seeders\AttacksSeeder;
+use Database\Seeders\CardsVariantTypeSeeder;
+use Database\Seeders\PricesCmSeeder;
+use Database\Seeders\PricesTcgSeeder;
+use Database\Seeders\UserSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -38,11 +42,16 @@ class DatabaseSeeder extends Seeder
             CardsSeeder::class,
             CardsVariantSeeder::class,
             AttacksSeeder::class,
+            CardsVariantTypeSeeder::class,
+            PricesCmSeeder::class,
+            PricesTcgSeeder::class,
             
             // Nakonec data specifická pro sbírky (závisí na katalogu)
             SetTrackingRuleSeeder::class,
             
             // další seedery...
         ]);
+
+        $this->call(UserSeeder::class);
     }
 }

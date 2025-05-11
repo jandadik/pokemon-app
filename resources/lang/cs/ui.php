@@ -3,7 +3,7 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | UI překlady
+    | UI Language Lines
     |--------------------------------------------------------------------------
     |
     | Následující jazykové řádky se používají v komponentách uživatelského rozhraní,
@@ -135,5 +135,61 @@ return [
     'stats' => 'Statistiky',
     'coming_soon' => 'Připravujeme pro vás',
 
+    'buttons' => [
+        'scroll_to_top' => 'Posunout nahoru',
+        'create' => 'Vytvořit',
+        'cancel' => 'Zrušit',
+        'delete' => 'Smazat',
+        'edit' => 'Upravit',
+        'save' => 'Uložit',
+        'submit' => 'Odeslat',
+        'back' => 'Zpět',
+        'close' => 'Zavřít',
+        'confirm' => 'Potvrdit',
+        'proceed' => 'Pokračovat',
+        'yes' => 'Ano',
+        'no' => 'Ne',
+        'view' => 'Zobrazit',
+        'download' => 'Stáhnout',
+        'upload' => 'Nahrát',
+        'search' => 'Hledat',
+        'reset' => 'Resetovat',
+    ],
 
+    'messages' => [
+        'validation_errors' => 'Opravte prosím chyby ve formuláři.',
+        'data_saved' => 'Data byla úspěšně uložena.',
+        'data_deleted' => 'Data byla úspěšně smazána.',
+        'operation_successful' => 'Operace byla úspěšně dokončena.',
+        'operation_failed' => 'Při provádění operace došlo k chybě.',
+        'no_data' => 'Žádná data k zobrazení.',
+        'loading' => 'Načítání...',
+        'processing' => 'Zpracování...',
+        'confirm_delete' => 'Opravdu chcete smazat tuto položku?',
+    ],
+
+    'labels' => [
+        'search' => 'Hledat',
+        'filter' => 'Filtrovat',
+        'sort' => 'Seřadit',
+        'from' => 'Od',
+        'to' => 'Do',
+        'status' => 'Stav',
+        'actions' => 'Akce',
+        'details' => 'Detaily',
+        'settings' => 'Nastavení',
+    ],
+
+    'placeholders' => [
+        'search' => 'Zadejte hledaný výraz...',
+        'select' => 'Vyberte položku',
+    ],
+
+    'statuses' => [
+        'active' => 'Aktivní',
+        'inactive' => 'Neaktivní',
+        'pending' => 'Čeká na zpracování',
+        'completed' => 'Dokončeno',
+        'failed' => 'Selhalo',
+    ],
 ]; 
