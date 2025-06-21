@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne; // Pro vazbu na user_set_card
 // Předpokládáme existenci těchto modelů:
 use App\Models\Card;
 use App\Models\CardsVariant;
+use App\Models\CardsVariantType;
 
 class UserCollectionItem extends Model
 {
@@ -30,10 +31,10 @@ class UserCollectionItem extends Model
         'collection_id',
         'card_id',
         'variant_id',
+        'variant_type',
         'quantity',
         'condition',
         'language',
-        'is_foil',
         'is_first_edition',
         'is_graded',
         'grade_company',
@@ -50,7 +51,6 @@ class UserCollectionItem extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'is_foil' => 'boolean',
         'is_first_edition' => 'boolean',
         'is_graded' => 'boolean',
         'purchase_price' => 'decimal:2',
@@ -85,6 +85,14 @@ class UserCollectionItem extends Model
     {
         // Předpokládá, že model CardsVariant používá 'cm_id' jako primární klíč (INTEGER)
         return $this->belongsTo(CardsVariant::class, 'variant_id', 'cm_id');
+    }
+
+    /**
+     * Get the variant type associated with the item.
+     */
+    public function variantType(): BelongsTo
+    {
+        return $this->belongsTo(CardsVariantType::class, 'variant_type', 'code');
     }
 
     /**

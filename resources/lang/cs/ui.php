@@ -158,6 +158,7 @@ return [
 
     'messages' => [
         'validation_errors' => 'Opravte prosím chyby ve formuláři.',
+        'validation_errors_generic' => 'Ve formuláři se vyskytly chyby. Zkontrolujte zadané údaje.',
         'data_saved' => 'Data byla úspěšně uložena.',
         'data_deleted' => 'Data byla úspěšně smazána.',
         'operation_successful' => 'Operace byla úspěšně dokončena.',
@@ -166,6 +167,60 @@ return [
         'loading' => 'Načítání...',
         'processing' => 'Zpracování...',
         'confirm_delete' => 'Opravdu chcete smazat tuto položku?',
+        'action_irreversible' => 'Tato akce je nevratná.',
+    ],
+
+    // Notifikace
+    'notifications' => [
+        'success' => [
+            // Kolekce
+            'collection_created' => 'Kolekce byla úspěšně vytvořena.',
+            'collection_updated' => 'Kolekce byla úspěšně aktualizována.',
+            'collection_deleted' => 'Kolekce byla úspěšně smazána.',
+            'collection_default_set' => 'Kolekce byla nastavena jako výchozí.',
+            'collection_visibility_changed' => 'Viditelnost kolekce byla změněna.',
+            
+            // Položky kolekce
+            'item_added' => 'Položka byla přidána do kolekce.',
+            'item_updated' => 'Položka byla úspěšně aktualizována.',
+            'item_deleted' => 'Položka byla úspěšně smazána.',
+            'item_duplicated' => 'Položka byla úspěšně duplikována.',
+            'items_duplicated' => 'Položky byly úspěšně duplikovány.',
+            'items_exported' => 'Export byl úspěšně spuštěn.',
+            'items_deleted' => 'Položky byly úspěšně smazány.',
+        ],
+        'error' => [
+            // Obecné chyby
+            'operation_failed' => 'Operace se nezdařila. Zkuste to prosím znovu.',
+            'network_error' => 'Chyba připojení. Zkontrolujte internetové připojení.',
+            'server_error' => 'Chyba serveru. Zkuste to prosím později.',
+            'validation_error' => 'Zkontrolujte prosím zadané údaje.',
+            
+            // Kolekce
+            'collection_create_failed' => 'Nepodařilo se vytvořit kolekci.',
+            'collection_update_failed' => 'Nepodařilo se aktualizovat kolekci.',
+            'collection_delete_failed' => 'Nepodařilo se smazat kolekci.',
+            'collection_default_failed' => 'Nepodařilo se nastavit kolekci jako výchozí.',
+            'collection_visibility_failed' => 'Nepodařilo se změnit viditelnost kolekce.',
+            
+            // Položky kolekce
+            'item_add_failed' => 'Nepodařilo se přidat položku do kolekce.',
+            'item_update_failed' => 'Nepodařilo se aktualizovat položku.',
+            'item_delete_failed' => 'Nepodařilo se smazat položku.',
+            'item_duplicate_failed' => 'Nepodařilo se duplikovat položku.',
+            'items_duplicate_failed' => 'Nepodařilo se duplikovat položky.',
+            'items_export_failed' => 'Nepodařilo se exportovat položky.',
+            'items_delete_failed' => 'Nepodařilo se smazat položky.',
+            'items_selection_required' => 'Vyberte prosím alespoň jednu položku.',
+        ],
+        'warning' => [
+            'unsaved_changes' => 'Máte neuložené změny.',
+            'slow_connection' => 'Pomalé připojení. Operace může trvat déle.',
+        ],
+        'info' => [
+            'auto_save' => 'Změny byly automaticky uloženy.',
+            'sync_in_progress' => 'Synchronizace probíhá...',
+        ],
     ],
 
     'labels' => [

@@ -31,5 +31,26 @@ module.exports = {
         },
       ],
       'vue/no-v-text-v-html-on-component': 'off',
+      
+      // Localization rules - automatické kontroly
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'vue-i18n',
+              importNames: ['useI18n'],
+              message: 'Forbidden: Use global $t() function instead of useI18n import. See localization.mdc rules.'
+            }
+          ]
+        }
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'CallExpression[callee.name="useI18n"]',
+          message: 'Forbidden: Use global $t() function instead of useI18n(). See localization.mdc rules.'
+        }
+      ]
     },
 }

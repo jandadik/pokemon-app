@@ -367,27 +367,11 @@
                     >
                         <template #[`item.image`]="{ item }">
                             <v-avatar size="30" rounded>
-                                <v-img
+                                <LazyImage
                                     :src="getCardImageUrl(item)"
                                     :alt="item.name"
-                                    :lazy-src="'/images/placeholder.jpg'"
-                                >
-                                    <template v-slot:placeholder>
-                                        <v-progress-circular
-                                            indeterminate
-                                            color="grey-lighten-5"
-                                            size="15"
-                                        />
-                                    </template>
-                                    <template v-slot:error>
-                                        <v-icon
-                                            size="x-small"
-                                            color="grey-lighten-1"
-                                        >
-                                            mdi-image-off
-                                        </v-icon>
-                                    </template>
-                                </v-img>
+                                    eager
+                                />
                             </v-avatar>
                         </template>
                         <template #[`item.name`]="{ item }">
@@ -467,6 +451,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { usePage, Link, router } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
+import LazyImage from '@/Components/UI/LazyImage.vue';
 
 const props = defineProps({
     set: Object,

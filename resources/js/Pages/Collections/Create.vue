@@ -2,27 +2,22 @@
     <v-container>
         <Head :title="$t('collections.titles.create')" />
 
-        <!-- Hlavička stránky -->
-        <v-card class="mb-4 page-header">
-            <v-card-text>
-                <v-row align="center">
-                    <v-col cols="12" md="2" class="d-flex justify-center align-center">
-                        <div class="page-logo-container">
-                            <v-icon
-                                size="64"
-                                color="primary"
-                                icon="mdi-folder-plus-outline" 
-                                class="mx-auto"
-                            />
-                        </div>
-                    </v-col>
-                    <v-col cols="12" md="10">
-                        <h1 class="text-h4">{{ $t('collections.titles.create') }}</h1>
-                        <p class="text-grey">{{ $t('collections.descriptions.create_new_collection') }}</p>
-                    </v-col>
-                </v-row>
-            </v-card-text>
-        </v-card>
+        <!-- Kompaktní hlavička -->
+        <div class="mb-4">
+            <v-row align="center" dense no-gutters>
+                <v-col cols="auto" class="me-2">
+                    <v-avatar size="24" color="primary" class="elevation-1">
+                        <v-icon size="14" color="white">mdi-folder-plus-outline</v-icon>
+                    </v-avatar>
+                </v-col>
+                <v-col cols="auto" class="me-3">
+                    <h1 class="text-body-1 text-md-h6 font-weight-bold mb-0">
+                        {{ $t('collections.titles.create') }}
+                    </h1>
+                </v-col>
+                <v-spacer></v-spacer>
+            </v-row>
+        </div>
 
         <!-- Formulář -->
         <v-card class="elevation-1">
@@ -109,6 +104,9 @@ const form = useForm({
 });
 
 const submit = () => {
+    // TODO: Add retry mechanism for form submission failures
+    // TODO: Implement auto-save functionality for long forms
+    // TODO: Add error boundary for form component failures
     form.post(route('collections.store'), {
         onSuccess: () => {
             // Zde můžete přidat globální notifikaci o úspěchu, pokud používáte
@@ -118,6 +116,8 @@ const submit = () => {
             // Chybové hlášky se zobrazí u polí díky form.errors.
             // Zde můžete přidat globální notifikaci o chybě, pokud používáte
             // např. toastStore.show({ message: t('common.messages.creation_failed'), type: 'error' });
+            // TODO: Distinguish between validation errors and network failures
+            // TODO: Add option to retry submission on network errors
         }
     });
 };
@@ -140,6 +140,4 @@ const submit = () => {
 // 'messages' => ['validation_errors' => 'Opravte prosím chyby ve formuláři.', 'creation_failed' => 'Vytvoření se nezdařilo.'],
 </script>
 
-<style scoped>
-/* Případné specifické styly */
-</style> 
+ 

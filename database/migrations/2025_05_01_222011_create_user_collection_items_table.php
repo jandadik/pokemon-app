@@ -16,10 +16,10 @@ return new class extends Migration
             $table->foreignId('collection_id')->constrained('user_collections')->onDelete('cascade');
             $table->string('card_id', 20)->charset('utf8mb4')->collation('utf8mb4_unicode_ci'); // Explicitní charset a collation
             $table->integer('variant_id')->nullable(); // Opraveno: integer místo unsignedInteger
+            $table->string('variant_type', 32)->nullable();
             $table->integer('quantity')->default(1);
             $table->enum('condition', ['mint', 'near_mint', 'excellent', 'good', 'played', 'poor'])->default('near_mint');
             $table->string('language', 10)->default('en');
-            $table->boolean('is_foil')->default(false);
             $table->boolean('is_first_edition')->default(false);
             $table->boolean('is_graded')->default(false);
             $table->string('grade_company', 50)->nullable();
@@ -44,7 +44,7 @@ return new class extends Migration
             // Unikátní klíč s povolením NULL pro variant_id - toto je závislé na DB, Laravel to přímo nepodporuje.
             // V MySQL lze mít NULL v unique indexu vícekrát.
             // Zkusíme definovat standardní unique, MySQL by to mělo zvládnout.
-            $table->unique(['collection_id', 'card_id', 'variant_id', 'condition', 'is_foil'], 'uk_collection_card_variant_details');
+            $table->unique(['collection_id', 'card_id', 'variant_id', 'variant_type', 'condition', 'language', 'purchase_price'], 'uk_collection_card_variant_details');
 
         });
     }

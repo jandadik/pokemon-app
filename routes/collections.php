@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\CollectionItemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,22 @@ Route::patch('/{collection}/toggle-visibility', [CollectionController::class, 't
 
 // TODO: Routa pro přidání karty do sbírky
 // Route::post('/{collection}/cards', [CollectionCardController::class, 'store'])->name('cards.store');
+
+// Hromadné operace s položkami (MUSÍ být před resource routami!)
+Route::delete('/{collection}/items/bulk-delete', [CollectionItemController::class, 'bulkDelete'])->name('items.bulk_delete');
+Route::post('/{collection}/items/bulk-duplicate', [CollectionItemController::class, 'bulkDuplicate'])->name('items.bulk_duplicate');
+Route::patch('/{collection}/items/bulk-edit', [CollectionItemController::class, 'bulkEdit'])->name('items.bulk_edit');
+Route::get('/{collection}/items/export', [CollectionItemController::class, 'export'])->name('items.export');
+
+// Routy pro položky sbírky (karty v kolekci)
+Route::resource('/{collection}/items', CollectionItemController::class)
+    ->parameters(['items' => 'item'])
+    ->names('items');
+
+// Demo stránka pro testování integrace úkolů 2.3 + 2.4
+Route::get('/demo/card-variant-selection', function () {
+    return inertia('Collections/Items/Demo');
+})->name('demo.card_variant_selection');
 
 // Výsledné routy budou například:
 // GET /collections -> collections.index (CollectionController@index)

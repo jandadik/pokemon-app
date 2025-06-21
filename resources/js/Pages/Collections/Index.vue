@@ -2,198 +2,306 @@
     <v-container>
         <Head :title="$t('collections.title')" />
 
-        <!-- Hlavička stránky -->
-        <v-card class="mb-4 page-header" id="top">
+        <!-- Kompaktní hlavička -->
+        <div class="mb-4">
+            <v-row align="center" dense no-gutters>
+                <v-col cols="auto" class="me-2">
+                    <v-avatar size="24" color="primary" class="elevation-1">
+                        <v-icon size="14" color="white">mdi-folder-multiple-outline</v-icon>
+                    </v-avatar>
+                </v-col>
+                <v-col cols="auto" class="me-3">
+                    <h1 class="text-body-1 text-md-h6 font-weight-bold mb-0">
+                        {{ $t('collections.title') }}
+                    </h1>
+                </v-col>
+                <v-col cols="auto" class="me-2" v-if="props.collections && props.collections.total !== undefined">
+                    <v-chip 
+                        color="primary" 
+                        size="x-small"
+                        variant="tonal"
+                    >
+                        {{ props.collections.total }} {{ $t('collections.collections_count_text', props.collections.total) }}
+                    </v-chip>
+                </v-col>
+                <v-spacer></v-spacer>
+                <v-col cols="auto">
+                    <v-btn
+                        v-if="auth.can('collections.create') || props.can?.create_collection"
+                        @click="router.get(route('collections.create'))"
+                        icon="mdi-plus"
+                        color="primary"
+                        variant="tonal"
+                        size="small"
+                    >
+                        <v-icon>mdi-plus</v-icon>
+                        <v-tooltip activator="parent" location="bottom">
+                            {{ $t('collections.buttons.create') }}
+                        </v-tooltip>
+                    </v-btn>
+                </v-col>
+            </v-row>
+        </div>
+
+        <!-- Empty state -->
+        <v-card v-if="!props.collections || !props.collections.data || props.collections.data.length === 0" 
+               class="text-center py-8" variant="tonal">
             <v-card-text>
-                <v-row align="center">
-                    <v-col cols="12" md="2" class="d-flex justify-center align-center">
-                        <div class="page-logo-container">
-                            <v-icon
-                                size="64"
-                                color="primary"
-                                icon="mdi-folder-multiple-outline"
-                                class="mx-auto"
-                            />
-                        </div>
-                    </v-col>
-                    <v-col cols="12" md="10">
-                        <div class="d-flex flex-wrap align-center justify-space-between">
-                            <h1 class="text-h4">{{ $t('collections.title') }}</h1>
-                            
-                            <div class="d-flex align-center">
-                                <v-chip
-                                    v-if="props.collections && props.collections.total !== undefined"
-                                    class="me-2"
-                                    color="primary"
-                                    variant="outlined"
-                                >
-                                    {{ props.collections.total }} {{ $t('collections.collections_count_text', props.collections.total) }}
-                                </v-chip>
-                                
-                                <v-btn
-                                    v-if="auth.can('collections.create') || props.can?.create_collection"
-                                    @click="router.get(route('collections.create'))"
-                                    color="primary"
-                                >
-                                    {{ $t('collections.buttons.create') }}
-                                </v-btn>
-                            </div>
-                        </div>
-                    </v-col>
-                </v-row>
+                <v-icon size="64" color="primary" class="mb-4">mdi-folder-plus-outline</v-icon>
+                <h3 class="text-h6 mb-2">{{ $t('collections.empty.title') }}</h3>
+                <p class="text-body-2 text-medium-emphasis mb-4">{{ $t('collections.empty.text') }}</p>
+                <v-btn
+                    v-if="auth.can('collections.create') || props.can?.create_collection"
+                    @click="router.get(route('collections.create'))"
+                    color="primary"
+                    variant="elevated"
+                    prepend-icon="mdi-plus"
+                >
+                    {{ $t('collections.buttons.create_first') }}
+                </v-btn>
             </v-card-text>
         </v-card>
 
-        <p v-if="!props.collections || !props.collections.data || props.collections.data.length === 0" class="text-center text-grey-darken-1 my-10">
-            {{ $t('collections.empty.text') }}
-        </p>
 
-        <v-table v-else fixed-header hover class="elevation-1">
-            <thead>
-                <tr>
-                    <th class="text-left">{{ $t('collections.fields.name') }}</th>
-                    <th class="text-left">{{ $t('collections.fields.description') }}</th>
-                    <th class="text-center">{{ $t('collections.fields.is_default') }}</th>
-                    <th class="text-center">{{ $t('collections.fields.visibility') }}</th>
-                    <th class="text-right">{{ $t('collections.fields.actions') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="collection in props.collections.data" :key="collection.id">
-                    <td>
-                        <div 
-                            class="collection-name cursor-pointer"
-                            @click="router.visit(route('collections.show', collection.id))"
-                        >
-                            {{ collection.name }}
+
+        <!-- Collections List -->
+        <div v-else>
+            <!-- Desktop Table -->
+            <v-card class="d-none d-md-block elevation-2 mb-4" rounded="lg">
+                <v-table hover>
+                    <thead>
+                        <tr>
+                            <th class="text-left font-weight-bold">{{ $t('collections.fields.name') }}</th>
+                            <th class="text-left font-weight-bold">{{ $t('collections.fields.description') }}</th>
+                            <th class="text-center font-weight-bold">{{ $t('collections.fields.is_default') }}</th>
+                            <th class="text-center font-weight-bold">{{ $t('collections.fields.visibility') }}</th>
+                            <th class="text-right font-weight-bold">{{ $t('collections.fields.actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="collection in props.collections.data" :key="collection.id" 
+                            class="cursor-pointer hover-row"
+                            @click="router.visit(route('collections.show', collection.id))">
+                            <td class="py-3">
+                                <div class="font-weight-medium">{{ collection.name }}</div>
+                            </td>
+                            <td class="py-3">
+                                <div class="text-body-2">
+                                    {{ collection.description ? collection.description.substring(0, 60) + (collection.description.length > 60 ? '...' : '') : '-' }}
+                                </div>
+                            </td>
+                            <td class="text-center py-3">
+                                <v-btn
+                                    :icon="collection.is_default ? 'mdi-star' : 'mdi-star-outline'"
+                                    :color="collection.is_default ? 'primary' : 'grey'"
+                                    variant="text"
+                                    size="small"
+                                    @click.stop="toggleDefault(collection)"
+                                    :loading="collection.updating_default" 
+                                    :disabled="collection.updating_default || !props.can.setDefault"
+                                    :title="collection.is_default ? $t('collections.buttons.unset_default') : $t('collections.buttons.set_default')"
+                                />
+                            </td>
+                            <td class="text-center py-3">
+                                <v-chip
+                                    :color="collection.is_public ? 'success' : 'warning'"
+                                    size="small"
+                                    variant="tonal"
+                                    @click.stop="toggleVisibility(collection)"
+                                    :loading="collection.updating_visibility"
+                                    :disabled="collection.updating_visibility || !props.can.update"
+                                    class="cursor-pointer"
+                                >
+                                    {{ collection.is_public ? $t('collections.visibility_values.public') : $t('collections.visibility_values.private') }}
+                                </v-chip>
+                            </td>
+                            <td class="text-right py-3">
+                                <div class="d-flex justify-end">
+                                    <v-btn 
+                                        icon="mdi-eye" 
+                                        size="small" 
+                                        variant="text"
+                                        color="primary"
+                                        :title="$t('collections.buttons.show')"
+                                        @click.stop="router.visit(route('collections.show', collection.id))"
+                                    />
+                                    <v-btn 
+                                        v-if="props.can.update"
+                                        icon="mdi-pencil" 
+                                        size="small" 
+                                        variant="text"
+                                        color="primary"
+                                        :title="$t('collections.buttons.edit')"
+                                        @click.stop="router.visit(route('collections.edit', collection.id))"
+                                    />
+                                    <v-btn 
+                                        v-if="props.can.delete" 
+                                        icon="mdi-delete" 
+                                        size="small" 
+                                        variant="text"
+                                        color="error"
+                                        @click.stop="confirmDelete(collection)"
+                                        :title="$t('collections.buttons.delete')"
+                                    />
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </v-table>
+            </v-card>
+
+            <!-- Mobile Cards -->
+            <div class="d-md-none">
+                <v-card
+                    v-for="collection in props.collections.data" 
+                    :key="collection.id" 
+                    class="mb-3 collection-card"
+                    elevation="2"
+                    rounded="lg"
+                    @click="router.visit(route('collections.show', collection.id))"
+                >
+                    <v-card-text class="pb-2">
+                        <div class="d-flex align-start justify-space-between mb-2">
+                            <div class="flex-grow-1 mr-2">
+                                <h3 class="text-h6 mb-1 collection-name">{{ collection.name }}</h3>
+                                <p v-if="collection.description" class="text-body-2 text-medium-emphasis mb-2">
+                                    {{ collection.description.substring(0, 80) + (collection.description.length > 80 ? '...' : '') }}
+                                </p>
+                            </div>
+                            <div class="d-flex flex-column align-end gap-1">
+                                <v-chip
+                                    :color="collection.is_public ? 'success' : 'warning'"
+                                    size="x-small"
+                                    variant="tonal"
+                                    @click.stop="toggleVisibility(collection)"
+                                    :loading="collection.updating_visibility"
+                                    :disabled="collection.updating_visibility || !props.can.update"
+                                >
+                                    {{ collection.is_public ? $t('collections.visibility_values.public') : $t('collections.visibility_values.private') }}
+                                </v-chip>
+                                <v-btn
+                                    v-if="collection.is_default"
+                                    icon="mdi-star"
+                                    color="primary"
+                                    variant="text"
+                                    size="x-small"
+                                    :title="$t('collections.buttons.unset_default')"
+                                    @click.stop="toggleDefault(collection)"
+                                    :loading="collection.updating_default"
+                                    :disabled="collection.updating_default || !props.can.setDefault"
+                                />
+                            </div>
                         </div>
-                    </td>
-                    <td>
-                        <div 
-                            class="collection-description cursor-pointer"
-                            @click="router.visit(route('collections.show', collection.id))"
-                        >
-                            {{ collection.description ? collection.description.substring(0, 50) + (collection.description.length > 50 ? '...' : '') : '-' }}
-                        </div>
-                    </td>
-                    <td class="text-center">
-                        <v-btn
-                            :icon="collection.is_default ? 'mdi-star' : 'mdi-star-outline'"
-                            :color="collection.is_default ? 'primary' : 'grey'"
-                            variant="text"
-                            size="small"
-                            @click="toggleDefault(collection)"
-                            :loading="collection.updating_default" 
-                            :disabled="collection.updating_default || !props.can.setDefault"
-                            :title="collection.is_default ? $t('collections.buttons.unset_default') : $t('collections.buttons.set_default')"
-                        ></v-btn>
-                    </td>
-                    <td class="text-center">
-                        <v-btn
-                            @click="toggleVisibility(collection)"
-                            :color="collection.is_public ? 'success' : 'warning'"
-                            size="small"
-                            variant="tonal"
-                            :loading="collection.updating_visibility"
-                            :disabled="collection.updating_visibility || !props.can.update"
-                            :title="$t('collections.buttons.toggle_visibility')"
-                        >
-                            {{ collection.is_public ? $t('collections.visibility_values.public') : $t('collections.visibility_values.private') }}
-                        </v-btn>
-                    </td>
-                    <td class="text-right">
+                    </v-card-text>
+                    
+                    <v-card-actions class="pt-0">
                         <v-btn 
-                            icon="mdi-eye" 
-                            size="x-small" 
                             variant="text"
-                            color="orange"
-                            class="mr-1"
-                            :title="$t('collections.buttons.show')"
-                            @click="router.visit(route('collections.show', collection.id))"
-                        ></v-btn>
+                            color="primary"
+                            size="small"
+                            prepend-icon="mdi-eye"
+                            @click.stop="router.visit(route('collections.show', collection.id))"
+                        >
+                            {{ $t('collections.buttons.show') }}
+                        </v-btn>
+                        
+                        <v-spacer />
+                        
                         <v-btn 
                             v-if="props.can.update"
                             icon="mdi-pencil" 
-                            size="x-small" 
+                            size="small" 
                             variant="text"
                             color="primary"
-                            class="mr-1"
                             :title="$t('collections.buttons.edit')"
-                            @click="router.visit(route('collections.edit', collection.id))"
-                        ></v-btn>
+                            @click.stop="router.visit(route('collections.edit', collection.id))"
+                        />
                         <v-btn 
                             v-if="props.can.delete" 
                             icon="mdi-delete" 
-                            size="x-small" 
+                            size="small" 
                             variant="text"
                             color="error"
-                            @click="confirmDelete(collection)"
                             :title="$t('collections.buttons.delete')"
-                        ></v-btn>
-                    </td>
-                </tr>
-            </tbody>
-        </v-table>
+                            @click.stop="confirmDelete(collection)"
+                        />
+                    </v-card-actions>
+                </v-card>
+            </div>
+        </div>
         
-        <!-- Paginace -->
-        <div v-if="props.collections && props.collections.meta && props.collections.meta.links.length > 3" class="text-center mt-6">
-            <Link
-                v-for="(link, index) in props.collections.meta.links"
-                :key="index"
-                :href="link.url"
-                class="px-1"
-                :class="{ 'v-btn v-btn--active mx-1 v-btn--variant-tonal primary': link.active, 'v-btn v-btn--disabled mx-1 v-btn--variant-tonal': !link.url, 'v-btn mx-1 v-btn--variant-tonal': link.url && !link.active }"
-                preserve-scroll
-            >
-                <span v-html="link.label"></span>
-            </Link>
+        <!-- Better Pagination -->
+        <div v-if="props.collections && props.collections.meta && props.collections.meta.links.length > 3" 
+             class="d-flex justify-center mt-6">
+            <v-pagination
+                :model-value="props.collections.meta.current_page"
+                :length="props.collections.meta.last_page"
+                @update:model-value="(page) => router.get(route('collections.index', { page }))"
+                :total-visible="isMobile ? 3 : 7"
+                rounded="circle"
+                color="primary"
+                variant="elevated"
+            />
         </div>
 
         <!-- Dialog pro potvrzení smazání -->
-        <v-dialog v-model="showDeleteDialog" max-width="500">
-            <v-card v-if="selectedCollection">
-                <v-card-title class="text-h5">
+        <v-dialog v-model="showDeleteDialog" max-width="400" :fullscreen="isMobile">
+            <v-card v-if="selectedCollection" rounded="lg">
+                <v-card-title class="text-h6 d-flex align-center">
+                    <v-icon class="me-2" color="error">mdi-delete-alert</v-icon>
                     {{ $t('collections.delete_dialog.title') }}
                 </v-card-title>
                 <v-card-text>
-                    {{ $t('collections.delete_dialog.message', { name: selectedCollection.name }) }}
+                    <p class="text-body-1 mb-2">{{ $t('collections.delete_dialog.message', { name: selectedCollection.name }) }}</p>
+                    <v-alert type="warning" variant="tonal" density="compact">
+                        {{ $t('collections.delete_dialog.warning') }}
+                    </v-alert>
                 </v-card-text>
                 <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="default" variant="text" @click="showDeleteDialog = false">
+                    <v-spacer />
+                    <v-btn color="default" variant="text" @click="showDeleteDialog = false" :block="isMobile">
                         {{ $t('collections.buttons.cancel') }}
                     </v-btn>
-                    <v-btn color="error" variant="tonal" @click="deleteCollection" :loading="isDeleting">
+                    <v-btn color="error" variant="elevated" @click="deleteCollection" :loading="isDeleting" :block="isMobile">
                         {{ $t('collections.buttons.delete') }}
                     </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
 
-        <!-- Plovoucí tlačítko pro přesun zpět nahoru -->
-        <v-btn
+
+
+        <!-- Scroll to top button -->
+        <v-fab
             v-show="showScrollButton"
+            location="bottom end"
+            size="small"
+            color="surface-variant"
             icon="mdi-arrow-up"
-            class="scroll-to-top"
-            color="primary"
-            elevation="8"
-            size="large"
-            :aria-label="$t('ui.buttons.scroll_to_top')"
             @click="scrollToTop"
-        ></v-btn>
+        />
     </v-container>
 </template>
 
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3'
 import { useAuthStore } from '@/stores/authStore';
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue';
+import { useDisplay } from 'vuetify';
+import { useScrollPerformance } from '@/utils/performance';
 
 // Components
 // import ConfirmDeleteDialog from '@/Components/Dialogs/ConfirmDeleteDialog.vue';
 
-
 const auth = useAuthStore();
+const notificationStore = useNotificationStore();
+const { mobile: isMobile } = useDisplay();
+const { addScrollListener, removeScrollListener, cleanup } = useScrollPerformance();
+
+// Translation function
+const instance = getCurrentInstance();
+const $t = instance?.appContext.config.globalProperties.$t;
 
 const props = defineProps({
     collections: Object, // Očekáváme paginovaná data
@@ -218,12 +326,12 @@ const handleScroll = () => {
 };
 
 onMounted(() => {
-    window.addEventListener('scroll', handleScroll);
+    addScrollListener(handleScroll);
 });
 
-// Přidat onUnmounted pro odstranění listeneru
 onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll);
+    removeScrollListener(handleScroll);
+    cleanup();
 });
 
 const confirmDelete = (collection) => {
@@ -234,22 +342,20 @@ const confirmDelete = (collection) => {
 const deleteCollection = () => {
     if (selectedCollection.value) {
         isDeleting.value = true;
+        // TODO: Add retry mechanism for delete operations
+        // TODO: Implement confirmation with undo functionality
         router.delete(route('collections.destroy', selectedCollection.value.id), {
-            preserveState: true, // Zachová stav stránky
+            preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
-                // Můžeme přidat notifikaci o úspěšném smazání
-                // Seznam by se měl automaticky obnovit díky Inertia partial reload
-                console.log('Collection deleted:', selectedCollection.value.id);
-                // Případně zavolat globální notifikaci
-                // např. toastStore.show({ message: 'Collection deleted successfully.', type: 'success' });
+                notificationStore.success($t('ui.notifications.success.collection_deleted'));
                 showDeleteDialog.value = false;
                 selectedCollection.value = null;
             },
             onError: (errors) => {
-                // Zpracování chyb, zobrazení notifikace
                 console.error('Error deleting collection:', errors);
-                // např. toastStore.show({ message: 'Failed to delete collection.', type: 'error' });
+                // TODO: Distinguish between recoverable and non-recoverable errors
+                notificationStore.error($t('ui.notifications.error.collection_delete_failed'));
             },
             onFinish: () => {
                 isDeleting.value = false;
@@ -268,14 +374,11 @@ const toggleDefault = (collection) => {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
-            // props.collections by se měl automaticky aktualizovat
-            // Pokud by se is_default nastavovalo na true, ostatní by se na serveru měly nastavit na false
-            // např. toastStore.show({ message: 'Default status updated.', type: 'success' });
+            notificationStore.success($t('ui.notifications.success.collection_default_set'));
         },
         onError: (errors) => {
             console.error('Error updating default status:', errors);
-            // Zobrazit chybovou notifikaci
-            // Např. toastStore.show({ message: 'Failed to update default status.', type: 'error' });
+            notificationStore.error($t('ui.notifications.error.collection_default_failed'));
         },
         onFinish: () => {
             collection.updating_default = false;
@@ -293,13 +396,11 @@ const toggleVisibility = (collection) => {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
-            // props.collections by se měl automaticky aktualizovat
-            // např. toastStore.show({ message: 'Visibility updated.', type: 'success' });
+            notificationStore.success($t('ui.notifications.success.collection_visibility_changed'));
         },
         onError: (errors) => {
             console.error('Error updating visibility:', errors);
-            // Zobrazit chybovou notifikaci
-            // Např. toastStore.show({ message: 'Failed to update visibility.', type: 'error' });
+            notificationStore.error($t('ui.notifications.error.collection_visibility_failed'));
         },
         onFinish: () => {
             collection.updating_visibility = false;
@@ -327,30 +428,31 @@ const scrollToTop = () => {
 </script>
 
 <style scoped>
-.scroll-to-top-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px; 
-    z-index: 100;
-}
-/* Styly specifické pro tuto stránku, pokud jsou potřeba */
-.cursor-pointer {
+
+
+.collection-card {
+    transition: all 0.2s ease;
     cursor: pointer;
 }
 
+.collection-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
 .collection-name {
-    transition: color 0.2s ease;
+    line-height: 1.2;
 }
 
-.collection-name:hover {
-    color: #1976D2; /* Primární modrá barva - přizpůsobte dle vašeho barevného schématu */
+.hover-row:hover {
+    background-color: rgba(var(--v-theme-primary), 0.04) !important;
 }
 
-.collection-description {
-    transition: color 0.2s ease;
+.gap-3 {
+    gap: 12px;
 }
 
-.collection-description:hover {
-    color: #1976D2; /* Primární modrá barva - přizpůsobte dle vašeho barevného schématu */
+.gap-1 {
+    gap: 4px;
 }
 </style> 

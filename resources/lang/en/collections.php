@@ -11,6 +11,7 @@ return [
     */
 
     'title' => 'My Collections',
+    'subtitle' => 'Manage your {count} |{1} collection|[*,*] collections',
     'collections_count_text' => '{1} collection|[*,*] collections',
 
     'titles' => [
@@ -35,6 +36,7 @@ return [
         'cancel' => 'Cancel',
         'delete' => 'Delete',
         'edit' => 'Edit',
+        'duplicate' => 'Duplicate',
         'add_card' => 'Add Card',
         'add_first_card' => 'Add Your First Card',
         'back_to_collection' => 'Back to Collection',
@@ -48,6 +50,9 @@ return [
         'unset_default' => 'Unset as Default',
         'toggle_visibility' => 'Toggle Visibility',
         'show' => 'Show',
+        'manage_items' => 'Manage Items',
+        'make_private' => 'Make Private',
+        'make_public' => 'Make Public',
     ],
     
     'table' => [
@@ -93,12 +98,64 @@ return [
     ],
     
     'form' => [
-        'name' => 'Collection Name',
-        'description' => 'Description',
-        'is_public' => 'Make Collection Public',
-        'is_public_hint' => 'Public collections can be viewed by other users',
-        'is_default' => 'Set as Default Collection',
-        'is_default_hint' => 'Default collection is used when adding cards without specifying a collection',
+        'title' => [
+            'create' => 'Add Item to Collection',
+            'edit' => 'Edit Collection Item',
+        ],
+        'condition' => 'Card Condition',
+        'language' => 'Language',
+        'quantity' => 'Quantity',
+        'purchase_price' => 'Purchase Price',
+        'grading' => 'Grading Agency',
+        'grading_cert' => 'Certificate Number',
+        'first_edition' => 'First Edition',
+        'location' => 'Location (box, folder...)',
+        'note' => 'Note',
+        'save' => 'Save',
+        'cancel' => 'Cancel',
+        'errors' => [
+            'required' => 'This field is required.',
+            'quantity' => 'Quantity must be between 1 and 999.',
+            'price' => 'Price must be a number.',
+            'location' => 'Maximum length is 100 characters.',
+            'note' => 'Maximum length is 500 characters.',
+        ],
+        'conditions' => [
+            'nm' => 'Near Mint',
+            'ex' => 'Excellent',
+            'gd' => 'Good',
+            'pl' => 'Played',
+            'po' => 'Poor',
+            'mint' => 'Mint',
+            'near_mint' => 'Near Mint',
+            'excellent' => 'Excellent',
+            'good' => 'Good',
+            'played' => 'Played',
+            'poor' => 'Poor',
+        ],
+        'languages' => [
+            'en' => 'English',
+            'de' => 'German',
+            'fr' => 'French',
+            'cs' => 'Czech',
+            'jp' => 'Japanese',
+            'english' => 'English',
+            'german' => 'German',
+            'french' => 'French',
+            'czech' => 'Czech',
+            'japanese' => 'Japanese',
+            'spanish' => 'Spanish',
+            'italian' => 'Italian',
+            'portuguese' => 'Portuguese',
+            'chinese' => 'Chinese',
+            'korean' => 'Korean',
+        ],
+        'grading_agencies' => [
+            'psa' => 'PSA',
+            'bgs' => 'BGS',
+            'cgc' => 'CGC',
+            'sgc' => 'SGC',
+        ],
     ],
 
     'visibility_values' => [
@@ -122,15 +179,30 @@ return [
             'set' => 'Set',
             'condition' => 'Condition',
             'quantity' => 'Quantity',
+            'market_price' => 'Market Price',
             'actions' => 'Actions',
         ],
+        'set' => 'Set',
+        'basic_info' => 'Basic Information',
+        'number' => 'Card Number',
+        'condition_quantity' => 'Condition & Quantity',
+        'price_info' => 'Price Information',
+        'purchase_price' => 'Purchase Price',
+        'market_value' => 'Market Value',
+        'profit_loss' => 'Profit/Loss',
+        'metadata' => 'Metadata',
+        'date_added' => 'Date Added',
+        'last_updated' => 'Last Updated',
+        'variant_type' => 'Variant Type',
     ],
     
     'stats' => [
         'title' => 'Collection Statistics',
         'total_cards' => 'Total Cards',
         'unique_cards' => 'Unique Cards',
-        'total_value' => 'Total Value',
+        'purchase_value' => 'Purchase Value',
+        'market_value' => 'Market Value',
+        'total_value' => 'Total Value', // Kept for backward compatibility
     ],
     
     'filters' => [
@@ -139,8 +211,20 @@ return [
         'rarity' => 'Rarity',
         'condition' => 'Condition',
         'reset' => 'Reset Filters',
+        'all_rarities' => 'All rarities',
+        'all_languages' => 'All languages',
+        'all_conditions' => 'All conditions',
+        'sort' => 'Sort by',
+        'sort_name' => 'Name',
+        'sort_number' => 'Number',
+        'sort_rarity' => 'Rarity',
+        'sort_price' => 'Price',
+        'sort_created_at' => 'Date added',
+        'per_page' => 'Per page',
+        'no_results_title' => 'No Results',
+        'no_results_text' => 'No cards found for the current filters. Try adjusting your search criteria.',
     ],
-    
+
     'condition' => [
         'mint' => 'Mint',
         'near_mint' => 'Near Mint',
@@ -180,12 +264,56 @@ return [
 
     'delete_dialog' => [
         'title' => 'Delete Collection',
-        'message' => 'Are you sure you want to delete collection "{name}"? This action cannot be undone and all cards in the collection will be removed from the collection.',
+        'message' => 'Are you sure you want to delete collection "{name}"?',
+        'warning' => 'This action is irreversible. All cards in this collection will be permanently deleted.',
     ],
     
     'dialogs' => [
         'delete' => [
             'title' => 'Confirm Collection Deletion'
         ]
+    ],
+
+    'variant_selection' => [
+        'title' => 'Card Variant Selection',
+        'no_variants' => 'No variants available for this card.',
+        'loading' => 'Loading available variants...',
+        'select_variant' => 'Select card variant',
+        'selected_card' => 'Selected card',
+        'default_variant' => 'Default variant',
+    ],
+
+    // New section for collection items
+    'items' => [
+        'empty_title' => 'No Cards Yet',
+        'empty_text' => 'This collection doesn\'t have any cards yet. Start by adding your first card!',
+        'add_new_item' => 'Add Card',
+        'add_first_card' => 'Add First Card',
+        'create_title' => 'Add Item to Collection',
+        'create_description' => 'Select a card, its variant, and enter the required details.',
+        'select_card' => 'Card Selection',
+        'select_card_variant' => 'Card and Variant Selection',
+        'selected_card_variant' => 'Selected Card and Variant',
+        'card_search_instructions' => 'Search for a card by name, code, or number. Minimum 2 characters.',
+        'change_selection' => 'Change selection',
+        'demo_selection_notice' => 'A demo card/variant is shown below. In the future, a full selection mechanism will be here.',
+        'edit_title' => 'Edit Collection Item',
+        'edit_description' => 'Update the details of the selected item in your collection.',
+        'editing_item_info' => 'Editing Item Information',
+        'no_item_data_for_edit' => 'Item data not found for editing.',
+        'index_title' => 'Items in Collection: :name',
+        'index_description' => 'Manage the individual cards and items within your collection.',
+        'table_header_card' => 'Card',
+        'table_header_variant' => 'Variant',
+        'table_header_condition' => 'Condition',
+        'table_header_language' => 'Language',
+        'table_header_quantity' => 'Quantity',
+        'table_header_actions' => 'Actions',
+        'title_singular' => 'item',
+        'messages' => [
+            'created' => 'Item was successfully added to the collection.',
+            'updated' => 'Item was successfully updated.',
+            'deleted' => 'Item was successfully removed from the collection.',
+        ],
     ],
 ]; 

@@ -58,8 +58,11 @@ return new class extends Migration
             $table->index(['set_id', 'number'], 'idx_set_number'); // idx_set_number, idx_card_ordering
             $table->index(['ptcgo_code', 'number'], 'idx_ptcgo_search');
             
-            // Fulltext index (používáme number_txt)
-            $table->fullText(['name', 'number_txt'], 'idx_search'); // idx_search, idx_card_search
+            // Odstranění/zakomentování starého fulltext indexu
+            // $table->fullText(['name', 'number_txt'], 'idx_search'); 
+
+            // Nový Fulltext index zahrnující name, number_txt a ptcgo_code
+            $table->fullText(['name', 'number_txt', 'ptcgo_code'], 'cards_name_number_txt_ptcgo_code_fulltext');
 
             // Cizí klíč pro set_id (předpokládá, že tabulka sets už existuje)
             $table->foreign('set_id')->references('id')->on('sets')->onDelete('cascade');

@@ -11,10 +11,23 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\Set;
+use App\Services\CardService;
+use Illuminate\Http\JsonResponse;
+use App\Services\CollectionItemService;
+use App\Services\CardImageService;
 
 class CardController extends Controller
 {
-    
+    protected CardService $cardService;
+    protected CollectionItemService $itemService;
+    protected CardImageService $imageService;
+
+    public function __construct(CardService $cardService, CollectionItemService $itemService, CardImageService $imageService)
+    {
+        $this->cardService = $cardService;
+        $this->itemService = $itemService;
+        $this->imageService = $imageService;
+    }
 
     /**
      * Display a listing of the resource.
@@ -117,7 +130,7 @@ class CardController extends Controller
             }, $searchTerms));
 
             if (!empty($booleanSearchQuery)) {
-                $query->whereRaw('MATCH(cards.name, cards.number_txt) AGAINST(? IN BOOLEAN MODE)', [$booleanSearchQuery]);
+                $query->whereRaw('MATCH(cards.name, cards.number_txt, cards.ptcgo_code) AGAINST(? IN BOOLEAN MODE)', [$booleanSearchQuery]);
             }
         }
 
@@ -239,4 +252,74 @@ class CardController extends Controller
         ]);
     }
 
+    // Nová metoda pro lookup
+    public function performLookup(Request $request): JsonResponse
+    {
+        $queryString = $request->input('query', '');
+        $limit = (int) $request->input('limit', 15);
+
+        if (empty($queryString) || mb_strlen($queryString) < 2) {
+            return response()->json([]);
+        }
+
+        $results = $this->cardService->lookupCards($queryString, $limit);
+
+        return response()->json($results);
+    }
+
+    /**
+     * Vrátí seznam typů karet pro konkrétní kartu (AJAX endpoint).
+     */
+    public function variants(string $cardId)
+    {
+        $types = $this->itemService->getTypesForCard($cardId);
+        return response()->json($types);
+    }
+
+    /**
+     * Vrátí detailní informace o variantě pro konkrétní kartu a typ (AJAX endpoint).
+     */
+    public function variantDetails(string $cardId, string $variantTypeCode)
+    {
+        // Najít konkrétní variantu podle card_id a variant_type_code
+        $variant = $this->itemService->resolveVariantForType($cardId, $variantTypeCode);
+        
+        if (!$variant) {
+            return response()->json(['error' => 'Variant not found'], 404);
+        }
+        
+        // Získat detailní informace o variantě
+        $details = $this->itemService->getVariantDetails($variant->cm_id);
+        
+        if (!$details) {
+            return response()->json(['error' => 'Variant details not found'], 404);
+        }
+        
+        // Přidat cm_id do odpovědi
+        $details['cm_id'] = $variant->cm_id;
+        
+        return response()->json($details);
+    }
+    
+    /**
+     * Get bulk image data for multiple cards (for PokeImage component)
+     */
+    public function getBulkImageData(Request $request)
+    {
+        $request->validate([
+            'card_ids' => 'required|array|max:50', // Limit to 50 cards per request
+            'card_ids.*' => 'required|string',
+            'size' => 'sometimes|string|in:small,large'
+        ]);
+        
+        $cardIds = $request->input('card_ids');
+        $size = $request->input('size', 'small');
+        
+        $imageData = $this->imageService->getBulkImageData($cardIds, $size);
+        
+        return response()->json([
+            'imageData' => $imageData,
+            'success' => true
+        ]);
+    }
 }

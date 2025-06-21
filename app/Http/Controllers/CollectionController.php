@@ -118,27 +118,59 @@ class CollectionController extends Controller
      * @param  UserCollection  $collection
      * @return \Inertia\Response|\Illuminate\Http\JsonResponse
      */
-    public function show(Request $request, UserCollection $collection) // Route model binding
+    public function show(Request $request, UserCollection $collection)
     {
-        // Autorizace 'view' je již řešena pomocí $this->authorizeResource
-        // if (!Gate::allows('view', $collection)) {
-        //     if (!Auth::check()) {
-        //          abort(403, 'Pro zobrazení této kolekce se musíte přihlásit.');
-        //     }
-        //     abort(403, 'Nemáte oprávnění zobrazit tuto kolekci.');
-        // }
+        // Validace filtrů (všechny jsou volitelné)
+        $filters = $request->validate([
+            'search' => 'sometimes|string|max:255',
+            'condition' => 'sometimes|string|in:near_mint,excellent,good,played,poor',
+            'language' => 'sometimes|string|in:english,czech,german,french,japanese',
+            'rarity' => 'sometimes|string|max:100',
+            'price_min' => 'sometimes|numeric|min:0',
+            'price_max' => 'sometimes|numeric|min:0',
+            'date_from' => 'sometimes|date',
+            'date_to' => 'sometimes|date',
+            'sort_by' => 'sometimes|string|in:name,number,rarity,condition,language,quantity,price,created_at',
+            'sort_direction' => 'sometimes|string|in:asc,desc',
+            'per_page' => 'sometimes|integer|in:2,10,30,60,100',
+            'page' => 'sometimes|integer|min:1'
+        ]);
 
-        // Načtení karet v kolekci, pokud by existovaly
-        // $collection->load('cards'); 
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortDirection = $filters['sort_direction'] ?? 'desc';
+        $perPage = $filters['per_page'] ?? 30;
 
+        // Načtení položek kolekce s pagination a filtry
+        $items = app(\App\Services\CollectionItemService::class)
+            ->getItemsForCollectionPaginated($collection, $filters, $sortBy, $sortDirection, $perPage);
+
+        // Načtení statistik kolekce
+        $stats = app(\App\Services\CollectionItemService::class)
+            ->getCollectionStats($collection);
+
+        // Načtení možností pro filtry (dropdowny)
+        $filterOptions = app(\App\Services\CollectionItemService::class)
+            ->getFilterOptions($collection);
+
+        // Oprávnění pro akce nad položkami
+        $user = $request->user();
+        $can = [
+            'edit' => \Illuminate\Support\Facades\Gate::allows('update', $collection),
+            'delete' => \Illuminate\Support\Facades\Gate::allows('delete', $collection),
+            'toggleDefault' => \Illuminate\Support\Facades\Gate::allows('setDefault', $collection),
+            'toggleVisibility' => \Illuminate\Support\Facades\Gate::allows('update', $collection),
+            'update' => $user ? $user->can('update', $collection) : false,
+            'view' => $user ? $user->can('view', $collection) : false,
+        ];
+
+        // Předání všech potřebných dat do Inertia
         return Inertia::render('Collections/Show', [
             'collection' => $collection,
-            'can' => [
-                'edit' => Gate::allows('update', $collection),
-                'delete' => Gate::allows('delete', $collection),
-                'toggleDefault' => Gate::allows('setDefault', $collection),
-                'toggleVisibility' => Gate::allows('update', $collection),
-            ]
+            'items' => $items, // paginovaná data
+            'stats' => $stats, // statistiky
+            'filterOptions' => $filterOptions, // možnosti pro dropdowny
+            'filters' => $filters, // aktuální stav filtrů
+            'can' => $can,
         ]);
     }
 

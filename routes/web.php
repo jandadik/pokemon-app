@@ -45,4 +45,8 @@ Route::prefix('collections')
     // ->middleware(['auth', '2fa']) // Dočasně zakomentováno, řešíme v controlleru
     ->group(base_path('routes/collections.php'));
 
+// Image API routy
+Route::post('/images/bulk', [App\Http\Controllers\CardController::class, 'getBulkImageData'])
+    ->name('images.bulk');
+
 //require __DIR__.'/auth.php';

@@ -37,6 +37,14 @@
                 />
             </Link>
 
+            <Link href="/collections/demo/card-variant-selection" @click="closeDrawer">
+                <v-list-item
+                    prepend-icon="mdi-test-tube"
+                    title="Demo: Card Variant Selection"
+                    value="demo"
+                />
+            </Link>
+
         </v-list>
 
         <v-divider />

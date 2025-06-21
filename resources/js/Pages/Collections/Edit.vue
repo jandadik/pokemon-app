@@ -2,27 +2,22 @@
     <v-container>
         <Head :title="$t('collections.titles.edit')" />
 
-        <!-- Hlavička stránky -->
-        <v-card class="mb-4 page-header">
-            <v-card-text>
-                <v-row align="center">
-                    <v-col cols="12" md="2" class="d-flex justify-center align-center">
-                        <div class="page-logo-container">
-                            <v-icon
-                                size="64"
-                                color="primary"
-                                icon="mdi-folder-edit-outline" 
-                                class="mx-auto"
-                            />
-                        </div>
-                    </v-col>
-                    <v-col cols="12" md="10">
-                        <h1 class="text-h4">{{ $t('collections.titles.edit') }}</h1>
-                        <p class="text-grey">{{ $t('collections.descriptions.edit_collection') }}</p>
-                    </v-col>
-                </v-row>
-            </v-card-text>
-        </v-card>
+        <!-- Kompaktní hlavička -->
+        <div class="mb-4">
+            <v-row align="center" dense no-gutters>
+                <v-col cols="auto" class="me-2">
+                    <v-avatar size="24" color="primary" class="elevation-1">
+                        <v-icon size="14" color="white">mdi-folder-edit-outline</v-icon>
+                    </v-avatar>
+                </v-col>
+                <v-col cols="auto" class="me-3">
+                    <h1 class="text-body-1 text-md-h6 font-weight-bold mb-0">
+                        {{ $t('collections.titles.edit') }}
+                    </h1>
+                </v-col>
+                <v-spacer></v-spacer>
+            </v-row>
+        </div>
 
         <!-- Formulář -->
         <v-card class="elevation-1">
@@ -111,6 +106,9 @@ const form = useForm({
 });
 
 const submit = () => {
+    // TODO: Add retry mechanism for form submission failures
+    // TODO: Implement auto-save functionality for long forms
+    // TODO: Add error boundary for form component failures
     form.patch(route('collections.update', props.collection.id), {
         preserveScroll: true,
         onSuccess: () => {
@@ -121,6 +119,8 @@ const submit = () => {
             // Chybové hlášky se zobrazí u polí díky form.errors
             // Zde můžete přidat globální notifikaci o chybě, pokud používáte
             // např. toastStore.show({ message: $t('collections.messages.update_failed'), type: 'error' });
+            // TODO: Distinguish between validation errors and network failures
+            // TODO: Add option to retry submission on network errors
         }
     });
 };
@@ -128,13 +128,4 @@ const submit = () => {
 
 <style scoped>
 /* Případné specifické styly */
-.page-logo-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(var(--v-theme-primary), 0.1);
-    border-radius: 50%;
-    width: 96px;
-    height: 96px;
-}
 </style> 

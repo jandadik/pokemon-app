@@ -133,7 +133,7 @@
                             hover
                             style="cursor: pointer;"
                         >
-                            <v-img
+                            <LazyImage
                                 :src="set.logo_url"
                                 :alt="set.name"
                                 height="150"
@@ -142,34 +142,7 @@
                                 position="center center"
                                 class="mx-auto px-6 py-3 rounded-sm set-logo-img"
                                 @error="handleImageError"
-                            >
-                                <template v-slot:placeholder>
-                                    <v-row
-                                        class="fill-height ma-0"
-                                        align="center"
-                                        justify="center"
-                                    >
-                                        <v-progress-circular
-                                            indeterminate
-                                            color="grey-lighten-5"
-                                        />
-                                    </v-row>
-                                </template>
-                                <template v-slot:error>
-                                    <v-row
-                                        class="fill-height ma-0"
-                                        align="center"
-                                        justify="center"
-                                    >
-                                        <v-icon
-                                            size="large"
-                                            color="grey-lighten-1"
-                                        >
-                                            mdi-cards
-                                        </v-icon>
-                                    </v-row>
-                                </template>
-                            </v-img>
+                            />
 
                             <v-card-title class="pa-3">
                                 <div class="d-flex w-100">
@@ -279,6 +252,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
+import LazyImage from '@/Components/UI/LazyImage.vue'
 
 const page = usePage();
 const props = defineProps({
@@ -391,6 +365,12 @@ const handleSymbolImageError = (set) => {
 
 // Nastavení výchozího indexu řazení podle props
 onMounted(() => {
+    // Debug informace
+    console.log('Props sets:', props.sets);
+    console.log('Props sets data:', props.sets?.data);
+    console.log('Props sets data length:', props.sets?.data?.length);
+    console.log('hasSets computed:', hasSets.value);
+    
     nextTick(() => {
         try {
             const sortByValue = props.filters.sort_by || 'release_date';

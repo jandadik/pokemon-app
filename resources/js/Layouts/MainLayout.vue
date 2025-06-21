@@ -1,4 +1,6 @@
 <template>
+    <!-- TODO: Add global Error Boundary for the entire application -->
+    <!-- TODO: Implement network error recovery mechanisms -->
     <v-app :theme="theme">
         <!-- Levý drawer s menu -->
         <AppNavDrawer
@@ -16,6 +18,9 @@
                 <slot></slot>
             </v-layout>
         </v-main>
+        
+        <!-- Toast notifikace -->
+        <NotificationToasts />
     </v-app>
 </template>
 
@@ -23,6 +28,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import AppHeader from '@/Components/Layout/AppHeader.vue'
 import AppNavDrawer from '@/Components/Layout/AppNavDrawer.vue'
+import NotificationToasts from '@/Components/UI/NotificationToasts.vue'
 import { usePage, Link } from '@inertiajs/vue3'
 import { useUserStore } from '@/stores/userStore'
 import { useTheme } from 'vuetify'
