@@ -1,5 +1,7 @@
 /.phpunit.cache
 /.cursor
+# Prevent API keys from being committed
+.cursor/mcp.json
 /node_modules
 /public/build
 /public/hot
