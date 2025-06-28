@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
+use App\Models\Session;
 
 /**
  * Controller pro správu uživatelských sessions
@@ -53,11 +54,10 @@ class SessionController extends Controller
             ], 400);
         }
 
+        $user = Auth::user();
+
         // Ověření existence session a jejího vlastnictví
-        $sessionExists = DB::table('sessions')
-            ->where('id', $sessionId)
-            ->where('user_id', Auth::id())
-            ->exists();
+        $sessionExists = $user->sessions()->where('id', $sessionId)->exists();
 
         if (!$sessionExists) {
             return response()->json([
@@ -66,10 +66,7 @@ class SessionController extends Controller
         }
 
         // Smazání session
-        DB::table('sessions')
-            ->where('id', $sessionId)
-            ->where('user_id', Auth::id())
-            ->delete();
+        $user->sessions()->where('id', $sessionId)->delete();
 
         return response()->json([
             'message' => 'Session byla úspěšně ukončena.'

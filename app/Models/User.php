@@ -85,10 +85,7 @@ class User extends Authenticatable
 
     public function sessions()
     {
-        return DB::table('sessions')
-            ->where('user_id', $this->id)
-            ->orderBy('last_activity', 'desc')
-            ->get();
+        return $this->hasMany(Session::class, 'user_id', 'id');
     }
     
     /**
