@@ -138,8 +138,26 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'condition' => [
+            'condition_enum' => 'The card condition must be one of: Near Mint, Excellent, Good, Played, Poor.',
+        ],
+        'language' => [
+            'language_enum' => 'The language must be one of: English, Czech, German, French, Japanese.',
+        ],
+        'grade_value' => [
+            'grading_required_with' => 'Grade value is required when grading company is filled.',
+        ],
+        'grade_company' => [
+            'grading_required_with' => 'Grading company is required when grade value is filled.',
+        ],
+        'grading' => [
+            'grading_required_with' => 'Grading company is required when grade value is filled.',
+        ],
+        'grading_cert' => [
+            'grading_required_with' => 'Grade value is required when grading company is filled.',
+        ],
+        'variant_id' => [
+            'valid_card_variant_combination' => 'The selected variant does not belong to this card.',
         ],
     ],
 
@@ -154,5 +172,25 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'card_id' => 'card',
+        'variant_id' => 'card variant',
+        'condition' => 'card condition',
+        'language' => 'language',
+        'grade_company' => 'grading company',
+        'grade_value' => 'grade value',
+        'is_first_edition' => 'first edition',
+        'is_graded' => 'graded',
+        'collection_id' => 'collection',
+        'variant_type' => 'variant type',
+        'purchase_date' => 'purchase date',
+        'notes' => 'notes',
+        'purchase_price' => 'purchase price',
+        'quantity' => 'quantity',
+        'location' => 'location',
+        'note' => 'note',
+        'first_edition' => 'first edition',
+        'grading' => 'grading company',
+        'grading_cert' => 'grade value',
+    ],
 ]; 

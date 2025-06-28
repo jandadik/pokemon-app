@@ -12,6 +12,8 @@ use App\Http\Requests\CollectionItemUpdateRequest;
 use App\Services\CollectionItemService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use App\Rules\ConditionEnum;
+use App\Rules\LanguageEnum;
 
 class CollectionItemController extends Controller
 {
@@ -66,13 +68,14 @@ class CollectionItemController extends Controller
             ]);
 
             $dataToStore = [
+                'collection_id' => $collection->id,
                 'card_id' => $validatedData['card_id'],
                 'variant_id' => $validatedData['variant_id'],
                 'variant_type' => $validatedData['variant_type'] ?? null,
                 'quantity' => $validatedData['quantity'],
                 'condition' => $validatedData['condition'],
                 'language' => $validatedData['language'],
-                'is_first_edition' => $validatedData['first_edition'],
+                'is_first_edition' => $validatedData['first_edition'] ?? false,
                 'is_graded' => !empty($validatedData['grading']),
                 'grade_company' => $validatedData['grading'] ?? null,
                 'grade_value' => $validatedData['grading_cert'] ?? null,
@@ -167,7 +170,7 @@ class CollectionItemController extends Controller
             'quantity' => $validatedData['quantity'],
             'condition' => $validatedData['condition'],
             'language' => $validatedData['language'],
-            'is_first_edition' => $validatedData['first_edition'],
+            'is_first_edition' => $validatedData['first_edition'] ?? false,
             'is_graded' => !empty($validatedData['grading']),
             'grade_company' => $validatedData['grading'] ?? null,
             'grade_value' => $validatedData['grading_cert'] ?? null,
@@ -200,14 +203,14 @@ class CollectionItemController extends Controller
     }
 
     /**
-     * Hromadné smazání položek.
+     * Hromadné mazání položek.
      */
     public function bulkDelete(Request $request, UserCollection $collection)
     {
         $this->authorize('update', $collection);
         
         $request->validate([
-            'item_ids' => 'required|array',
+            'item_ids' => 'required|array|min:1|max:100',
             'item_ids.*' => 'integer|exists:user_collection_items,id'
         ]);
 
@@ -220,7 +223,7 @@ class CollectionItemController extends Controller
 
         if ($items->count() !== count($itemIds)) {
             return redirect()->route('collections.show', $collection->id)
-                ->withErrors(['error' => 'Některé položky nepatří do této kolekce']);
+                ->withErrors(['error' => 'Některé položky nepatří do této kolekce nebo neexistují']);
         }
 
         foreach ($items as $item) {
@@ -239,7 +242,7 @@ class CollectionItemController extends Controller
         $this->authorize('update', $collection);
         
         $request->validate([
-            'item_ids' => 'required|array',
+            'item_ids' => 'required|array|min:1|max:50',
             'item_ids.*' => 'integer|exists:user_collection_items,id'
         ]);
 
@@ -252,7 +255,7 @@ class CollectionItemController extends Controller
 
         if ($items->count() !== count($itemIds)) {
             return redirect()->route('collections.show', $collection->id)
-                ->withErrors(['error' => 'Některé položky nepatří do této kolekce']);
+                ->withErrors(['error' => 'Některé položky nepatří do této kolekce nebo neexistují']);
         }
 
         $duplicatedCount = 0;
@@ -307,13 +310,18 @@ class CollectionItemController extends Controller
         $this->authorize('update', $collection);
         
         $request->validate([
-            'item_ids' => 'required|array',
+            'item_ids' => 'required|array|min:1|max:100',
             'item_ids.*' => 'integer|exists:user_collection_items,id',
-            'updates' => 'required|array',
-            'updates.condition' => 'nullable|string|in:mint,near_mint,excellent,good,light_played,played,poor',
-            'updates.language' => 'nullable|string|in:cs,en,de,fr,es,it,ja,ko,pt,ru,zh',
-            'updates.location' => 'nullable|string|max:255',
-            'updates.purchase_price' => 'nullable|numeric|min:0',
+            'updates' => 'required|array|min:1',
+            'updates.condition' => ['nullable', 'string', new ConditionEnum()],
+            'updates.language' => ['nullable', 'string', new LanguageEnum()],
+            'updates.location' => 'nullable|string|max:100',
+            'updates.purchase_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99', 'regex:/^\d{1,8}(\.\d{1,2})?$/'],
+            'updates.quantity' => 'nullable|integer|min:1|max:999',
+            'updates.first_edition' => 'nullable|boolean',
+            'updates.grading' => 'nullable|string|max:50',
+            'updates.grading_cert' => 'nullable|string|max:10',
+            'updates.note' => 'nullable|string|max:65535',
         ]);
 
         $itemIds = $request->input('item_ids');
@@ -328,12 +336,47 @@ class CollectionItemController extends Controller
             return response()->json(['error' => 'Některé položky nepatří do této kolekce'], 422);
         }
 
+        // Cross-field validace pro grading
+        if ((!empty($updates['grading']) && empty($updates['grading_cert'])) || 
+            (!empty($updates['grading_cert']) && empty($updates['grading']))) {
+            return response()->json([
+                'error' => 'Při hromadné úpravě gradingu musí být vyplněny oba údaje - společnost i certifikát'
+            ], 422);
+        }
+
+        // Ověř, že je specifikována alespoň jedna změna
+        $filteredUpdates = array_filter($updates, function($value) {
+            return $value !== null && $value !== '';
+        });
+        
+        if (empty($filteredUpdates)) {
+            return response()->json(['error' => 'Musí být specifikována alespoň jedna změna'], 422);
+        }
+
         $updatedCount = 0;
         foreach ($items as $item) {
-            // Filtruj pouze neprázdné hodnoty
-            $dataToUpdate = array_filter($updates, function($value) {
-                return $value !== null && $value !== '';
-            });
+            // Mapování názvů polí z formuláře do databáze (stejné jako v store/update)
+            $dataToUpdate = [];
+            foreach ($filteredUpdates as $field => $value) {
+                switch ($field) {
+                    case 'first_edition':
+                        $dataToUpdate['is_first_edition'] = (bool) $value;
+                        break;
+                    case 'grading':
+                        $dataToUpdate['is_graded'] = !empty($value);
+                        $dataToUpdate['grade_company'] = $value;
+                        break;
+                    case 'grading_cert':
+                        $dataToUpdate['grade_value'] = $value;
+                        break;
+                    case 'note':
+                        $dataToUpdate['notes'] = $value;
+                        break;
+                    default:
+                        $dataToUpdate[$field] = $value;
+                        break;
+                }
+            }
             
             if (!empty($dataToUpdate)) {
                 $this->itemService->updateItemInCollection($collection, $item, $dataToUpdate);

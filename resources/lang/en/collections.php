@@ -108,6 +108,7 @@ return [
         'purchase_price' => 'Purchase Price',
         'grading' => 'Grading Agency',
         'grading_cert' => 'Certificate Number',
+        'grading_cert_placeholder' => 'Enter certificate number',
         'first_edition' => 'First Edition',
         'location' => 'Location (box, folder...)',
         'note' => 'Note',

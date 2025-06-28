@@ -24,21 +24,41 @@
       <!-- Sekce: Detaily položky -->
       <v-row>
         <v-col cols="12" md="6">
-          <ConditionSelect v-model="form.condition" :error-messages="form.errors.condition" />
+          <ConditionSelect 
+            v-model="form.condition" 
+            :error-messages="getFieldErrors('condition')"
+            @update:model-value="handleFieldChange('condition', $event)" 
+          />
         </v-col>
         <v-col cols="12" md="6">
-          <LanguageSelect v-model="form.language" :error-messages="form.errors.language" />
+          <LanguageSelect 
+            v-model="form.language" 
+            :error-messages="getFieldErrors('language')"
+            @update:model-value="handleFieldChange('language', $event)" 
+          />
         </v-col>
       </v-row>
       <v-row>
         <v-col cols="12" md="4">
-          <QuantityInput v-model="form.quantity" :error-messages="form.errors.quantity" />
+          <QuantityInput 
+            v-model="form.quantity" 
+            :error-messages="getFieldErrors('quantity')"
+            @update:model-value="handleFieldChange('quantity', $event)" 
+          />
         </v-col>
         <v-col cols="12" md="4">
-          <PriceInput v-model="form.purchase_price" :error-messages="form.errors.purchase_price" />
+          <PriceInput 
+            v-model="form.purchase_price" 
+            :error-messages="getFieldErrors('purchase_price')"
+            @update:model-value="handleFieldChange('purchase_price', $event)" 
+          />
         </v-col>
         <v-col cols="12" md="4">
-          <LocationInput v-model="form.location" :error-messages="form.errors.location" />
+          <LocationInput 
+            v-model="form.location" 
+            :error-messages="getFieldErrors('location')"
+            @update:model-value="handleFieldChange('location', $event)" 
+          />
         </v-col>
       </v-row>
       <v-row>
@@ -46,16 +66,27 @@
           <GradingSection 
             v-model:grading="form.grading" 
             v-model:gradingCert="form.grading_cert" 
-            :error-messages="form.errors.grading || form.errors.grading_cert" 
+            :grading-error="getFieldErrors('grading')"
+            :cert-error="getFieldErrors('grading_cert')"
+            @update:grading="handleFieldChange('grading', $event)"
+            @update:gradingCert="handleFieldChange('grading_cert', $event)"
           />
         </v-col>
         <v-col cols="12" md="6">
-          <FirstEditionCheckbox v-model="form.first_edition" :error-messages="form.errors.first_edition" />
+          <FirstEditionCheckbox 
+            v-model="form.first_edition" 
+            :error-messages="getFieldErrors('first_edition')"
+            @update:model-value="handleFieldChange('first_edition', $event)" 
+          />
         </v-col>
       </v-row>
       <v-row>
         <v-col cols="12">
-          <NoteInput v-model="form.note" :error-messages="form.errors.note" />
+          <NoteInput 
+            v-model="form.note" 
+            :error-messages="getFieldErrors('note')"
+            @update:model-value="handleFieldChange('note', $event)" 
+          />
         </v-col>
       </v-row>
        <v-alert
@@ -77,9 +108,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, toRefs } from 'vue';
+import { ref, reactive, watch, toRefs, computed } from 'vue';
 // Import card utilities pro správné zobrazení obrázků
 import { getCardImageUrl, handleImageError } from '@/composables/useCardUtils';
+// Import frontend validace
+import { useCollectionItemValidation } from '@/composables/useCollectionItemValidation';
 // Import podkomponenty (zatím placeholdery)
 import ConditionSelect from './ConditionSelect.vue';
 import LanguageSelect from './LanguageSelect.vue';
@@ -98,4 +131,35 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['submit', 'cancel']);
+
+// Frontend validace
+const formData = computed(() => props.form.data())
+const { 
+  errors: frontendErrors, 
+  isValid, 
+  validateField, 
+  validateAll, 
+  clearError 
+} = useCollectionItemValidation(formData)
+
+// Funkce pro kombinování frontend a backend chyb
+const getFieldErrors = (fieldName) => {
+  const frontendError = frontendErrors.value[fieldName]
+  const backendError = props.form.errors[fieldName]
+  
+  if (frontendError) return frontendError
+  if (backendError) return backendError
+  return null
+}
+
+// Real-time validace při změně hodnot
+const handleFieldChange = (fieldName, value) => {
+  // Vyčistit chybu při změně
+  clearError(fieldName)
+  
+  // Validovat novou hodnotu po krátkém zpoždění
+  setTimeout(() => {
+    validateField(fieldName, value, formData.value)
+  }, 300)
+}
 </script> 

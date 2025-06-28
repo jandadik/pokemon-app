@@ -119,6 +119,7 @@ return [
         'purchase_price' => 'Nákupní cena',
         'grading' => 'Grading agentura',
         'grading_cert' => 'Číslo certifikátu',
+        'grading_cert_placeholder' => 'Zadejte číslo certifikátu',
         'first_edition' => 'První edice',
         'location' => 'Umístění (box, složka...)',
         'note' => 'Poznámka',

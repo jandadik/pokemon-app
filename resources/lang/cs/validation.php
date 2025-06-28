@@ -138,8 +138,26 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'vlastní-zpráva',
+        'condition' => [
+            'condition_enum' => 'Stav karty musí být jedna z hodnot: Near Mint, Excellent, Good, Played, Poor.',
+        ],
+        'language' => [
+            'language_enum' => 'Jazyk musí být jeden z podporovaných: English, Czech, German, French, Japanese.',
+        ],
+        'grade_value' => [
+            'grading_required_with' => 'Hodnota gradingu je povinná při vyplnění gradovací společnosti.',
+        ],
+        'grade_company' => [
+            'grading_required_with' => 'Gradovací společnost je povinná při vyplnění hodnoty gradingu.',
+        ],
+        'grading' => [
+            'grading_required_with' => 'Gradovací společnost je povinná při vyplnění hodnoty gradingu.',
+        ],
+        'grading_cert' => [
+            'grading_required_with' => 'Hodnota gradingu je povinná při vyplnění gradovací společnosti.',
+        ],
+        'variant_id' => [
+            'valid_card_variant_combination' => 'Vybraná varianta nepatří k této kartě.',
         ],
     ],
 
@@ -154,5 +172,25 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'card_id' => 'karta',
+        'variant_id' => 'varianta karty',
+        'condition' => 'stav karty',
+        'language' => 'jazyk',
+        'grade_company' => 'gradovací společnost',
+        'grade_value' => 'hodnota gradingu',
+        'is_first_edition' => 'první edice',
+        'is_graded' => 'gradováno',
+        'collection_id' => 'kolekce',
+        'variant_type' => 'typ varianty',
+        'purchase_date' => 'datum nákupu',
+        'notes' => 'poznámky',
+        'purchase_price' => 'nákupní cena',
+        'quantity' => 'množství',
+        'location' => 'umístění',
+        'note' => 'poznámka',
+        'first_edition' => 'první edice',
+        'grading' => 'gradovací společnost',
+        'grading_cert' => 'hodnota gradingu',
+    ],
 ]; 
