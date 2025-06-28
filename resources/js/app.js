@@ -7,7 +7,8 @@ import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { setupI18n, TranslationPlugin } from '@/i18n'
 
 // Vuetify
-import 'vuetify/styles'
+// import 'vuetify/styles'
+import '../css/style.scss'
 import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
@@ -41,17 +42,66 @@ const vuetify = createVuetify({
     defaultTheme: prefersDarkTheme ? 'dark' : 'light',
     themes: {
       light: {
+        variables: {
+        'border-color': '#ebf1f6',
+        'border-opacity': 1,
+        },
         colors: {
-          primary: '#1867C0',
-          secondary: '#5CBBF6',
           accent: '#8c9eff',
           error: '#b71c1c',
+          primary: '#1B84FF',
+          secondary: '#43CED7',
+          info: '#2CABE3',
+          success: '#2CD07E',
+          accent: '#FFAB91',
+          warning: '#F6C000',
+          error: '#F8285A',
+          purple:'#725AF2',
+          indigo:'#6610f2',
+          lightprimary: '#EDF5FD',
+          lightsecondary: '#F2FCFC',
+          lightsuccess: '#EDFDF2',
+          lighterror: '#FFF0F4',
+          lightwarning: '#FFFCF0',
+          lightinfo: '#E4F5FF',
+          textPrimary: '#3A4752',
+          textSecondary: '#768B9E',
+          borderColor: '#ebf1f6',
+          inputBorder: '#DFE5EF',
+          containerBg: '#ffffff',
+          background: '#eef5f9',
+          hoverColor: '#f6f9fc',
+          surface: '#fff',
+          'on-surface-variant': '#fff',
+          grey100: '#F2F6FA',
+          grey200: '#EAEFF4'
         },
       },
       dark: {
+        variables: {
+        'border-color': '#333F55',
+        'border-opacity': 1,
+      },
         colors: {
-          primary: '#2196F3',
-          secondary: '#424242',
+          primary: '#1B84FF',
+          secondary: '#0cb9c5',
+          lightprimary: '#253662',
+          lightsecondary: '#1C455D',
+          lightsuccess: '#1B3C48',
+          lighterror: '#4B313D',
+          lightwarning: '#4D3A2A',
+          lightinfo:'#223662',
+          textPrimary: '#EAEFF4',
+          textSecondary: '#7C8FAC',
+          borderColor: '#333F55',
+          inputBorder: '#465670',
+          containerBg: '#2a3447',
+          background: '#192838',
+          surface: '#152332',
+          hoverColor: '#333f55',
+          'on-surface-variant': '#2a3447',
+          grey100: '#333F55',
+          grey200: '#465670',
           accent: '#FF4081',
           error: '#FF5252',
         },
