@@ -16,7 +16,10 @@ export const useUserStore = defineStore('user', {
         theme: 'system',
         
         // Zabezpečení
-        login_notifications: true
+        login_notifications: true,
+        
+        // Kolekce
+        auto_save_to_default_collection: true
       }
     },
     isLoading: false,
@@ -39,7 +42,10 @@ export const useUserStore = defineStore('user', {
     
     // Zabezpečení
     getLoginNotifications: (state) => state.parameters.settings.login_notifications,
-    getLoginHistory: (state) => state.loginHistory
+    getLoginHistory: (state) => state.loginHistory,
+    
+    // Kolekce
+    getAutoSaveToDefaultCollection: (state) => state.parameters.settings.auto_save_to_default_collection
   },
 
   actions: {

@@ -126,6 +126,11 @@ return [
         'theme_light' => 'Light Mode',
         'theme_dark' => 'Dark Mode',
         'theme_system' => 'System Default (:mode)',
+        'collections' => [
+            'title' => 'Collections',
+            'auto_save_to_default' => 'Auto-save to default collection',
+            'auto_save_to_default_hint' => 'When enabled, cards from catalog will be automatically saved to your default collection. Otherwise, you can select collection manually.',
+        ],
         'colors' => [
             'primary' => 'Primary',
             'secondary' => 'Secondary',

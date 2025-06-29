@@ -15,18 +15,22 @@ use App\Services\CardService;
 use Illuminate\Http\JsonResponse;
 use App\Services\CollectionItemService;
 use App\Services\CardImageService;
+use App\Services\CollectionService;
+use Illuminate\Support\Facades\Auth;
 
 class CardController extends Controller
 {
     protected CardService $cardService;
     protected CollectionItemService $itemService;
     protected CardImageService $imageService;
+    protected CollectionService $collectionService;
 
-    public function __construct(CardService $cardService, CollectionItemService $itemService, CardImageService $imageService)
+    public function __construct(CardService $cardService, CollectionItemService $itemService, CardImageService $imageService, CollectionService $collectionService)
     {
         $this->cardService = $cardService;
         $this->itemService = $itemService;
         $this->imageService = $imageService;
+        $this->collectionService = $collectionService;
     }
 
     /**
@@ -246,9 +250,16 @@ class CardController extends Controller
         // Získání referreru z URL - odkud byla stránka volána
         $referrer = $request->query('referrer', null);
 
+        // Načtení kolekcí pro přihlášeného uživatele (pokud je přihlášen)
+        $userCollections = [];
+        if (Auth::check()) {
+            $userCollections = $this->collectionService->getUserCollections(Auth::user());
+        }
+
         return inertia('Card/Show', [
             'card' => $card,
-            'referrer' => $referrer
+            'referrer' => $referrer,
+            'userCollections' => $userCollections
         ]);
     }
 

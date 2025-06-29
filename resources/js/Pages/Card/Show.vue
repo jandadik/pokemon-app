@@ -37,6 +37,19 @@
               <div class="text-h6 text-grey">
                 {{ card.supertype }}{{ card.subtypes?.length ? ` - ${card.subtypes.join(', ')}` : '' }}
               </div>
+              
+              <!-- Add to Collection button -->
+              <div v-if="$page.props.auth.user" class="mt-4">
+                <v-btn 
+                  color="primary" 
+                  variant="elevated" 
+                  rounded="xl"
+                  prepend-icon="mdi-folder-plus"
+                  @click="showAddToCollectionModal = true"
+                >
+                  {{ $t('collections.add_to_collection.title') }}
+                </v-btn>
+              </div>
             </div>
             <div v-if="card.supertype === 'Pokémon'" class="d-flex align-center">
               <span class="me-2 font-weight-bold">HP {{ card.hp }}</span>
@@ -95,18 +108,33 @@
         </v-col>
       </v-row>
     </v-container>
+
+    <!-- Add to Collection Modal -->
+    <AddToCollectionModal
+      v-model="showAddToCollectionModal"
+      :card="card"
+      :collections="userCollections"
+      @added="onCardAdded"
+    />
   
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, getCurrentInstance } from 'vue'
 import { router } from '@inertiajs/vue3'
 import PokemonAttacks from '@/Components/Card/PokemonAttacks.vue'
 import PokemonAbilities from '@/Components/Card/PokemonAbilities.vue'
 import PokemonRules from '@/Components/Card/PokemonRules.vue'
 import CardAdditionalInfo from '@/Components/Card/CardAdditionalInfo.vue'
 import PricesContainer from '@/Components/Card/PricesContainer.vue'
+import AddToCollectionModal from '@/Components/Collections/AddToCollectionModal.vue'
 import { handleImageError } from '@/composables/useCardUtils'
+import { useNotificationStore } from '@/stores/notificationStore'
+
+// Translation function
+const instance = getCurrentInstance()
+const $t = instance?.appContext.config.globalProperties.$t
+const notificationStore = useNotificationStore()
 
 const props = defineProps({
   card: {
@@ -116,6 +144,10 @@ const props = defineProps({
   referrer: {
     type: String,
     default: null
+  },
+  userCollections: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -123,6 +155,7 @@ const props = defineProps({
 console.log('Karta v Show.vue:', props.card)
 
 const loading = ref(false)
+const showAddToCollectionModal = ref(false)
 
 // Připravíme ceny z dat karty místo načítání přes API
 const prices = computed(() => {
@@ -176,6 +209,11 @@ const goBack = () => {
     // Pokud nemáme referrer, vrátíme se na stránku setů jako fallback
     router.visit(`/sets/${props.card.set_id}/cards`);
   }
+}
+
+const onCardAdded = (data) => {
+  console.log('Karta přidána do kolekce:', data)
+  // Můžeme zobrazit dodatečnou notifikaci nebo aktualizovat stav
 }
 </script>
 

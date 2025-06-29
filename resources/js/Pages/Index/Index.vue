@@ -90,6 +90,27 @@
                         </td>
                     </tr>
 
+                    <!-- Kolekce -->
+                    <tr>
+                        <td>{{ $t('app.collections') }}</td>
+                        <td>{{ $t('account.settings.collections.auto_save_to_default') }}</td>
+                        <td>
+                            <v-icon :color="userStore.getAutoSaveToDefaultCollection ? 'success' : 'error'">
+                                {{ userStore.getAutoSaveToDefaultCollection ? 'mdi-check' : 'mdi-close' }}
+                            </v-icon>
+                        </td>
+                        <td>
+                            <Link :href="route('user.profile', { tab: 'settings' })">
+                                <v-btn
+                                    variant="text"
+                                    color="primary"
+                                >
+                                    {{ $trans('app.buttons.edit') }}
+                                </v-btn>
+                            </Link>
+                        </td>
+                    </tr>
+
                     <!-- Zabezpečení -->
                     <tr>
                         <td rowspan="2">{{ $t('app.security') }}</td>

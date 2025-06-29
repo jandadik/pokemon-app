@@ -8,6 +8,7 @@ use App\Models\Card;
 use App\Models\CardsVariant;
 use App\Models\CardsVariantType;
 use App\Models\CardsVariantsPricesMv;
+use App\Models\CardsVariantsTypesMv;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -144,62 +145,27 @@ class CollectionItemService
 
     /**
      * Vrátí seznam typů karet (z cards_variant_types) pro danou kartu.
+     * OPTIMALIZOVÁNO: Používá materialized view místo komplexních JOIN operací.
      */
     public function getTypesForCard(string $cardId)
     {
-        // 1. Najít všechny varianty pro dané card_id
-        $variantIds = CardsVariant::where('card_id', $cardId)
-            ->pluck('variant')
-            ->unique()
-            ->filter(); // Odstraní null hodnoty
-
-        if ($variantIds->isEmpty()) {
-            return collect();
-        }
-
-        // 2. Najít všechny typy, které odpovídají některé z variant
-        // Používáme DISTINCT na code, abychom dostali jen jeden záznam pro každý code
-        $types = DB::table('cards_variant_types')
-            ->whereIn('variant', $variantIds)
-            ->select('code', 'name', 'description')
-            ->selectRaw('MIN(variant) as variant') // Vezmeme první variant pro daný code
-            ->groupBy('code', 'name', 'description')
-            ->get();
-
-        return $types;
+        return CardsVariantsTypesMv::getVariantTypesForCard($cardId);
     }
 
     /**
      * Najde konkrétní variantu (cm_id) pro daný typ a kartu.
+     * OPTIMALIZOVÁNO: Používá materialized view místo komplexních JOIN operací.
      */
     public function resolveVariantForType(string $cardId, string $variantTypeCode)
     {
-        // 1. Najít všechny varianty pro danou kartu
-        $cardVariants = CardsVariant::where('card_id', $cardId)
-            ->pluck('variant')
-            ->unique()
-            ->filter();
-            
-        if ($cardVariants->isEmpty()) {
+        $mvRecord = CardsVariantsTypesMv::resolveVariantForType($cardId, $variantTypeCode);
+        
+        if (!$mvRecord) {
             return null;
         }
         
-        // 2. Najít záznam v cards_variant_types podle code a variant, který existuje pro tuto kartu
-        $type = DB::table('cards_variant_types')
-            ->where('code', $variantTypeCode)
-            ->whereIn('variant', $cardVariants)
-            ->first();
-            
-        if (!$type) {
-            return null;
-        }
-        
-        // 3. Najít variantu v cards_variant podle card_id a variant
-        $variant = CardsVariant::where('card_id', $cardId)
-            ->where('variant', $type->variant)
-            ->first();
-            
-        return $variant;
+        // Vrací CardsVariant model pro zpětnou kompatibilitu
+        return CardsVariant::where('cm_id', $mvRecord->cm_id)->first();
     }
 
     /**

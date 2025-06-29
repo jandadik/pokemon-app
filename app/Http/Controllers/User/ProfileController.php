@@ -119,6 +119,7 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'language' => ['required', 'string', 'in:cs,en'],
             'theme' => ['required', 'string', 'in:light,dark,system'],
+            'auto_save_to_default_collection' => ['sometimes', 'boolean'],
         ]);
 
         $settings = $this->updateUserParameters($request->user(), $validated);
@@ -170,6 +171,8 @@ class ProfileController extends Controller
             'settings' => $settings
         ]);
     }
+
+
 
     /**
      * Načte parametry přihlášeného uživatele

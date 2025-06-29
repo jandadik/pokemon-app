@@ -26,6 +26,7 @@ return [
     'push_notifications' => 'Push notifications',
     'newsletter' => 'Newsletter',
     'settings' => 'Settings',
+    'collections' => 'Collections',
     'language' => 'Language',
     'theme' => 'Theme',
     'security' => 'Security',

@@ -37,14 +37,15 @@ class CollectionController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // Ujistíme se, že uživatel je přihlášen (i když by to měl řešit middleware)
-        // Tuto kontrolu by měl primárně řešit middleware 'auth'
-        // if (!$user) {
-        //     // V reálné aplikaci by zde mohlo být přesměrování na login nebo chyba 401/403
-        //     return response()->json(['message' => 'Uživatel není přihlášen'], 401);
-        // }
-
         $collections = $this->collectionService->getUserCollections($user);
+
+        // Pokud je požadavek AJAX/JSON, vratíme jen data
+        if ($request->wantsJson() || $request->has('api')) {
+            return response()->json([
+                'data' => $collections,
+                'success' => true
+            ]);
+        }
 
         return Inertia::render('Collections/Index', [
             'collections' => $collections,

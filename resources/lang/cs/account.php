@@ -126,6 +126,11 @@ return [
         'theme_light' => 'Světlý režim',
         'theme_dark' => 'Tmavý režim',
         'theme_system' => 'Podle systému (:mode)',
+        'collections' => [
+            'title' => 'Kolekce',
+            'auto_save_to_default' => 'Automaticky ukládat do výchozí kolekce',
+            'auto_save_to_default_hint' => 'Pokud je zapnuto, karty z katalogu se budou automaticky ukládat do vaší výchozí kolekce. Jinak budete moci vybrat kolekci ručně.',
+        ],
         'colors' => [
             'primary' => 'Primární',
             'secondary' => 'Sekundární',

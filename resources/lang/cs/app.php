@@ -26,6 +26,7 @@ return [
     'push_notifications' => 'Push notifikace',
     'newsletter' => 'Newsletter',
     'settings' => 'Nastavení',
+    'collections' => 'Kolekce',
     'language' => 'Jazyk',
     'theme' => 'Téma',
     'security' => 'Zabezpečení',

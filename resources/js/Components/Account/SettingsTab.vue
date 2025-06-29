@@ -25,6 +25,20 @@
           prepend-inner-icon="mdi-theme-light-dark"
           class="mb-4"
         ></v-select>
+
+        <!-- Nastavení kolekcí -->
+        <v-divider class="mb-4"></v-divider>
+        <v-card-subtitle class="px-0 text-h6">{{ $t('account.settings.collections.title') }}</v-card-subtitle>
+        
+        <v-switch
+          v-model="settingsForm.auto_save_to_default_collection"
+          :label="$t('account.settings.collections.auto_save_to_default')"
+          :hint="$t('account.settings.collections.auto_save_to_default_hint')"
+          persistent-hint
+          color="primary"
+          hide-details="auto"
+          class="mb-4"
+        ></v-switch>
         
         <!-- Ukázka vybraného tématu -->
         <v-card class="mt-4 mb-4 pa-4" :theme="previewTheme">
@@ -68,7 +82,8 @@ const isSettingsFormValid = ref(true)
 
 const settingsForm = useForm({
   language: userStore.getLanguage,
-  theme: userStore.getTheme
+  theme: userStore.getTheme,
+  auto_save_to_default_collection: userStore.getAutoSaveToDefaultCollection
 })
 
 // Detekce systémového nastavení
@@ -99,6 +114,7 @@ watch(
     if (newSettings) {
       settingsForm.language = newSettings.language
       settingsForm.theme = newSettings.theme
+      settingsForm.auto_save_to_default_collection = newSettings.auto_save_to_default_collection
     }
   },
   { deep: true }
@@ -108,7 +124,8 @@ watch(
 watch(
   () => ({
     language: settingsForm.language,
-    theme: settingsForm.theme
+    theme: settingsForm.theme,
+    auto_save_to_default_collection: settingsForm.auto_save_to_default_collection
   }),
   (newValues) => {
     if (settingsForm.processing) return
