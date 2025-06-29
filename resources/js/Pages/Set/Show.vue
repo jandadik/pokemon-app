@@ -313,6 +313,15 @@
                                         </v-icon>
                                     </v-row>
                                 </template>
+                                <!-- Tlačítko přidání do kolekce -->
+                                <v-btn
+                                    icon="mdi-folder-plus"
+                                    color="primary"
+                                    size="small"
+                                    class="add-to-collection-btn"
+                                    @click.stop="handleAddToCollectionClick(card)"
+                                    :title="$t('catalog.cards.add_to_collection')"
+                                />
                                 <div class="card-number">{{ formatCardNumber(card.number) }}/{{ formatTotalNumber(set.printed_total) }}</div>
                             </v-img>
 
@@ -429,6 +438,16 @@
                             </div>
                             <div v-else>-</div>
                         </template>
+                        <template #[`item.actions`]="{ item }">
+                            <v-btn
+                                icon="mdi-folder-plus"
+                                color="primary"
+                                size="small"
+                                variant="text"
+                                @click="handleAddToCollectionClick(item)"
+                                :title="$t('catalog.cards.add_to_collection')"
+                            />
+                        </template>
                     </v-data-table>
                 </v-card>
             </v-window-item>
@@ -444,20 +463,34 @@
             </v-window-item>
         </v-window>
     </v-container>
+    
+    <!-- Modal pro přidání do kolekce -->
+    <AddToCollectionModal
+        v-if="selectedCard || showAddToCollectionModal"
+        v-model="showAddToCollectionModal"
+        :card="selectedCard"
+    />
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { usePage, Link, router } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import LazyImage from '@/Components/UI/LazyImage.vue';
+import AddToCollectionModal from '@/Components/Collections/AddToCollectionModal.vue';
+import { useAuthStore } from '@/stores/authStore';
 
 const props = defineProps({
     set: Object,
 });
 
 const page = usePage();
+
+// Auth store a modal stav
+const auth = useAuthStore();
+const showAddToCollectionModal = ref(false);
+const selectedCard = ref(null);
 
 // Stav stránky
 const loading = ref(false);
@@ -529,6 +562,7 @@ const tableHeaders = [
     { title: page.props.translations?.catalog?.cards?.type || 'Typ', key: 'types', width: '120px', sortable: true },
     { title: page.props.translations?.catalog?.cards?.rarity || 'Vzácnost', key: 'rarity', width: '100px', sortable: true },
     { title: page.props.translations?.catalog?.cards?.price || 'Cena', key: 'price', width: '80px', align: 'end', sortable: true },
+    { title: 'Akce', key: 'actions', sortable: false, width: '100px', align: 'center' },
 ];
 
 // Computed properties
@@ -939,10 +973,22 @@ function navigateToCardDetail(cardId) {
     
     // Návštěva detailu karty s předáním referreru
     router.visit(`/cards/${cardId}?referrer=${encodeURIComponent(currentUrl)}`, {
-        preserveScroll: true,
+        preserveScroll: false,
         preserveState: true
     });
 }
+
+// Handler pro přidání do kolekce
+const handleAddToCollectionClick = async (card) => {
+    if (auth.isLoggedIn) {
+        selectedCard.value = card;
+        await nextTick(); // Počkat na DOM update
+        showAddToCollectionModal.value = true;
+    } else {
+        const redirectUrl = window.location.href;
+        router.visit(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+    }
+};
 </script>
 
 <style scoped>
@@ -980,6 +1026,14 @@ function navigateToCardDetail(cardId) {
     font-weight: 500;
     z-index: 1;
     line-height: 1.2;
+}
+
+.add-to-collection-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 2;
+    opacity: 1;
 }
 
 .series-title {

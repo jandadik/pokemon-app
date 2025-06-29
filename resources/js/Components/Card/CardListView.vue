@@ -220,6 +220,16 @@
                     </div>
                     <div v-else>-</div>
                 </template>
+                <template #[`item.actions`]="{ item }">
+                    <v-btn
+                        icon="mdi-folder-plus"
+                        color="primary"
+                        size="small"
+                        variant="text"
+                        @click="handleAddToCollectionClick(item)"
+                        :title="$t('catalog.cards.add_to_collection')"
+                    />
+                </template>
             </v-data-table>
             
             <!-- Externí paginace -->
@@ -248,15 +258,24 @@
             </v-col>
         </v-row>
     </div>
+    
+    <!-- Modal pro přidání do kolekce -->
+    <AddToCollectionModal
+        v-if="selectedCard || showAddToCollectionModal"
+        v-model="showAddToCollectionModal"
+        :card="selectedCard"
+    />
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, watch, ref, nextTick } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import { debounce } from 'lodash';
 import { useCardStore } from '@/stores/cardStore';
+import AddToCollectionModal from '@/Components/Collections/AddToCollectionModal.vue';
+import { useAuthStore } from '@/stores/authStore';
 // Import sdílených utilit
 import {
     getCardImageUrl,
@@ -272,8 +291,12 @@ import {
 } from '@/composables/useCardUtils';
 
 const page = usePage();
-
 const cardStore = useCardStore();
+
+// Auth store a modal stav
+const auth = useAuthStore();
+const showAddToCollectionModal = ref(false);
+const selectedCard = ref(null);
 
 const props = defineProps({
     cards: {
@@ -331,6 +354,7 @@ const tableHeaders = computed(() => [
     { title: page.props.translations?.catalog?.table?.headers?.number || 'Číslo', key: 'number', width: '80px', sortable: true },
     { title: page.props.translations?.catalog?.table?.headers?.rarity || 'Vzácnost', key: 'rarity', width: '220px', sortable: true },
     { title: page.props.translations?.catalog?.table?.headers?.price_avg30 || 'Cena (Avg30)', key: 'price_cm_avg30', width: '110px', align: 'end', sortable: true },
+    { title: 'Akce', key: 'actions', sortable: false, width: '100px', align: 'center' },
 ]);
 
 const hasCards = computed(() => props.cards && props.cards.data && props.cards.data.length > 0);
@@ -449,10 +473,29 @@ function navigateToCardDetail(cardId) {
     
     // Návštěva detailu karty s předáním referreru
     router.visit(`/cards/${cardId}?referrer=${encodeURIComponent(currentUrl)}`, {
-        preserveScroll: true,
+        preserveScroll: false,
         preserveState: true
     });
 }
+
+// Handler pro přidání do kolekce
+const handleAddToCollectionClick = async (card) => {
+    if (auth.isLoggedIn) {
+        selectedCard.value = card;
+        await nextTick(); // Počkat na DOM update
+        showAddToCollectionModal.value = true;
+    } else {
+        const redirectUrl = window.location.href;
+        router.visit(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+    }
+};
+
+// Watch pro reset selectedCard při zavření modalu
+watch(showAddToCollectionModal, (newValue) => {
+    if (!newValue) {
+        selectedCard.value = null;
+    }
+});
 </script>
 
 <style scoped>

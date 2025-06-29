@@ -17,6 +17,15 @@
                     class="card-img"
                     @error="handleImageError"
                 >
+                <!-- Tlačítko přidání do kolekce -->
+                <v-btn
+                    icon="mdi-folder-plus"
+                    color="primary"
+                    size="small"
+                    class="add-to-collection-btn"
+                    @click.stop="handleAddToCollectionClick"
+                    :title="$t('catalog.cards.add_to_collection')"
+                />
                 <div class="card-number">{{ formatCardNumber(card.number) }}</div>
                 <div v-if="card.set" class="card-set-name">{{ card.set.name }}</div>
             </div>
@@ -60,12 +69,22 @@
             </v-card-text>
         </template>
     </v-card>
+    
+    <!-- Modal pro přidání do kolekce -->
+    <AddToCollectionModal
+        v-if="card"
+        v-model="showAddToCollectionModal"
+        :card="card"
+    />
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import { router } from '@inertiajs/vue3';
+import AddToCollectionModal from '@/Components/Collections/AddToCollectionModal.vue';
+import { useAuthStore } from '@/stores/authStore';
 // Import sdílených utilit
 import {
     getCardImageUrl,
@@ -91,16 +110,19 @@ const props = defineProps({
     }
 });
 
-// ODSTRANIT NÁSLEDUJÍCÍ FUNKCE (byly přesunuty do useCardUtils.js)
-/*
-function getCardImageUrl(card) { ... }
-function getRarityClass(rarity) { ... }
-function formatCardNumber(number) { ... }
-function formatNumberPrice(price) { ... }
-function formatPrice(price) { ... }
-function formatUpdateDate(dateString) { ... }
-function handleImageError(event) { ... }
-*/
+// Auth store a reaktivní proměnné
+const auth = useAuthStore();
+const showAddToCollectionModal = ref(false);
+
+// Handler pro přidání do kolekce
+const handleAddToCollectionClick = () => {
+    if (auth.isLoggedIn) {
+        showAddToCollectionModal.value = true;
+    } else {
+        const redirectUrl = window.location.href;
+        router.visit(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+    }
+};
 
 const navigateToDetail = () => {
     // Získání aktuální URL jako referrer
@@ -108,7 +130,7 @@ const navigateToDetail = () => {
     
     // Návštěva detailu karty s předáním referreru
     router.visit(`/cards/${props.card.id}?referrer=${encodeURIComponent(currentUrl)}`, {
-        preserveScroll: true,
+        preserveScroll: false,
         preserveState: true
     });
 };
@@ -177,6 +199,14 @@ const navigateToDetail = () => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.add-to-collection-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 2;
+    opacity: 1;
 }
 
 .card-rarity {

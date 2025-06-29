@@ -1,16 +1,25 @@
 <template>
   
     <v-container>
-      <!-- Tlačítko zpět -->
+      <!-- Header s tlačítky -->
       <v-row>
         <v-col cols="12">
-          <div class="d-flex align-center mb-4">
+          <div class="d-flex justify-space-between align-center mb-4">
+            <!-- Tlačítko zpět -->
             <v-btn
               icon="mdi-arrow-left"
               variant="text"
               @click="goBack"
-              class="me-4"
             />
+                         <!-- Tlačítko pro přidání do kolekce -->
+             <v-btn 
+               color="primary" 
+               variant="elevated"
+               prepend-icon="mdi-folder-plus"
+               @click="handleAddToCollectionClick"
+             >
+               {{ $t('catalog.cards.add_to_collection') }}
+             </v-btn>
           </div>
         </v-col>
       </v-row>
@@ -36,19 +45,6 @@
               <h1 class="text-h4 font-weight-bold">{{ card.name }}</h1>
               <div class="text-h6 text-grey">
                 {{ card.supertype }}{{ card.subtypes?.length ? ` - ${card.subtypes.join(', ')}` : '' }}
-              </div>
-              
-              <!-- Add to Collection button -->
-              <div v-if="$page.props.auth.user" class="mt-4">
-                <v-btn 
-                  color="primary" 
-                  variant="elevated" 
-                  rounded="xl"
-                  prepend-icon="mdi-folder-plus"
-                  @click="showAddToCollectionModal = true"
-                >
-                  {{ $t('collections.add_to_collection.title') }}
-                </v-btn>
               </div>
             </div>
             <div v-if="card.supertype === 'Pokémon'" class="d-flex align-center">
@@ -108,13 +104,12 @@
         </v-col>
       </v-row>
     </v-container>
-
-    <!-- Add to Collection Modal -->
+    
+    <!-- Test Modal -->
     <AddToCollectionModal
-      v-model="showAddToCollectionModal"
+      v-if="card"
+      v-model="showTestModal"
       :card="card"
-      :collections="userCollections"
-      @added="onCardAdded"
     />
   
 </template>
@@ -130,11 +125,13 @@ import PricesContainer from '@/Components/Card/PricesContainer.vue'
 import AddToCollectionModal from '@/Components/Collections/AddToCollectionModal.vue'
 import { handleImageError } from '@/composables/useCardUtils'
 import { useNotificationStore } from '@/stores/notificationStore'
+import { useAuthStore } from '@/stores/authStore'
 
 // Translation function
 const instance = getCurrentInstance()
 const $t = instance?.appContext.config.globalProperties.$t
 const notificationStore = useNotificationStore()
+const auth = useAuthStore()
 
 const props = defineProps({
   card: {
@@ -144,10 +141,6 @@ const props = defineProps({
   referrer: {
     type: String,
     default: null
-  },
-  userCollections: {
-    type: Array,
-    default: () => []
   }
 })
 
@@ -155,7 +148,21 @@ const props = defineProps({
 console.log('Karta v Show.vue:', props.card)
 
 const loading = ref(false)
-const showAddToCollectionModal = ref(false)
+const showTestModal = ref(false)
+
+// Při načtení stránky scrollovat na začátek
+onMounted(() => {
+  window.scrollTo(0, 0)
+})
+
+const handleAddToCollectionClick = () => {
+  if (auth.isLoggedIn) {
+    showTestModal.value = true
+  } else {
+    const redirectUrl = window.location.href;
+    router.visit(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
+  }
+}
 
 // Připravíme ceny z dat karty místo načítání přes API
 const prices = computed(() => {
@@ -209,11 +216,6 @@ const goBack = () => {
     // Pokud nemáme referrer, vrátíme se na stránku setů jako fallback
     router.visit(`/sets/${props.card.set_id}/cards`);
   }
-}
-
-const onCardAdded = (data) => {
-  console.log('Karta přidána do kolekce:', data)
-  // Můžeme zobrazit dodatečnou notifikaci nebo aktualizovat stav
 }
 </script>
 

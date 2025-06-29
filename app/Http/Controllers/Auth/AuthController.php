@@ -18,10 +18,15 @@ class AuthController extends Controller
     /**
      * Zobrazí přihlašovací formulář
      * 
+     * @param Request $request HTTP požadavek
      * @return \Inertia\Response Renderuje Vue komponentu Auth/Login
      */
-    public function create()
+    public function create(Request $request)
     {
+        if ($request->has('redirect')) {
+            session(['url.intended' => $request->input('redirect')]);
+        }
+
         return Inertia::render('Auth/Login');
     }
 

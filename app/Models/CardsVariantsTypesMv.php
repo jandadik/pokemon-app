@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * CardsVariantsTypesMv Model
@@ -107,9 +109,10 @@ class CardsVariantsTypesMv extends Model
     /**
      * Scope pro filtrování podle typu varianty
      */
-    public function scopeVariantType($query, int $variantTypeCode)
+    public function scopeVariantType($query, $variantTypeCode)
     {
-        return $query->where('variant_type_code', $variantTypeCode);
+        // Převést na integer pokud je to string (z API)
+        return $query->where('variant_type_code', (int) $variantTypeCode);
     }
 
     /**
@@ -126,16 +129,19 @@ class CardsVariantsTypesMv extends Model
      */
     public static function getVariantTypesForCard(string $cardId): \Illuminate\Database\Eloquent\Collection
     {
-        return static::forCard($cardId)
-            ->select([
-                'variant_type_code as code',
-                'variant_type_name as name', 
-                'variant_type_description as description'
-            ])
-            ->selectRaw('MIN(variant) as variant') // Pro kompatibilitu se stávajícím kódem
-            ->groupBy('variant_type_code', 'variant_type_name', 'variant_type_description')
-            ->orderBy('variant_type_code')
-            ->get();
+        // Cache na 5 minut pro často dotazované karty
+        return \Cache::remember("card_variants_{$cardId}", 300, function () use ($cardId) {
+            return static::forCard($cardId)
+                ->select([
+                    'variant_type_code as code',
+                    'variant_type_name as name', 
+                    'variant_type_description as description'
+                ])
+                ->selectRaw('MIN(variant) as variant') // Pro kompatibilitu se stávajícím kódem
+                ->groupBy('variant_type_code', 'variant_type_name', 'variant_type_description')
+                ->orderBy('variant_type_code')
+                ->get();
+        });
     }
 
     /**
@@ -209,5 +215,74 @@ class CardsVariantsTypesMv extends Model
     public function getIsReverseHoloAttribute(): bool
     {
         return $this->price_column_suffix && str_contains(strtolower($this->price_column_suffix), 'reverse_holo');
+    }
+
+    /**
+     * Rychlé načtení kompletních informací o variantě pomocí materialized view
+     * Nahrazuje CollectionItemService::getVariantDetails()
+     */
+    public static function getCompleteVariantDetails(string $cardId, string $variantTypeCode): ?array
+    {
+        // Cache na 10 minut pro detaily variant
+        return \Cache::remember("card_variant_details_{$cardId}_{$variantTypeCode}", 600, function () use ($cardId, $variantTypeCode) {
+            $mvRecord = static::forCard($cardId)
+                ->variantType($variantTypeCode)
+                ->with('card')
+                ->first();
+
+            if (!$mvRecord || !$mvRecord->card) {
+                return null;
+            }
+
+            // Načíst ceny z cards_variants_prices_mv
+            $priceData = DB::table('cards_variants_prices_mv')
+                ->where('cm_id', $mvRecord->cm_id)
+                ->first();
+
+            $prices = null;
+            if ($priceData) {
+                $isReverseHolo = $mvRecord->is_reverse_holo;
+                
+                if ($isReverseHolo) {
+                    $prices = [
+                        'low' => $priceData->reverse_holo_low ?? null,
+                        'trend' => $priceData->reverse_holo_trend ?? null,
+                        'avg1' => $priceData->reverse_holo_avg1 ?? null,
+                        'avg7' => $priceData->reverse_holo_avg7 ?? null,
+                        'avg30' => $priceData->reverse_holo_avg30 ?? null,
+                        'sell' => $priceData->reverse_holo_sell ?? null,
+                        'updated_at' => $priceData->cm_updated_at,
+                    ];
+                } else {
+                    $prices = [
+                        'low' => $priceData->low_price ?? null,
+                        'trend' => $priceData->trend_price ?? null,
+                        'avg1' => $priceData->avg1 ?? null,
+                        'avg7' => $priceData->avg7 ?? null,
+                        'avg30' => $priceData->avg30 ?? null,
+                        'sell' => $priceData->sell_price ?? null,
+                        'updated_at' => $priceData->cm_updated_at,
+                    ];
+                }
+            }
+
+            return [
+                'card_id' => $mvRecord->card->id,
+                'card_name' => $mvRecord->card->name,
+                'set_id' => $mvRecord->card->set_id,
+                'number' => $mvRecord->card->number,
+                'rarity' => $mvRecord->rarity ?? $mvRecord->card->rarity,
+                'supertype' => $mvRecord->card->supertype,
+                'types' => $mvRecord->card->types,
+                'image_url' => $mvRecord->card->img_large,
+                'variant_id' => $mvRecord->cm_id,
+                'variant_type_code' => $mvRecord->variant_type_code,
+                'variant_type_name' => $mvRecord->variant_type_name,
+                'collector_number' => $mvRecord->collector_number,
+                'ptcgo_code' => $mvRecord->ptcgo_code,
+                'tcgplayer_id' => $mvRecord->tcgplayer_id,
+                'prices' => $prices,
+            ];
+        });
     }
 }

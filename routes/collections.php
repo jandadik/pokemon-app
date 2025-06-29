@@ -15,7 +15,28 @@ use App\Http\Controllers\CollectionItemController;
 |
 */
 
-Route::resource('/', CollectionController::class)->parameters(['' => 'collection']);
+// Route::middleware(['auth', 'verified'])->group(function () {
+//     Route::get('', [CollectionController::class, 'index'])->name('index');
+//     Route::post('', [CollectionController::class, 'store'])->name('store');
+//     Route::get('/create', [CollectionController::class, 'create'])->name('create');
+//     Route::get('/list', [CollectionController::class, 'list'])->name('list');
+//     Route::get('/{collection}', [CollectionController::class, 'show'])->name('show');
+//     Route::put('/{collection}', [CollectionController::class, 'update'])->name('update');
+// });
+
+// Speciální routy MUSÍ být před Route::resource, aby nebyly přepsány
+Route::get('simple-list', [CollectionController::class, 'listSimple'])
+    ->name('simple-list');
+
+// Další speciální routy můžeme přidat zde
+
+// Tato routa MUSÍ být před Route::resource, aby nebyla přepsána
+Route::get('user-list', [CollectionController::class, 'list'])->name('user-list');
+
+// Resource routes pro collections - parametr bude {collection}
+Route::resource('', CollectionController::class, [
+    'parameters' => ['' => 'collection']
+]);
 
 // Routy pro rychlou aktualizaci stavů
 Route::patch('/{collection}/toggle-default', [CollectionController::class, 'toggleDefault'])->name('toggle_default');
@@ -40,20 +61,3 @@ Route::get('/demo/card-variant-selection', function () {
     return inertia('Collections/Items/Demo');
 })->name('demo.card_variant_selection');
 
-// Výsledné routy budou například:
-// GET /collections -> collections.index (CollectionController@index)
-// GET /collections/create -> collections.create (CollectionController@create)
-// POST /collections -> collections.store (CollectionController@store)
-// GET /collections/{collection} -> collections.show (CollectionController@show)
-// GET /collections/{collection}/edit -> collections.edit (CollectionController@edit)
-// PUT/PATCH /collections/{collection} -> collections.update (CollectionController@update)
-// DELETE /collections/{collection} -> collections.destroy (CollectionController@destroy)
-
-// Poznámka: Použitím ->parameters(['' => 'collection']) zajistíme,
-// že parametr v URL pro resource routy bude pojmenován '{collection}'
-// namísto výchozího '{\/}' (což by bylo nevalidní) nebo '{collection}' pokud by resource byl pojmenován.
-// Jelikož náš resource je '/', explicitně definujeme jméno parametru.
-// Alternativně, pokud bychom resource pojmenovali např. 'items', bylo by to:
-// Route::resource('items', CollectionController::class); // a parametr by byl {item}
-// Ale vzhledem k tomu, že prefix 'collections' je už v web.php,
-// chceme, aby se cesty generovaly jako /collections/{id} a ne /collections/collections/{id} 

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\CardController;
-use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\SetController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,13 +39,4 @@ Route::prefix('cards')
 // Používá se např. v modálním okně pro rychlé vyhledání karty
 Route::middleware('auth')->group(function () {
     Route::get('/lookup', [CardController::class, 'performLookup'])->name('cards.lookup');
-    
-    // Routy pro správu uživatelských sbírek
-    Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
-    Route::post('/collections', [CollectionController::class, 'store'])->name('collections.store');
-    Route::get('/collections/create', [CollectionController::class, 'create'])->name('collections.create');
-    Route::get('/collections/{collection}', [CollectionController::class, 'show'])->name('collections.show');
-    Route::put('/collections/{collection}', [CollectionController::class, 'update'])->name('collections.update');
-    Route::delete('/collections/{collection}', [CollectionController::class, 'destroy'])->name('collections.destroy');
-    Route::get('/collections/{collection}/edit', [CollectionController::class, 'edit'])->name('collections.edit');
 }); 

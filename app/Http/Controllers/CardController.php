@@ -280,11 +280,44 @@ class CardController extends Controller
 
     /**
      * Vrátí seznam typů karet pro konkrétní kartu (AJAX endpoint).
+     * OPTIMALIZOVÁNO: Při jediné variantě vrací rovnou kompletní detaily.
      */
     public function variants(string $cardId)
     {
         $types = $this->itemService->getTypesForCard($cardId);
-        return response()->json($types);
+        
+        // Pokud je dostupná pouze jedna varianta, vrátíme rovnou kompletní detaily
+        if ($types->count() === 1) {
+            $singleType = $types->first();
+            $details = \App\Models\CardsVariantsTypesMv::getCompleteVariantDetails($cardId, $singleType->code);
+            
+            if ($details) {
+                // Vrátíme formát kompatibilní s frontend - seznam s jednou položkou obsahující detaily
+                return response()->json([
+                    [
+                        'code' => $singleType->code,  
+                        'name' => $singleType->name,
+                        'description' => $singleType->description,
+                        'variant' => $singleType->variant,
+                        // Přidáme indikátor, že obsahuje kompletní detaily
+                        'has_details' => true,
+                        // Přidáme kompletní detaily
+                        'details' => $details
+                    ]
+                ]);
+            }
+        }
+        
+        // Standardní odpověď pro více variant (bez detailů)
+        return response()->json($types->map(function($type) {
+            return [
+                'code' => $type->code,
+                'name' => $type->name, 
+                'description' => $type->description,
+                'variant' => $type->variant,
+                'has_details' => false
+            ];
+        }));
     }
 
     /**
@@ -292,22 +325,12 @@ class CardController extends Controller
      */
     public function variantDetails(string $cardId, string $variantTypeCode)
     {
-        // Najít konkrétní variantu podle card_id a variant_type_code
-        $variant = $this->itemService->resolveVariantForType($cardId, $variantTypeCode);
-        
-        if (!$variant) {
-            return response()->json(['error' => 'Variant not found'], 404);
-        }
-        
-        // Získat detailní informace o variantě
-        $details = $this->itemService->getVariantDetails($variant->cm_id);
+        // OPTIMALIZOVÁNO: Použít materialized view místo složitých JOIN dotazů
+        $details = \App\Models\CardsVariantsTypesMv::getCompleteVariantDetails($cardId, $variantTypeCode);
         
         if (!$details) {
-            return response()->json(['error' => 'Variant details not found'], 404);
+            return response()->json(['error' => 'Variant not found'], 404);
         }
-        
-        // Přidat cm_id do odpovědi
-        $details['cm_id'] = $variant->cm_id;
         
         return response()->json($details);
     }

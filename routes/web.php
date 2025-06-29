@@ -34,19 +34,23 @@ Route::prefix('/')
     ->middleware(['auth', '2fa'])
     ->group(base_path('routes/profile.php'));
 
-// Katalog routy
-Route::prefix('/')
-    ->name('catalog.')
-    ->group(base_path('routes/catalog.php'));
-
-// Routy pro sbírky uživatelů
+// Routy pro sbírky uživatelů (MUSÍ být před catalog routami kvůli kolizi!)
 Route::prefix('collections')
     ->name('collections.')
     // ->middleware(['auth', '2fa']) // Dočasně zakomentováno, řešíme v controlleru
     ->group(base_path('routes/collections.php'));
 
+// Katalog routy
+Route::prefix('/')
+    ->name('catalog.')
+    ->group(base_path('routes/catalog.php'));
+
 // Image API routy
 Route::post('/images/bulk', [App\Http\Controllers\CardController::class, 'getBulkImageData'])
     ->name('images.bulk');
+
+
+
+
 
 //require __DIR__.'/auth.php';

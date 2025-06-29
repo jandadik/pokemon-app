@@ -1,13 +1,14 @@
 <template>
   <v-card v-if="cardId" class="card-variant-selector">
-    <v-card-title>
+    <!-- Titulek pouze v plném režimu -->
+    <v-card-title v-if="!compact">
       <v-icon start>mdi-card-multiple</v-icon>
       {{ $t('collections.variant_selection.title') }}
     </v-card-title>
     
-    <v-card-text>
-      <!-- Zobrazení vybrané karty -->
-      <div v-if="selectedCard" class="selected-card-info mb-4">
+    <v-card-text :class="compact ? 'pa-2' : ''">
+      <!-- Zobrazení vybrané karty pouze v plném režimu -->
+      <div v-if="selectedCard && !compact" class="selected-card-info mb-4">
         <v-alert
           type="info"
           variant="tonal"
@@ -31,16 +32,19 @@
       
       <!-- Seznam dostupných variant -->
       <div v-else-if="variantTypes.length > 0">
-        <v-list-subheader class="px-0 mb-2">
+        <v-list-subheader v-if="!compact" class="px-0 mb-2">
           {{ $t('collections.variant_selection.select_variant') }}
         </v-list-subheader>
+        <div v-else class="text-body-2 font-weight-medium mb-2">
+          Vyberte variantu:
+        </div>
         
         <v-list density="compact" class="variant-list">
           <VariantTypeItem
             v-for="variantType in variantTypes"
             :key="variantType.code"
             :variant-type="variantType"
-            :is-selected="String(selectedVariantType) === String(variantType.code)"
+            :is-selected="String(selectedVariantCode) === String(variantType.code)"
             :disabled="disabled"
             @click="selectVariant(variantType)"
           />
@@ -97,6 +101,10 @@ const props = defineProps({
   selectedCard: {
     type: Object,
     default: null
+  },
+  compact: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -105,6 +113,12 @@ const emit = defineEmits(['variant-selected']);
 const variantTypes = ref([]);
 const loading = ref(false);
 const error = ref(null);
+const selectedVariantCode = ref(props.selectedVariantType);
+
+// Sledování změn selectedVariantType z parent komponenty
+watch(() => props.selectedVariantType, (newValue) => {
+  selectedVariantCode.value = newValue;
+});
 
 // Načtení variant při změně cardId
 watch(() => props.cardId, (newCardId) => {
@@ -113,6 +127,7 @@ watch(() => props.cardId, (newCardId) => {
   } else {
     variantTypes.value = [];
     error.value = null;
+    selectedVariantCode.value = null;
   }
 }, { immediate: true });
 
@@ -145,6 +160,29 @@ async function loadVariantTypes() {
     const data = await response.json();
     variantTypes.value = data || [];
     
+    // Automaticky vybrat jedinou dostupnou variantu
+    if (variantTypes.value.length === 1 && !selectedVariantCode.value) {
+      const singleVariant = variantTypes.value[0];
+      
+      // Pokud varianta již obsahuje kompletní detaily, použij je
+      if (singleVariant.has_details && singleVariant.details) {
+        selectedVariantCode.value = singleVariant.code;
+        emit('variant-selected', {
+          // Základní informace o typu
+          code: singleVariant.code,
+          variant: singleVariant.variant,
+          name: singleVariant.name,
+          description: singleVariant.description || null,
+          
+          // Kompletní informace o variantě (už načtené)
+          ...singleVariant.details
+        });
+      } else {
+        // Fallback - zavolat selectVariant pro načtení detailů
+        await selectVariant(singleVariant);
+      }
+    }
+    
   } catch (err) {
     console.error('Chyba při načítání variant:', err);
     error.value = 'Nepodařilo se načíst dostupné varianty karty.';
@@ -156,6 +194,9 @@ async function loadVariantTypes() {
 
 async function selectVariant(variantType) {
   if (props.disabled) return;
+  
+  // Nastavit jako vybranou
+  selectedVariantCode.value = variantType.code;
   
   try {
     // Zavolat endpoint pro získání kompletních informací o variantě

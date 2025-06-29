@@ -23,10 +23,10 @@ class CollectionController extends Controller
     public function __construct(CollectionService $collectionService)
     {
         $this->collectionService = $collectionService;
-        $this->authorizeResource(UserCollection::class, 'collection');
+        $this->authorizeResource(UserCollection::class, 'collection', ['except' => ['list', 'listSimple']]);
 
-        // Aplikujeme middleware 'auth' a '2fa' na všechny metody kromě 'show'
-        $this->middleware(['auth', '2fa'])->except('show');
+        // Aplikujeme middleware 'auth' a '2fa' na všechny metody kromě 'show' a 'listSimple'
+        $this->middleware(['auth', '2fa'])->except(['show', 'listSimple']);
     }
 
     /**
@@ -309,6 +309,47 @@ class CollectionController extends Controller
             return redirect()->back()->with('error', __('collections.messages.toggle_visibility_failed'));
         }
     }
+
+    /**
+     * Vrátí seznam kolekcí přihlášeného uživatele jako JSON.
+     */
+    public function list()
+    {
+        if (!Auth::check()) {
+            return response()->json([]);
+        }
+
+        $collections = Auth::user()->collections()
+            ->select('id', 'name', 'is_default')
+            ->orderBy('is_default', 'desc')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($collections);
+    }
+
+    /**
+     * Vrátí pouze čistý seznam kolekcí přihlášeného uživatele (id, name, is_default) jako JSON.
+     * Slouží pro jednoduché výběry (např. v modalech).
+     */
+    public function listSimple(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([]);
+        }
+
+        $collections = $user->collections()
+            ->select('id', 'name', 'is_default')
+            ->orderBy('is_default', 'desc')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($collections);
+    }
+
+
 
     // Zde budou další metody pro CRUD operace se sbírkami...
 }
