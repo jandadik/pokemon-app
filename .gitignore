@@ -19,6 +19,8 @@
 .env.tmp
 .env.production
 .phpunit.result.cache
+.roomodes
+.windsurfrules
 Homestead.json
 Homestead.yaml
 auth.json
@@ -68,6 +70,6 @@ tasks/
 /storage/app/
 /public/images/card_images/*
 !/public/images/card_images/.gitignore
-/temp_env_line.txt
-/_ide_helper.php
-/.phpstorm.meta.php 
+temp_env_line.txt
+_ide_helper.php
+.phpstorm.meta.php 
