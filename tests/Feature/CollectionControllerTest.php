@@ -12,7 +12,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 class CollectionControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    //use RefreshDatabase;
     // use WithFaker; // Můžeme odkomentovat, pokud budeme potřebovat faker pro názvy atd.
 
     protected User $user;

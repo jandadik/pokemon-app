@@ -1,5 +1,8 @@
 /.phpunit.cache
 /.cursor
+/.roo
+/.taskmaster
+/.taskmaster-migration-backup
 # Prevent API keys from being committed
 .cursor/mcp.json
 /node_modules
@@ -9,8 +12,11 @@
 /public/images/card_images
 /storage/*.key
 /vendor
+/docs
 .env
 .env.backup
+.env.example
+.env.tmp
 .env.production
 .phpunit.result.cache
 Homestead.json
@@ -52,3 +58,16 @@ node_modules/
 # Task files
 tasks.json
 tasks/ 
+
+# --- DOPLNĚNO: AI doporučení ---
+/storage/*
+!/storage/.gitignore
+/storage/debugbar/
+/storage/framework/
+/storage/logs/
+/storage/app/
+/public/images/card_images/*
+!/public/images/card_images/.gitignore
+/temp_env_line.txt
+/_ide_helper.php
+/.phpstorm.meta.php 

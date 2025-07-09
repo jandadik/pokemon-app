@@ -15,7 +15,7 @@ use LogicException; // Make sure this is imported
 
 class CollectionServiceTest extends TestCase
 {
-    use RefreshDatabase; // Resets database for each test, good for service tests
+    //use RefreshDatabase; // Resets database for each test, good for service tests
 
     protected CollectionService $collectionService;
 

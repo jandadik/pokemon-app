@@ -11,7 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 
 class UserCollectionPolicyTest extends TestCase
 {
-    use RefreshDatabase;
+    //use RefreshDatabase;
 
     protected UserCollectionPolicy $policy;
 
