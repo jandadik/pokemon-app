@@ -1,53 +1,56 @@
 <template>
-    <v-app-bar :elevation="2">
-        <div class="header-container d-flex align-center">
-            <!-- Levá část -->
-            <v-app-bar-nav-icon 
-                variant="text" 
-                @click="$emit('update:drawer', !drawer)"
-                class="flex-shrink-0"
-            />
+  <header class="fixed top-0 left-0 right-0 z-50 bg-surface dark:bg-surface-dark shadow-md">
+    <div class="header-container max-w-[1400px] mx-auto w-full flex items-center h-16 px-4">
+      <!-- Left part - menu toggle -->
+      <button
+        type="button"
+        class="btn-icon flex-shrink-0"
+        @click="$emit('update:drawer', !drawer)"
+      >
+        <span class="mdi mdi-menu text-xl"></span>
+      </button>
 
-            <!-- Střední část -->
-            <Link href="/" class="ml-3 mr-2">
-                <ApplicationLogo class="" />
-            </Link>
-            <v-app-bar-title>{{ $trans('app.app_name') }}</v-app-bar-title>
+      <!-- Logo and title -->
+      <Link href="/" class="ml-3 mr-2 flex items-center">
+        <ApplicationLogo />
+      </Link>
+      <h1 class="text-lg font-semibold text-text-primary dark:text-text-primary-dark">
+        {{ $trans('app.app_name') }}
+      </h1>
 
-            <v-spacer></v-spacer>
+      <div class="flex-grow"></div>
 
-            <!-- Pravá část -->
-            <AppHeaderActions />
+      <!-- Right part - actions -->
+      <AppHeaderActions />
+    </div>
+
+    <!-- Bottom tabs -->
+    <div v-if="showTabs" class="border-t border-border dark:border-border-dark">
+      <div class="header-container max-w-[1400px] mx-auto w-full">
+        <div class="flex justify-center">
+          <AppTabs />
         </div>
-
-        <!-- Spodní část s taby -->
-        <template v-slot:extension v-if="showTabs">
-            <div class="header-container">
-                <div class="d-flex justify-center">
-                    <AppTabs />
-                </div>
-            </div>
-        </template>
-    </v-app-bar>
+      </div>
+    </div>
+  </header>
 </template>
 
 <script setup>
-    import { Link } from '@inertiajs/vue3'
-    import ApplicationLogo from '@/Components/UI/ApplicationLogo.vue'
-    import AppHeaderActions from '@/Components/Layout/AppHeaderActions.vue'
-    import AppTabs from '@/Components/Layout/AppTabs.vue'
-    import { useAuthStore } from '@/stores/authStore'
+import { Link } from '@inertiajs/vue3'
+import ApplicationLogo from '@/Components/UI/ApplicationLogo.vue'
+import AppHeaderActions from '@/Components/Layout/AppHeaderActions.vue'
+import AppTabs from '@/Components/Layout/AppTabs.vue'
+import { useAuthStore } from '@/stores/authStore'
 
-    const auth = useAuthStore()
+const auth = useAuthStore()
 
-    defineProps({
-        drawer: Boolean,
-        showTabs: {
-            type: Boolean,
-            default: true
-        }
-    })
+defineProps({
+  drawer: Boolean,
+  showTabs: {
+    type: Boolean,
+    default: true
+  }
+})
 
-    defineEmits(['update:drawer'])
+defineEmits(['update:drawer'])
 </script>
-

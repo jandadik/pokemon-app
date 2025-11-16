@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import MDI icons */
+@import '@mdi/font/css/materialdesignicons.css';
+/* Import PrimeIcons */
+@import 'primeicons/primeicons.css';
+
+/* Base layer customizations */
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-background text-text-primary font-sans;
+  }
+
+  /* Dark mode base styles */
+  .dark body {
+    @apply bg-background-dark text-text-primary-dark;
+  }
+}
+
+/* Component layer - reusable component classes */
+@layer components {
+  /* Card component */
+  .card {
+    @apply bg-surface rounded-lg shadow-card p-4;
+  }
+
+  .dark .card {
+    @apply bg-surface-dark;
+  }
+
+  /* Button variants */
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-3xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-white hover:bg-primary/90 focus:ring-primary;
+  }
+
+  .btn-secondary {
+    @apply btn bg-secondary text-white hover:bg-secondary/90 focus:ring-secondary;
+  }
+
+  .btn-success {
+    @apply btn bg-success text-white hover:bg-success/90 focus:ring-success;
+  }
+
+  .btn-warning {
+    @apply btn bg-warning text-white hover:bg-warning/90 focus:ring-warning;
+  }
+
+  .btn-error {
+    @apply btn bg-error text-white hover:bg-error/90 focus:ring-error;
+  }
+
+  .btn-outline {
+    @apply btn border border-border bg-transparent hover:bg-hover;
+  }
+
+  .btn-text {
+    @apply btn bg-transparent hover:bg-hover;
+  }
+
+  .btn-icon {
+    @apply inline-flex items-center justify-center p-2 rounded-full transition-colors hover:bg-hover;
+  }
+
+  /* Form inputs */
+  .input {
+    @apply w-full px-3 py-2 bg-surface border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors;
+  }
+
+  .dark .input {
+    @apply bg-surface-dark border-input-border-dark;
+  }
+
+  .input-error {
+    @apply border-error focus:ring-error focus:border-error;
+  }
+
+  /* Form label */
+  .label {
+    @apply block text-sm font-medium text-text-primary mb-1;
+  }
+
+  .dark .label {
+    @apply text-text-primary-dark;
+  }
+
+  /* Helper/error text */
+  .helper-text {
+    @apply text-xs text-text-secondary mt-1;
+  }
+
+  .error-text {
+    @apply text-xs text-error mt-1;
+  }
+
+  /* Container */
+  .container-fluid {
+    @apply w-full px-4 mx-auto;
+  }
+
+  /* Page wrapper */
+  .page-wrapper {
+    @apply min-h-screen bg-background;
+  }
+
+  .dark .page-wrapper {
+    @apply bg-background-dark;
+  }
+}
+
+/* Utilities layer */
+@layer utilities {
+  /* Text colors for dark mode */
+  .text-muted {
+    @apply text-text-secondary;
+  }
+
+  .dark .text-muted {
+    @apply text-text-secondary-dark;
+  }
+}

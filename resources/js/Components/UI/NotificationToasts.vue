@@ -1,43 +1,51 @@
 <template>
-  <div class="notification-toasts">
-    <v-snackbar
-      v-for="snackbar in snackbars"
-      :key="snackbar.id"
-      v-model="snackbar.show"
-      :color="getSnackbarColor(snackbar.type)"
-      :timeout="-1"
-      location="top right"
-      multi-line
-      class="notification-toast"
-      rounded="lg"
-      elevation="8"
-    >
-      <div class="d-flex align-center">
-        <v-icon 
-          :icon="getSnackbarIcon(snackbar.type)" 
-          class="me-3"
-          size="20"
-        />
-        <div class="text-body-2 flex-grow-1">
-          {{ snackbar.message }}
-        </div>
-        <v-btn
-          v-if="snackbar.closable"
-          icon
-          size="small"
-          variant="text"
-          @click="hideSnackbar(snackbar.id)"
+  <Toast
+    position="top-right"
+    :pt="{
+      root: 'fixed top-4 right-4 z-[10000]',
+      message: 'flex items-center gap-3',
+      content: 'flex items-center gap-3 p-3',
+      icon: 'text-xl',
+      text: 'flex-grow',
+      closeButton: 'ml-2'
+    }"
+  />
+  <!-- Custom toast container for manual toasts -->
+  <div class="fixed top-4 right-4 z-[10000] flex flex-col gap-2 pointer-events-none">
+    <TransitionGroup name="toast">
+      <div
+        v-for="snackbar in snackbars"
+        :key="snackbar.id"
+        class="pointer-events-auto"
+      >
+        <div
+          :class="[
+            'flex items-center gap-3 p-4 rounded-lg shadow-lg min-w-[300px] max-w-[400px]',
+            getToastClasses(snackbar.type)
+          ]"
         >
-          <v-icon size="16">mdi-close</v-icon>
-        </v-btn>
+          <span :class="['mdi text-xl', getSnackbarIcon(snackbar.type)]"></span>
+          <div class="flex-grow text-sm">
+            {{ snackbar.message }}
+          </div>
+          <button
+            v-if="snackbar.closable"
+            type="button"
+            class="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10"
+            @click="hideSnackbar(snackbar.id)"
+          >
+            <span class="mdi mdi-close text-base"></span>
+          </button>
+        </div>
       </div>
-    </v-snackbar>
+    </TransitionGroup>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { useNotificationStore } from '@/stores/notificationStore'
+import Toast from 'primevue/toast'
 
 const notificationStore = useNotificationStore()
 
@@ -47,14 +55,14 @@ const hideSnackbar = (id) => {
   notificationStore.hide(id)
 }
 
-const getSnackbarColor = (type) => {
-  const colors = {
-    success: 'success',
-    error: 'error',
-    warning: 'warning',
-    info: 'info'
+const getToastClasses = (type) => {
+  const classes = {
+    success: 'bg-success text-white',
+    error: 'bg-error text-white',
+    warning: 'bg-warning text-white',
+    info: 'bg-info text-white'
   }
-  return colors[type] || 'info'
+  return classes[type] || 'bg-info text-white'
 }
 
 const getSnackbarIcon = (type) => {
@@ -69,20 +77,22 @@ const getSnackbarIcon = (type) => {
 </script>
 
 <style scoped>
-.notification-toasts {
-  position: fixed;
-  top: 0;
-  right: 0;
-  z-index: 10000;
-  pointer-events: none;
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
 }
 
-.notification-toast {
-  pointer-events: auto;
-  margin-bottom: 8px;
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(100%);
 }
 
-:deep(.v-snackbar__wrapper) {
-  margin-bottom: 8px;
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
 }
-</style> 
+
+.toast-move {
+  transition: transform 0.3s ease;
+}
+</style>
