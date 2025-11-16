@@ -1,38 +1,42 @@
 <template>
+  <nav class="flex items-center gap-1 py-2">
     <Link href="/">
-        <v-btn>
-            {{ $t('ui.menu.home') }}
-        </v-btn>
+      <button class="btn-text px-4 py-2">
+        {{ $t('ui.menu.home') }}
+      </button>
     </Link>
     <Link href="/sets">
-        <v-btn>
-            {{ $t('ui.menu.catalog') }}
-        </v-btn>
+      <button class="btn-text px-4 py-2">
+        {{ $t('ui.menu.catalog') }}
+      </button>
     </Link>
     <Link href="/cards">
-        <v-btn>
-            {{ $t('ui.menu.cards') }}
-        </v-btn>
+      <button class="btn-text px-4 py-2">
+        {{ $t('ui.menu.cards') }}
+      </button>
     </Link>
-    <Link 
-        v-if="auth.isLoggedIn"
-        href="/collections">
-        <v-btn>
-            {{ $t('ui.menu.collections') }}
-        </v-btn>
+    <Link
+      v-if="auth.isLoggedIn"
+      href="/collections"
+    >
+      <button class="btn-text px-4 py-2">
+        {{ $t('ui.menu.collections') }}
+      </button>
     </Link>
-    <Link 
-        v-if="auth.isLoggedIn && auth.can('admin.access')"
-        href="/admin">
-        <v-btn>
-            {{ $t('ui.menu.admin') }}
-        </v-btn>
+    <Link
+      v-if="auth.isLoggedIn && auth.can('admin.access')"
+      href="/admin"
+    >
+      <button class="btn-text px-4 py-2">
+        {{ $t('ui.menu.admin') }}
+      </button>
     </Link>
+  </nav>
 </template>
 
 <script setup>
-    import { Link } from '@inertiajs/vue3'
-    import { useAuthStore } from '@/stores/authStore'
-    
-    const auth = useAuthStore()
+import { Link } from '@inertiajs/vue3'
+import { useAuthStore } from '@/stores/authStore'
+
+const auth = useAuthStore()
 </script>

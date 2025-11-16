@@ -1,192 +1,180 @@
 <template>
-    <v-container class="fill-height">
-        <v-row justify="center" align="center">
-            <v-col cols="12" sm="8" md="6" lg="4">
-                <v-card class="elevation-12 pa-8">
-                    <v-card-title class="text-h4 text-center mb-4">
-                        {{ $t('auth.login.title') }}
-                    </v-card-title>
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <div class="card p-8 shadow-lg">
+        <h1 class="text-2xl font-bold text-center mb-6 text-text-primary dark:text-text-primary-dark">
+          {{ $t('auth.login.title') }}
+        </h1>
 
-                    <v-card-text>
-                        <v-alert
-                            v-if="status"
-                            type="success"
-                            class="mb-4"
-                        >
-                            {{ status }}
-                        </v-alert>
+        <div
+          v-if="status"
+          class="mb-4 p-4 rounded-lg bg-success/10 text-success border border-success/20"
+        >
+          {{ status }}
+        </div>
 
-                        <v-form 
-                            ref="formRef"
-                            @submit.prevent="submit" 
-                            v-model="isFormValid"
-                        >
-                            <v-text-field
-                                v-model="form.email"
-                                :label="$t('auth.login.email')"
-                                type="email"
-                                required
-                                :rules="emailRules"
-                                :error-messages="errors.email"
-                                @update:model-value="() => errors.email = ''"
-                                prepend-inner-icon="mdi-email"
-                            />
+        <form @submit.prevent="submit">
+          <div class="mb-4">
+            <label class="label">{{ $t('auth.login.email') }}</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 mdi mdi-email text-text-secondary"></span>
+              <InputText
+                v-model="form.email"
+                type="email"
+                :class="[
+                  'input pl-10',
+                  errors.email ? 'input-error' : ''
+                ]"
+                :pt="{
+                  root: 'w-full'
+                }"
+              />
+            </div>
+            <p v-if="errors.email" class="error-text">{{ errors.email }}</p>
+          </div>
 
-                            <v-text-field
-                                v-model="form.password"
-                                :label="$t('auth.login.password')"
-                                :type="showPassword ? 'text' : 'password'"
-                                required
-                                :rules="passwordRules"
-                                :error-messages="errors.password"
-                                @update:model-value="() => errors.password = 'hovnohovno'"
-                                prepend-inner-icon="mdi-lock"
-                                :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                                @click:append-inner="showPassword = !showPassword"
-                            />
+          <div class="mb-4">
+            <label class="label">{{ $t('auth.login.password') }}</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 mdi mdi-lock text-text-secondary"></span>
+              <InputText
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                :class="[
+                  'input pl-10 pr-10',
+                  errors.password ? 'input-error' : ''
+                ]"
+                :pt="{
+                  root: 'w-full'
+                }"
+              />
+              <button
+                type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                @click="showPassword = !showPassword"
+              >
+                <span :class="['mdi', showPassword ? 'mdi-eye' : 'mdi-eye-off']"></span>
+              </button>
+            </div>
+            <p v-if="errors.password" class="error-text">{{ errors.password }}</p>
+          </div>
 
-                            <div class="d-flex align-center mb-4">
-                                <v-checkbox
-                                    v-model="form.remember"
-                                    :label="$t('auth.login.remember')"
-                                    hide-details
-                                    class="mt-0"
-                                />
-                            </div>
+          <div class="flex items-center mb-4">
+            <Checkbox
+              v-model="form.remember"
+              :binary="true"
+              inputId="remember"
+              :pt="{
+                root: 'w-5 h-5',
+                box: 'border border-input-border dark:border-input-border-dark rounded'
+              }"
+            />
+            <label for="remember" class="ml-2 text-sm text-text-primary dark:text-text-primary-dark">
+              {{ $t('auth.login.remember') }}
+            </label>
+          </div>
 
-                            <v-btn
-                                color="primary"
-                                type="submit"
-                                block
-                                :loading="form.processing"
-                                :disabled="!isFormValid || form.processing"
-                            >
-                                {{ $t('auth.login.submit') }}
-                            </v-btn>
+          <Button
+            type="submit"
+            :loading="form.processing"
+            :disabled="form.processing"
+            class="btn-primary w-full justify-center"
+            :pt="{
+              root: 'w-full',
+              label: 'font-medium'
+            }"
+          >
+            {{ $t('auth.login.submit') }}
+          </Button>
 
-                            <div class="d-flex align-items-center my-4">
-                                <v-divider class="flex-grow-1"></v-divider>
-                                <span class="mx-4 text-medium-emphasis">{{ $t('auth.login.or') }}</span>
-                                <v-divider class="flex-grow-1"></v-divider>
-                            </div>
-                            
-                            <v-btn
-                                color="red darken-1"
-                                block
-                                @click="redirectToWorkOS"
-                                class="mb-4"
-                                prepend-icon="mdi-google"
-                            >
-                                {{ $t('auth.login.google') }}
-                            </v-btn>
+          <div class="flex items-center my-4">
+            <div class="flex-grow border-t border-border dark:border-border-dark"></div>
+            <span class="mx-4 text-text-secondary text-sm">{{ $t('auth.login.or') }}</span>
+            <div class="flex-grow border-t border-border dark:border-border-dark"></div>
+          </div>
 
-                            <div class="text-center mt-4">
-                                <span class="text-medium-emphasis">{{ $t('auth.login.no_account') }}</span>
-                                <v-btn
-                                    variant="text"
-                                    color="primary"
-                                    @click="navigateToRegister"
-                                    class="text-none ms-2"
-                                >
-                                    {{ $t('auth.login.register') }}
-                                </v-btn>
-                            </div>
-                            
-                            <div class="text-center mt-2">
-                                <v-btn
-                                    variant="text"
-                                    color="secondary"
-                                    @click="navigateToForgotPassword"
-                                    class="text-none"
-                                >
-                                    {{ $t('auth.login.forgot') }}
-                                </v-btn>
-                            </div>
-                        </v-form>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </v-row>
-    </v-container>
+          <button
+            type="button"
+            class="btn w-full justify-center bg-red-600 text-white hover:bg-red-700 mb-4"
+            @click="redirectToWorkOS"
+          >
+            <span class="mdi mdi-google mr-2"></span>
+            {{ $t('auth.login.google') }}
+          </button>
+
+          <div class="text-center mt-4">
+            <span class="text-text-secondary text-sm">{{ $t('auth.login.no_account') }}</span>
+            <button
+              type="button"
+              class="btn-text text-primary ml-2"
+              @click="navigateToRegister"
+            >
+              {{ $t('auth.login.register') }}
+            </button>
+          </div>
+
+          <div class="text-center mt-2">
+            <button
+              type="button"
+              class="btn-text text-secondary"
+              @click="navigateToForgotPassword"
+            >
+              {{ $t('auth.login.forgot') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
+import InputText from 'primevue/inputtext'
+import Checkbox from 'primevue/checkbox'
+import Button from 'primevue/button'
 
 const props = defineProps({
-    status: {
-        type: String,
-        default: null
-    },
-    errors: {
-        type: Object,
-        default: () => ({})
-    },
-    canResetPassword: {
-        type: Boolean,
-        default: false
-    }
+  status: {
+    type: String,
+    default: null
+  },
+  errors: {
+    type: Object,
+    default: () => ({})
+  },
+  canResetPassword: {
+    type: Boolean,
+    default: false
+  }
 })
 
-const formRef = ref(null)
 const showPassword = ref(false)
-const isFormValid = ref(true)
-
-// Funkce pro získání validačních textů
-const validationText = {
-  emailRequired: 'E-mail je povinný',
-  emailValid: 'E-mail musí být platný',
-  passwordRequired: 'Heslo je povinné',
-  passwordMinLength: 'Heslo musí mít alespoň 8 znaků'
-}
-
-const emailRules = [
-    v => !!v || validationText.emailRequired,
-    v => /.+@.+\..+/.test(v) || validationText.emailValid,
-]
-
-const passwordRules = [
-    v => !!v || validationText.passwordRequired,
-    v => v?.length >= 8 || validationText.passwordMinLength,
-]
 
 const form = useForm({
-    email: 'janda@janda4.cz',
-    password: 'hovnohovno',
-    remember: false
+  email: '',
+  password: '',
+  remember: false
 })
 
-const submit = async () => {
-    if (formRef.value) {
-        const { valid } = await formRef.value.validate()
-        if (!valid) {
-            isFormValid.value = false
-            return
-        }
+const submit = () => {
+  form.post(route('auth.login.store'), {
+    onSuccess: () => {
+      form.reset()
     }
-
-    form.post(route('auth.login.store'), {
-        onSuccess: () => {
-            isFormValid.value = true
-            form.reset()
-        },
-        onError: () => {
-            isFormValid.value = false
-        }
-    })
+  })
 }
 
 const navigateToForgotPassword = () => {
-    router.visit(route('auth.password.request'))
+  router.visit(route('auth.password.request'))
 }
 
 const navigateToRegister = () => {
-    router.visit(route('auth.user-account.create'))
+  router.visit(route('auth.user-account.create'))
 }
 
 const redirectToWorkOS = () => {
-    // Místo fetch požadavku použijeme přímé otevření v novém okně nebo záložce
-    window.open(route('auth.workos'), '_self');
+  window.open(route('auth.workos'), '_self')
 }
 </script>

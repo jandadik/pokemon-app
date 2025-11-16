@@ -1,111 +1,155 @@
 <template>
-    <v-navigation-drawer
-        v-model="drawer"
-        :location="$vuetify.display.mobile ? 'bottom' : 'start'"
-        temporary
-    >
-        <Link 
-            v-if="auth.isLoggedIn" 
-            href="/profile" 
-            @click="closeDrawer"
+  <Sidebar
+    v-model:visible="drawerVisible"
+    :position="isMobile ? 'bottom' : 'left'"
+    :pt="{
+      root: 'bg-surface dark:bg-surface-dark',
+      header: 'hidden',
+      content: 'p-0'
+    }"
+  >
+    <div class="flex flex-col h-full w-72">
+      <!-- User profile section -->
+      <Link
+        v-if="auth.isLoggedIn"
+        href="/profile"
+        @click="closeDrawer"
+        class="block p-4 hover:bg-hover dark:hover:bg-hover-dark"
+      >
+        <div class="flex items-center gap-3">
+          <img
+            src="https://randomuser.me/api/portraits/men/85.jpg"
+            alt="User"
+            class="w-10 h-10 rounded-full"
+          />
+          <span class="font-medium text-text-primary dark:text-text-primary-dark">
+            {{ auth.user.name }}
+          </span>
+        </div>
+      </Link>
+
+      <div class="border-t border-border dark:border-border-dark"></div>
+
+      <!-- Navigation links -->
+      <nav class="flex-1 py-2">
+        <Link
+          v-if="auth.isLoggedIn && auth.can('admin.access')"
+          href="/admin"
+          @click="closeDrawer"
+          class="flex items-center gap-3 px-4 py-3 hover:bg-hover dark:hover:bg-hover-dark text-text-primary dark:text-text-primary-dark"
         >
-            <v-list-item
-                prepend-avatar="https://randomuser.me/api/portraits/men/85.jpg"
-                :title="auth.user.name"
-                nav
-            >
-            </v-list-item>
+          <span class="mdi mdi-cog text-xl"></span>
+          <span>Administrace</span>
         </Link>
 
-        <v-divider />
+        <Link
+          href="/"
+          @click="closeDrawer"
+          class="flex items-center gap-3 px-4 py-3 hover:bg-hover dark:hover:bg-hover-dark text-text-primary dark:text-text-primary-dark"
+        >
+          <span class="mdi mdi-view-dashboard text-xl"></span>
+          <span>Dashboard</span>
+        </Link>
 
-        <v-list density="compact" nav>
-            <Link href="/admin" @click="closeDrawer">
-                <v-list-item
-                    v-if="auth.isLoggedIn && auth.can('admin.access')"
-                    prepend-icon="mdi-cog"
-                    title="Administrace"
-                    value="admin"
-                />
-            </Link>
+        <Link
+          href="/collections/demo/card-variant-selection"
+          @click="closeDrawer"
+          class="flex items-center gap-3 px-4 py-3 hover:bg-hover dark:hover:bg-hover-dark text-text-primary dark:text-text-primary-dark"
+        >
+          <span class="mdi mdi-test-tube text-xl"></span>
+          <span>Demo: Card Variant Selection</span>
+        </Link>
+      </nav>
 
-            <Link href="/" @click="closeDrawer">
-                <v-list-item
-                    prepend-icon="mdi-view-dashboard"
-                    title="Dashboard"
-                    value="dashboard"
-                />
-            </Link>
+      <div class="border-t border-border dark:border-border-dark"></div>
 
-            <Link href="/collections/demo/card-variant-selection" @click="closeDrawer">
-                <v-list-item
-                    prepend-icon="mdi-test-tube"
-                    title="Demo: Card Variant Selection"
-                    value="demo"
-                />
-            </Link>
+      <!-- Auth actions -->
+      <div v-if="!auth.isLoggedIn" class="py-2">
+        <Link
+          href="/user-account/create"
+          @click="closeDrawer"
+          class="flex items-center gap-3 px-4 py-3 hover:bg-hover dark:hover:bg-hover-dark text-text-primary dark:text-text-primary-dark"
+        >
+          <span class="mdi mdi-account-plus text-xl"></span>
+          <span>Registrovat</span>
+        </Link>
+        <Link
+          href="/login"
+          @click="closeDrawer"
+          class="flex items-center gap-3 px-4 py-3 hover:bg-hover dark:hover:bg-hover-dark text-text-primary dark:text-text-primary-dark"
+        >
+          <span class="mdi mdi-login text-xl"></span>
+          <span>Přihlásit</span>
+        </Link>
+      </div>
 
-        </v-list>
+      <div v-if="auth.isLoggedIn" class="py-2">
+        <Link
+          href="/logout"
+          method="delete"
+          as="button"
+          @click="closeDrawer"
+          class="flex items-center gap-3 px-4 py-3 hover:bg-hover dark:hover:bg-hover-dark text-text-primary dark:text-text-primary-dark w-full text-left"
+        >
+          <span class="mdi mdi-logout text-xl"></span>
+          <span>Odhlásit</span>
+        </Link>
+      </div>
 
-        <v-divider />
-        <v-list density="compact" nav v-if="!auth.isLoggedIn">
-            <Link href="/user-account/create" @click="closeDrawer">
-                <v-list-item prepend-icon="mdi-account-plus" title="Registrovat" value="register" />
-            </Link>
-        </v-list>
-        <v-list density="compact" nav v-if="!auth.isLoggedIn">
-            <Link href="/login" @click="closeDrawer">
-                <v-list-item prepend-icon="mdi-login" title="Přihlásit" value="auth.login" />
-            </Link>
-        </v-list>
+      <div class="border-t border-border dark:border-border-dark"></div>
 
-        <v-list density="compact" nav v-if="auth.isLoggedIn">
-            <Link href="/logout" method="delete" as="button" @click="closeDrawer">
-                <v-list-item prepend-icon="mdi-logout" title="Odhlásit" value="auth.logout" />
-            </Link>
-        </v-list>
-        
-        <v-divider />
-        
-        <!-- Sekce Nastavení -->
-        <v-list-subheader>Nastavení</v-list-subheader>
-        <v-list density="compact" nav>
-            <v-list-item prepend-icon="mdi-theme-light-dark" title="Téma aplikace">
-                <template v-slot:append>
-                    <ThemeSwitcher />
-                </template>
-            </v-list-item>
-        </v-list>
-    </v-navigation-drawer>
+      <!-- Settings section -->
+      <div class="py-2">
+        <div class="px-4 py-2 text-xs font-semibold text-text-secondary dark:text-text-secondary-dark uppercase tracking-wider">
+          Nastavení
+        </div>
+        <div class="flex items-center justify-between px-4 py-3">
+          <div class="flex items-center gap-3 text-text-primary dark:text-text-primary-dark">
+            <span class="mdi mdi-theme-light-dark text-xl"></span>
+            <span>Téma aplikace</span>
+          </div>
+          <ThemeSwitcher />
+        </div>
+      </div>
+    </div>
+  </Sidebar>
 </template>
 
 <script setup>
-    import { ref, computed } from 'vue'
-    import { Link } from '@inertiajs/vue3'
-    import { useAuthStore } from '@/stores/authStore'
-    import ThemeSwitcher from '@/Components/ThemeSwitcher.vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { Link } from '@inertiajs/vue3'
+import { useAuthStore } from '@/stores/authStore'
+import ThemeSwitcher from '@/Components/ThemeSwitcher.vue'
+import Sidebar from 'primevue/sidebar'
 
-    const auth = useAuthStore()
-    const props = defineProps({
-        modelValue: Boolean,
-    })
+const auth = useAuthStore()
+const isMobile = ref(false)
 
-    const emit = defineEmits(['update:modelValue'])
+const props = defineProps({
+  visible: Boolean,
+})
 
-    const drawer = computed({
-        get: () => props.modelValue,
-        set: (value) => emit('update:modelValue', value)
-    })
+const emit = defineEmits(['update:visible'])
 
-    // const closeDrawer = () => {
-    //     emit('update:modelValue', false)
-    // }
+const drawerVisible = computed({
+  get: () => props.visible,
+  set: (value) => emit('update:visible', value)
+})
 
-    const closeDrawer = (event) => {
-        try {
-            emit('update:modelValue', false)
-        } catch (error) {
-            console.error('Chyba při zavírání menu:', error)
-        }
-    }
+const closeDrawer = () => {
+  emit('update:visible', false)
+}
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>

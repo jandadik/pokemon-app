@@ -1,20 +1,25 @@
 import { createApp, h } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import MainLayout from '@/Layouts/MainLayout.vue'
-import { ZiggyVue } from '../../vendor/tightenco/ziggy';
+import { ZiggyVue } from '../../vendor/tightenco/ziggy'
 
 // i18n
 import { setupI18n, TranslationPlugin } from '@/i18n'
 
-// Vuetify
-// import 'vuetify/styles'
-import '../css/style.scss'
-import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
+// PrimeVue
+import PrimeVue from 'primevue/config'
+import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice'
+import Tooltip from 'primevue/tooltip'
+
+// CSS
+import '../css/app.css'
+import '@mdi/font/css/materialdesignicons.css'
+import 'primeicons/primeicons.css'
+
+// Stores
 import { useUserStore, initializeUserStore } from '@/stores/userStore'
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 
 // Pinia
 import { createPinia } from 'pinia'
@@ -23,92 +28,16 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 
-// Vytvoříme defaultní hodnotu pro tmavý režim před inicializací Vuetify
+// Detect system preference for dark mode
 let prefersDarkTheme = false
-
-// Detekce nastavení systému
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
   prefersDarkTheme = true
 }
 
-// Vytvoření instance Vuetify s podporou tmavého režimu
-const vuetify = createVuetify({
-  components,
-  directives,
-  icons: {
-    defaultSet: 'mdi', // This is already the default value - only for display purposes
-  },
-  theme: {
-    defaultTheme: prefersDarkTheme ? 'dark' : 'light',
-    themes: {
-      light: {
-        variables: {
-        'border-color': '#ebf1f6',
-        'border-opacity': 1,
-        },
-        colors: {
-          accent: '#8c9eff',
-          error: '#b71c1c',
-          primary: '#1B84FF',
-          secondary: '#43CED7',
-          info: '#2CABE3',
-          success: '#2CD07E',
-          accent: '#FFAB91',
-          warning: '#F6C000',
-          error: '#F8285A',
-          purple:'#725AF2',
-          indigo:'#6610f2',
-          lightprimary: '#EDF5FD',
-          lightsecondary: '#F2FCFC',
-          lightsuccess: '#EDFDF2',
-          lighterror: '#FFF0F4',
-          lightwarning: '#FFFCF0',
-          lightinfo: '#E4F5FF',
-          textPrimary: '#3A4752',
-          textSecondary: '#768B9E',
-          borderColor: '#ebf1f6',
-          inputBorder: '#DFE5EF',
-          containerBg: '#ffffff',
-          background: '#eef5f9',
-          hoverColor: '#f6f9fc',
-          surface: '#fff',
-          'on-surface-variant': '#fff',
-          grey100: '#F2F6FA',
-          grey200: '#EAEFF4'
-        },
-      },
-      dark: {
-        variables: {
-        'border-color': '#333F55',
-        'border-opacity': 1,
-      },
-        colors: {
-          primary: '#1B84FF',
-          secondary: '#0cb9c5',
-          lightprimary: '#253662',
-          lightsecondary: '#1C455D',
-          lightsuccess: '#1B3C48',
-          lighterror: '#4B313D',
-          lightwarning: '#4D3A2A',
-          lightinfo:'#223662',
-          textPrimary: '#EAEFF4',
-          textSecondary: '#7C8FAC',
-          borderColor: '#333F55',
-          inputBorder: '#465670',
-          containerBg: '#2a3447',
-          background: '#192838',
-          surface: '#152332',
-          hoverColor: '#333f55',
-          'on-surface-variant': '#2a3447',
-          grey100: '#333F55',
-          grey200: '#465670',
-          accent: '#FF4081',
-          error: '#FF5252',
-        },
-      },
-    },
-  },
-})
+// Apply initial theme class
+if (prefersDarkTheme) {
+  document.documentElement.classList.add('dark')
+}
 
 createInertiaApp({
   resolve: name => {
@@ -119,64 +48,78 @@ createInertiaApp({
     return page
   },
   setup({ el, App, props, plugin }) {
-    // Inicializace i18n s překlady z backendu
-    const locale = props.initialPage.props.locale || 'cs';
-    const i18n = setupI18n(props.initialPage.props.translations || {}, locale);
-    
+    // Initialize i18n with translations from backend
+    const locale = props.initialPage.props.locale || 'cs'
+    const i18n = setupI18n(props.initialPage.props.translations || {}, locale)
+
     const app = createApp({ render: () => h(App, props) })
       .use(plugin)
       .use(pinia)
-      .use(vuetify)
+      .use(PrimeVue, {
+        unstyled: true,
+        pt: {} // Pass-through for custom styling
+      })
+      .use(ToastService)
+      .use(ConfirmationService)
       .use(ZiggyVue)
       .use(i18n)
       .use(TranslationPlugin)
-    
-    // Nastavení html lang atributu podle aktuálního jazyka
+
+    // Register global directives
+    app.directive('tooltip', Tooltip)
+
+    // Set html lang attribute
     document.documentElement.lang = props.initialPage.props.locale || 'cs'
-    
+
     app.mount(el)
 
-    // Sledování změn v theme nastavení
+    // Theme management
     const userStore = useUserStore()
-    
-    // Detekce preferencí systému
+
+    // System preference detection
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)')
-    
-    // Reaktivní nastavení témat
+
+    // Update theme function
     const updateTheme = () => {
-      console.log('Aktualizace tématu, aktuální nastavení:', userStore.getTheme);
+      console.log('Updating theme, current setting:', userStore.getTheme)
       const themePreference = userStore.getTheme
-      
+
+      let isDark = false
       if (themePreference === 'system') {
-        // Nastavení podle systému
-        vuetify.theme.global.name.value = systemPrefersDark.matches ? 'dark' : 'light'
-        console.log('Nastaveno téma podle systému:', vuetify.theme.global.name.value);
+        isDark = systemPrefersDark.matches
+        console.log('Setting theme based on system:', isDark ? 'dark' : 'light')
       } else {
-        // Explicitní nastavení uživatelem
-        vuetify.theme.global.name.value = themePreference
-        console.log('Nastaveno explicitní téma:', themePreference);
+        isDark = themePreference === 'dark'
+        console.log('Setting explicit theme:', themePreference)
+      }
+
+      // Apply dark class to html element for Tailwind
+      if (isDark) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
       }
     }
-    
-    // Zajistíme, že uživatelské parametry jsou načteny před inicializací tématu
-    if (document.querySelector('meta[name="user-id"]') && !userStore.isInitialized) {
-      console.log('Načítám parametry před nastavením tématu');
-      userStore.fetchParameters().then(() => {
-        console.log('Parametry načteny, nastavuji téma');
-        updateTheme();
-      });
-    } else {
-      console.log('Použití aktuálních nastavení pro téma');
-      updateTheme();
-    }
-    
-    // Sledování změn nastavení tématu
-    watch(() => userStore.getTheme, (newTheme) => {
-      console.log('Změna tématu na:', newTheme);
-      updateTheme();
-    });
 
-    // Sledování změn preferencí systému
+    // Load user parameters before setting theme
+    if (document.querySelector('meta[name="user-id"]') && !userStore.isInitialized) {
+      console.log('Loading parameters before setting theme')
+      userStore.fetchParameters().then(() => {
+        console.log('Parameters loaded, setting theme')
+        updateTheme()
+      })
+    } else {
+      console.log('Using current settings for theme')
+      updateTheme()
+    }
+
+    // Watch for theme setting changes
+    watch(() => userStore.getTheme, (newTheme) => {
+      console.log('Theme changed to:', newTheme)
+      updateTheme()
+    })
+
+    // Watch for system preference changes
     systemPrefersDark.addEventListener('change', updateTheme)
 
     // Initialize user store

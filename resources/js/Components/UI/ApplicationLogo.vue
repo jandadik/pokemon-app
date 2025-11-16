@@ -1,3 +1,7 @@
 <template>
-    <v-img src="/images/logo.png" width="45" height="45"></v-img>
+  <img
+    src="/images/logo.png"
+    alt="Logo"
+    class="w-[45px] h-[45px]"
+  />
 </template>
